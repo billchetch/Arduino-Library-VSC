@@ -1,0 +1,46 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arduino", "Arduino\Arduino.csproj", "{C9220F29-3BA2-4CDA-AF94-AA0B507E2091}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utilities", "..\Utilities\Utilities\Utilities.csproj", "{5567F5EC-E907-4B59-840B-D2D091CF8A2A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChetchXMPP", "..\ChetchXMPP\ChetchXMPP\ChetchXMPP.csproj", "{405C46D2-6F12-401C-9464-C92316A4476A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Database", "..\Database\Database\Database.csproj", "{031783BD-12F8-4380-A4E1-DDBD367AABD9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Messaging", "..\Messaging\Messaging\Messaging.csproj", "{B125A96A-8C0D-44C5-B7EF-51BB1F7886A9}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{C9220F29-3BA2-4CDA-AF94-AA0B507E2091}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C9220F29-3BA2-4CDA-AF94-AA0B507E2091}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C9220F29-3BA2-4CDA-AF94-AA0B507E2091}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C9220F29-3BA2-4CDA-AF94-AA0B507E2091}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5567F5EC-E907-4B59-840B-D2D091CF8A2A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5567F5EC-E907-4B59-840B-D2D091CF8A2A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5567F5EC-E907-4B59-840B-D2D091CF8A2A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5567F5EC-E907-4B59-840B-D2D091CF8A2A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{405C46D2-6F12-401C-9464-C92316A4476A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{405C46D2-6F12-401C-9464-C92316A4476A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{405C46D2-6F12-401C-9464-C92316A4476A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{405C46D2-6F12-401C-9464-C92316A4476A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{031783BD-12F8-4380-A4E1-DDBD367AABD9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{031783BD-12F8-4380-A4E1-DDBD367AABD9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{031783BD-12F8-4380-A4E1-DDBD367AABD9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{031783BD-12F8-4380-A4E1-DDBD367AABD9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{B125A96A-8C0D-44C5-B7EF-51BB1F7886A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B125A96A-8C0D-44C5-B7EF-51BB1F7886A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B125A96A-8C0D-44C5-B7EF-51BB1F7886A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B125A96A-8C0D-44C5-B7EF-51BB1F7886A9}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
