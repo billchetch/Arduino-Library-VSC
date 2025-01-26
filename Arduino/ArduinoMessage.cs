@@ -14,6 +14,11 @@ namespace Chetch.Arduino;
 /// </summary>
 public class ArduinoMessage
 {
+    #region Consttants
+    public const byte NO_TARGET = 0;
+    public const byte NO_SENDER = 0;
+    #endregion
+
     static public ArduinoMessage Deserialize(byte[] bytes)
     {
         var msg = new ArduinoMessage();
@@ -37,6 +42,13 @@ public class ArduinoMessage
     public bool IsConfigRelated => Type == MessageType.CONFIGURE || Type == MessageType.CONFIGURE_RESPONSE;
 
     public bool IsInitRelated => Type == MessageType.INITIALISE || Type == MessageType.INITIALISE_RESPONSE;
+
+
+    public ArduinoMessage(){}
+    public ArduinoMessage(MessageType type)
+    {
+        Type = type;
+    }
 
     public dynamic GetArgument(int idx, Type type = null)
     {
