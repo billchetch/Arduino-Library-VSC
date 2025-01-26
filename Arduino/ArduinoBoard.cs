@@ -69,28 +69,29 @@ public class ArduinoBoard
             else
             {
                 statusResponseReceived = false;
+                Ready?.Invoke(this, IsReady);
             }
             
         };
 
         connection.DataReceived += (sender, data) => {
-            Console.WriteLine("Received {0} bytes", data.Length);
-            try
-            {
-                if(inboundFrame.Add(data))
+            //Console.WriteLine("Received {0} bytes", data.Length);
+            foreach(var b in data){
+                try{
+                    if(inboundFrame.Add(b))
+                    {
+                        inboundFrame.Validate();
+                        var message = ArduinoMessage.Deserialize(inboundFrame.Payload);
+                        inboundFrame.Reset();
+                        OnMessageReceived(message);
+                    }
+                }
+                catch(Exception e)
                 {
-                    inboundFrame.Validate();
-                    var message = ArduinoMessage.Deserialize(inboundFrame.Payload);
+                    Console.WriteLine(e.Message);
                     inboundFrame.Reset();
-                    OnMessageReceived(message);
                 }
             }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-                inboundFrame.Reset();
-            }
-            
         };
 
         connection.Connect();
@@ -105,15 +106,25 @@ public class ArduinoBoard
     {
         ArduinoRequest.Handle(message); //this trigger callbacks per request
 
-        switch(message.Type)
-        {
-            case MessageType.ERROR:
-                Console.WriteLine("Errorrrrr!!!");
-                break;
-        }
-
         if(IsReady)
         {
+            Console.WriteLine("Received {0} for {1} from {2}", message.Type, message.Target, message.Sender);
+            switch(message.Target){
+                case ArduinoMessage.NO_TARGET:
+                    //what to do?
+                    break;
+
+                default:
+                    if(message.Target == ID)
+                    {
+
+                    } 
+                    else
+                    {
+                        
+                    }
+                    break;
+            }
             MessageReceived?.Invoke(this, message);
         }
     }
