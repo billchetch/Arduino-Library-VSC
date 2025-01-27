@@ -33,6 +33,18 @@ public class ArduinoBoard
     {
         connection = new ArduinoSerialConnection(productID, baudRate);
         inboundFrame = new Frame(frameSchema);
+        inboundFrame.FrameComplete += (frame, complete) => {
+            try
+            {
+                var message = ArduinoMessage.Deserialize(inboundFrame.Payload);
+                inboundFrame.Reset();
+                OnMessageReceived(message);
+            } 
+            catch (Exception e)
+            {
+                Console.WriteLine("Error when handling frame: {0}", e.Message);
+            }
+        };
         outboundFrame = new Frame(frameSchema, MessageEncoding.BYTES_ARRAY);
     }
 
@@ -49,22 +61,25 @@ public class ArduinoBoard
             //here should be something like: await RequestSTtaus
             if(connected)
             {
-                Task<bool> t;
-                statusResponseReceived = false;
-                do
-                {
-                    Console.WriteLine("Requesting status,,,");
-                    t = RequestStatus().OnReceivedAsync((response) =>{
-                        if(response.Type == MessageType.STATUS_RESPONSE)
-                        {
-                            statusResponseReceived = true;
-                        }
-                    }, 2);
-                    await t;
-                } while(!statusResponseReceived);
+                //run the following as a separate task as aware it may take a while
+                Task.Run(async () => {
+                    Task<bool> t;
+                    statusResponseReceived = false;
+                    do
+                    {
+                        Console.WriteLine("Connected so Requesting status,,,");
+                        t = RequestStatus().OnReceivedAsync((response) =>{
+                            if(response.Type == MessageType.STATUS_RESPONSE)
+                            {
+                                statusResponseReceived = true;
+                            }
+                        }, 2);
+                        await t;
+                    } while(!statusResponseReceived);
 
-                //ok so here we have a status resopnse
-                Ready?.Invoke(this, IsReady);
+                    //ok so here we have a status resopnse
+                    Ready?.Invoke(this, IsReady);
+                };
             }
             else
             {
@@ -78,13 +93,7 @@ public class ArduinoBoard
             //Console.WriteLine("Received {0} bytes", data.Length);
             foreach(var b in data){
                 try{
-                    if(inboundFrame.Add(b))
-                    {
-                        inboundFrame.Validate();
-                        var message = ArduinoMessage.Deserialize(inboundFrame.Payload);
-                        inboundFrame.Reset();
-                        OnMessageReceived(message);
-                    }
+                    inboundFrame.Add(b);    
                 }
                 catch(Exception e)
                 {
