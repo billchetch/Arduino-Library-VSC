@@ -61,25 +61,22 @@ public class ArduinoBoard
             //here should be something like: await RequestSTtaus
             if(connected)
             {
-                //run the following as a separate task as aware it may take a while
-                Task.Run(async () => {
-                    Task<bool> t;
-                    statusResponseReceived = false;
-                    do
-                    {
-                        Console.WriteLine("Connected so Requesting status,,,");
-                        t = RequestStatus().OnReceivedAsync((response) =>{
-                            if(response.Type == MessageType.STATUS_RESPONSE)
-                            {
-                                statusResponseReceived = true;
-                            }
-                        }, 2);
-                        await t;
-                    } while(!statusResponseReceived);
+                Task<bool> t;
+                statusResponseReceived = false;
+                do
+                {
+                    Console.WriteLine("Connected so Requesting status,,,");
+                    t = RequestStatus().OnReceivedAsync((response) =>{
+                        if(response.Type == MessageType.STATUS_RESPONSE)
+                        {
+                            statusResponseReceived = true;
+                        }
+                    }, 2);
+                    await t;
+                } while(!statusResponseReceived);
 
-                    //ok so here we have a status resopnse
-                    Ready?.Invoke(this, IsReady);
-                };
+                //ok so here we have a status resopnse
+                Ready?.Invoke(this, IsReady);
             }
             else
             {
