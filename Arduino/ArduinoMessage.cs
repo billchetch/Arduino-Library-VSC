@@ -50,66 +50,66 @@ public class ArduinoMessage
         Type = type;
     }
 
-    public dynamic GetArgument(int idx, Type type = null)
+    public dynamic Get(int idx, Type type = null)
     {
         if (type == null) type = typeof(Object);
 
         return Chetch.Utilities.Convert.ToType(type, Arguments[idx], LittleEndian);
     }
 
-    public T GetArgument<T>(int idx)
+    public T Get<T>(int idx)
     {
         return Chetch.Utilities.Convert.To<T>(Arguments[idx], LittleEndian);
     }
 
-    public void AddArgument(byte[] bytes)
+    public void Add(byte[] bytes)
     {
         Arguments.Add(bytes);
     }
 
-    public void AddArgument(byte b)
+    public void Add(byte b)
     {
-        AddArgument(new byte[] { b });
+        Add(new byte[] { b });
     }
 
-    public void AddArgument(bool b)
+    public void Add(bool b)
     {
-        AddArgument(b ? (byte)1 : (byte)0);
+        Add(b ? (byte)1 : (byte)0);
     }
 
-    public void AddArgument(String s)
+    public void Add(String s)
     {
-        AddArgument(Chetch.Utilities.Convert.ToBytes(s));
+        Add(Chetch.Utilities.Convert.ToBytes(s));
     }
 
-    public void AddArgument(Int16 arg)
-    {
-        byte[] bytes = Chetch.Utilities.Convert.ToBytes(arg, LittleEndian, true, -1);
-        AddArgument(bytes);
-    }
-
-    public void AddArgument(UInt16 arg)
+    public void Add(Int16 arg)
     {
         byte[] bytes = Chetch.Utilities.Convert.ToBytes(arg, LittleEndian, true, -1);
-        AddArgument(bytes);
+        Add(bytes);
     }
 
-    public void AddArgument(int arg)
+    public void Add(UInt16 arg)
+    {
+        byte[] bytes = Chetch.Utilities.Convert.ToBytes(arg, LittleEndian, true, -1);
+        Add(bytes);
+    }
+
+    public void Add(int arg)
     {
         byte[] bytes = Chetch.Utilities.Convert.ToBytes((Int16)arg, LittleEndian, true, -1);
-        AddArgument(bytes);
+        Add(bytes);
     }
 
-    public void AddArgument(long arg)
+    public void Add(long arg)
     {
         byte[] bytes = Chetch.Utilities.Convert.ToBytes((Int32)arg, LittleEndian, true, -1);
-        AddArgument(bytes);
+        Add(bytes);
     }
 
-    public void AddArgument(ulong arg)
+    public void Add(ulong arg)
     {
         byte[] bytes = Chetch.Utilities.Convert.ToBytes((UInt32)arg, LittleEndian, true, -1);
-        AddArgument(bytes);
+        Add(bytes);
     }
 
     public void WriteBytes(List<byte> bytes)
@@ -163,7 +163,7 @@ public class ArduinoMessage
             {
                 arg[i] = bytes[argumentIndex + i + 1];
             }
-            AddArgument(arg);
+            Add(arg);
             argumentIndex += length + 1;
         }
     }
