@@ -6,12 +6,12 @@ using Microsoft.Extensions.Logging;
 
 namespace Chetch.Arduino;
 
-public class ArduinoService : ChetchXMPPService<ArduinoService>
+public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T>
 {
     List<ArduinoBoard> boards = new List<ArduinoBoard>();
 
     #region Constructors
-    public ArduinoService(ILogger<ArduinoService> Logger) : base(Logger)
+    public ArduinoService(ILogger<T> Logger) : base(Logger)
     {
         ChetchDbContext.Config = Config;
     }
