@@ -21,7 +21,13 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
     protected void AddBoard(ArduinoBoard board)
     {
         //check no name conflicts
-
+        foreach(var b in boards)
+        {
+            if(b.Name == board.Name)
+            {
+                throw new Exception("Board names must be unique");
+            }
+        }
         //
         board.MessageReceived += (sender, updatedProperties) => {
             var msg = new Message();
@@ -32,8 +38,11 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
             {
                 msg.AddValue(prop.Name, prop.GetValue(updatedProperties.UpdatedObject));
             }
+            Console.WriteLine("Received message from board and braodcasting...");
             Broadcast(msg);
         };
+    
+        boards.Add(board);
     }
     #endregion
 
