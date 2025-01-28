@@ -4,12 +4,19 @@ using Chetch.Messaging;
 
 namespace Chetch.Arduino;
 
+public interface IMessageUpdatableObject
+{
+    byte ID { get; set; }
+
+    String Name { get;  }
+}
+
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
 public class ArduinoMessageMap : Attribute
 {
     static Dictionary<Type, Dictionary<MessageType, Dictionary<PropertyInfo, byte>>> map = new Dictionary<Type, Dictionary<MessageType, Dictionary<PropertyInfo, byte>>>();
     
-    public static void AssignMessageValues(Object obj, ArduinoMessage message)
+    public static UpdatedProperties AssignMessageValues(IMessageUpdatableObject obj, ArduinoMessage message)
     {
         var type = obj.GetType();
         if(!map.ContainsKey(type))
@@ -33,14 +40,33 @@ public class ArduinoMessageMap : Attribute
             map[type][message.Type] = prop2index;
         }
         
+        var updatedProperties = new UpdatedProperties(obj, message);
         foreach(var kv in map[type][message.Type])
         {
             var prop2set = kv.Key;
             var argIdx = kv.Value;
             var val = message.Get(argIdx, prop2set.PropertyType);
+            var oldVal = kv.Key.GetValue(obj);
             kv.Key.SetValue(obj, val);
+            updatedProperties.Properties.Add(prop2set);
         }
+        return updatedProperties;
+    }
 
+    public class UpdatedProperties
+    {
+        public ArduinoMessage? Message { get; internal set; }
+        public IMessageUpdatableObject? UpdatedObject { get; internal set; }
+
+        public List<PropertyInfo> Properties { get; internal set; } = new List<PropertyInfo>();
+
+        public UpdatedProperties(){}
+        
+        public UpdatedProperties(IMessageUpdatableObject obj, ArduinoMessage message)
+        {
+            UpdatedObject = obj;
+            Message = message;
+        }
     }
 
     public MessageType MessageType { get; set; }

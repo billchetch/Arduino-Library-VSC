@@ -3,7 +3,7 @@ using Pomelo.EntityFrameworkCore.MySql.Storage.Internal;
 
 namespace Chetch.Arduino;
 
-public class ArduinoBoard
+public class ArduinoBoard : IMessageUpdatableObject
 {
 
     #region Constants
@@ -16,15 +16,22 @@ public class ArduinoBoard
 
     #region Events
     public event EventHandler<bool>? Ready;
-    public event EventHandler<ArduinoMessage>? MessageReceived;
+    public event EventHandler<ArduinoMessageMap.UpdatedProperties>? MessageReceived;
     #endregion
 
     #region Properties
-    public byte ID { get; } = DEFAULT_BOARD_ID;
+    public byte ID { get; set; } = DEFAULT_BOARD_ID;
 
-    public String Name {get; internal set; } = "Unknown";
+    public String Name {get; internal set; } = DEFAULT_NAME;
+
     public bool IsConnected => connection != null && connection.IsConnected;
     public bool IsReady => IsConnected && statusResponseReceived;
+
+    [ArduinoMessageMap(MessageType.STATUS_RESPONSE, 0)]
+    public int Millis { get; internal set; } = -1;
+
+    //[ArduinoMessageMap(MessageType.STATUS_RESPONSE, 1)]
+    public int FreeMemory { get; internal set; } = -1;
     #endregion
     
     #region Fields
@@ -147,6 +154,8 @@ public class ArduinoBoard
         if(IsReady)
         {
             Console.WriteLine("Received {0} for {1} from {2}", message.Type, message.Target, message.Sender);
+            
+            ArduinoMessageMap.UpdatedProperties updatedProperties = new ArduinoMessageMap.UpdatedProperties();
             switch(message.Target){
                 case ArduinoMessage.NO_TARGET:
                     //what to do?
@@ -155,22 +164,22 @@ public class ArduinoBoard
                 default:
                     if(message.Target == ID)
                     {
-                        HandleMessage(message);
+                        updatedProperties = HandleMessage(message);
                     } 
                     else
                     {
                         var dev = getDevice(message.Target);
-                        dev.HandleMessage(message);
+                        updatedProperties = dev.HandleMessage(message);
                     }
                     break;
             }
-            MessageReceived?.Invoke(this, message);
+            MessageReceived?.Invoke(this, updatedProperties);
         }
     }
 
-    public void HandleMessage(ArduinoMessage message)
+    public ArduinoMessageMap.UpdatedProperties HandleMessage(ArduinoMessage message)
     {
-
+        return ArduinoMessageMap.AssignMessageValues(this, message);
     }
 
     public void SendMessage(ArduinoMessage message)
