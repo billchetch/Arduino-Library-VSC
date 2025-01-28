@@ -4,7 +4,7 @@ using Chetch.Messaging;
 
 namespace Chetch.Arduino;
 
-[AttributeUsage(AttributeTargets.Property)]
+[AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
 public class ArduinoMessageMap : Attribute
 {
     static Dictionary<Type, Dictionary<MessageType, Dictionary<PropertyInfo, byte>>> map = new Dictionary<Type, Dictionary<MessageType, Dictionary<PropertyInfo, byte>>>();
