@@ -8,7 +8,8 @@ public interface IMessageUpdatableObject
 {
     byte ID { get; set; }
 
-    String Name { get;  }
+    String UID { get;  }
+
 }
 
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]

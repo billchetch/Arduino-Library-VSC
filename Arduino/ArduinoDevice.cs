@@ -13,6 +13,8 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
 
     public String Name {get; internal set; } = ArduinoBoard.DEFAULT_NAME;
 
+    public String UID => String.Format("{0}:{1}", Board == null ? "" : Board.Name, Name);
+
     #endregion
 
     public ArduinoDevice(String name)

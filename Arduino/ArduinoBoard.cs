@@ -24,6 +24,8 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     public String Name {get; internal set; } = DEFAULT_NAME;
 
+    public String UID => Name; //for IMessageUpdatable interface compliance
+
     public bool IsConnected => connection != null && connection.IsConnected;
     public bool IsReady => IsConnected && statusResponseReceived;
 
