@@ -52,7 +52,7 @@ public class ArduinoSerialConnection : SerialPortConnection, IConnection
         }
         else if(OperatingSystem.IsLinux())
         {
-            searchFor = "";  //TODO: complete
+            searchFor = "usb-1a86_USB";  //TODO: complete
         }
         else
         {
