@@ -32,7 +32,10 @@ public class ArduinoBoard : IMessageUpdatableObject
     [ArduinoMessageMap(MessageType.STATUS_RESPONSE, 0)]
     public int Millis { get; internal set; } = -1;
 
-    //[ArduinoMessageMap(MessageType.STATUS_RESPONSE, 1)]
+     [ArduinoMessageMap(MessageType.STATUS_RESPONSE, 1)]
+    public int DeviceCount { get; internal set; } = -1;
+
+    [ArduinoMessageMap(MessageType.STATUS_RESPONSE, 2)]
     public int FreeMemory { get; internal set; } = -1;
     #endregion
     
