@@ -158,8 +158,6 @@ public class ArduinoBoard : IMessageUpdatableObject
 
         if(IsReady)
         {
-            Console.WriteLine("Received {0} for {1} from {2}", message.Type, message.Target, message.Sender);
-            
             ArduinoMessageMap.UpdatedProperties updatedProperties = new ArduinoMessageMap.UpdatedProperties();
             switch(message.Target){
                 case ArduinoMessage.NO_TARGET:

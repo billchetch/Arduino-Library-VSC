@@ -17,6 +17,10 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
 
     #endregion
 
+    #region Events
+    EventHandler<ArduinoMessageMap.UpdatedProperties>? Updated;
+    #endregion
+
     public ArduinoDevice(String name)
     {
         Name = name;
@@ -27,7 +31,9 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
     public virtual ArduinoMessageMap.UpdatedProperties HandleMessage(ArduinoMessage message)
     {
         //use reflection to read
-        return ArduinoMessageMap.AssignMessageValues(this, message);
+        var updatedProperties = ArduinoMessageMap.AssignMessageValues(this, message);
+        Updated?.Invoke(this, updatedProperties);
+        return updatedProperties;
     }
     #endregion
 }
