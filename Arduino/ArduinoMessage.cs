@@ -50,7 +50,7 @@ public class ArduinoMessage
         Type = type;
     }
 
-    public dynamic Get(int idx, Type type = null)
+    public dynamic Get(int idx, Type? type = null)
     {
         if (type == null) type = typeof(Object);
 

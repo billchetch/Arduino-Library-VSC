@@ -5,6 +5,10 @@ using XmppDotNet.Xmpp.PubSub;
 
 namespace Chetch.Arduino;
 
+/*
+HMMMMM this class isn't currently used as of 1/2/25
+*/
+
 public class ArduinoRequest
 {
     #region Constants

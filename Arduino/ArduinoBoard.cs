@@ -50,7 +50,7 @@ public class ArduinoBoard : IMessageUpdatableObject
     ArduinoMessage? lastMessageReceived;
     DateTime lastMessageReceivedOn;
 
-    bool sattusRequested = false;
+    bool statusRequested = false;
     bool statusResponseReceived = false;
 
     List<ArduinoDevice> devices = new List<ArduinoDevice>();
@@ -68,7 +68,7 @@ public class ArduinoBoard : IMessageUpdatableObject
                     var message = ArduinoMessage.Deserialize(payload);
 
                     //we check that this message can indeed be processed by this board
-                    if(IsReady || (message.Type == MessageType.STATUS_RESPONSE && message.Target == ID && sattusRequested))
+                    if(IsReady || (message.Type == MessageType.STATUS_RESPONSE && message.Target == ID && statusRequested))
                     {
                         OnMessageReceived(message);
                     }
@@ -105,25 +105,21 @@ public class ArduinoBoard : IMessageUpdatableObject
             //here should be something like: await RequestSTtaus
             if(connected)
             {
-                Task<bool> t;
-                statusResponseReceived = false;
-                do
-                {
-                    //Console.WriteLine("Connected so Requesting status,,,");
-                    t = RequestStatus().OnReceivedAsync((response) =>{
-                        if(response.Type == MessageType.STATUS_RESPONSE)
-                        {
-                            statusResponseReceived = true;
-                            Ready?.Invoke(this, IsReady);
-                        }
-                    }, 2);
-                    await t;
-                } while(!statusResponseReceived);
+                await Task.Run(()=>{
+                    do
+                    {
+                        Console.WriteLine("Requesting status...");
+                        RequestStatus();
+                        Thread.Sleep(1000);
+                    } while(!IsReady);
+                });
+
+                Ready?.Invoke(this, IsReady);
             }
             else
             {
                 statusResponseReceived = false;
-                sattusRequested = false;
+                statusRequested = false;
                 Ready?.Invoke(this, IsReady);
             }
             
@@ -175,7 +171,6 @@ public class ArduinoBoard : IMessageUpdatableObject
                 }
                 break;
         }
-        ArduinoRequest.Handle(message); //this trigger callbacks per request
         if(IsReady)
         {
             MessageReceived?.Invoke(this, updatedProperties);        
@@ -184,7 +179,14 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     public ArduinoMessageMap.UpdatedProperties HandleMessage(ArduinoMessage message)
     {
-        return ArduinoMessageMap.AssignMessageValues(this, message);
+        var updatedProperties = ArduinoMessageMap.AssignMessageValues(this, message);
+        switch(message.Type)
+        {
+            case MessageType.STATUS_RESPONSE:
+                statusResponseReceived = true;
+                break;
+        }
+        return updatedProperties;
     }
 
     public void SendMessage(ArduinoMessage message)
@@ -208,7 +210,7 @@ public class ArduinoBoard : IMessageUpdatableObject
         }
     }
 
-    public ArduinoRequest RequestStatus(byte target = ArduinoMessage.NO_TARGET)
+    public void RequestStatus(byte target = ArduinoMessage.NO_TARGET)
     {
         if(target == ArduinoMessage.NO_TARGET)
         {
@@ -216,10 +218,8 @@ public class ArduinoBoard : IMessageUpdatableObject
         }
         var msg = new ArduinoMessage(MessageType.STATUS_REQUEST);
         msg.Target = target;
-        var req = ArduinoRequest.Create(msg);
         SendMessage(msg);
-        sattusRequested = true; //flag that this has been requested
-        return req;
+        statusRequested = true; //flag that this has been requested
     }
     #endregion
 
@@ -235,6 +235,7 @@ public class ArduinoBoard : IMessageUpdatableObject
         }
         devices.Add(device);
         device.ID = id;
+        device.Board = this;
     }
 
     public ArduinoDevice getDevice(byte id){

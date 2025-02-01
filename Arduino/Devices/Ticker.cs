@@ -11,4 +11,9 @@ public class Ticker : ArduinoDevice
     public Ticker(string name) : base(name)
     {
     }
+
+    public void Test()
+    {
+        SendCommand(DeviceCommand.DEACTIVATE);
+    }
 }
