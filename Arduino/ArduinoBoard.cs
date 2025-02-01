@@ -50,6 +50,7 @@ public class ArduinoBoard : IMessageUpdatableObject
     ArduinoMessage? lastMessageReceived;
     DateTime lastMessageReceivedOn;
 
+    bool sattusRequested = false;
     bool statusResponseReceived = false;
 
     List<ArduinoDevice> devices = new List<ArduinoDevice>();
@@ -65,7 +66,12 @@ public class ArduinoBoard : IMessageUpdatableObject
             Task t = Task.Run(() => {
                 try{
                     var message = ArduinoMessage.Deserialize(payload);
-                    OnMessageReceived(message);
+
+                    //we check that this message can indeed be processed by this board
+                    if(IsReady || (message.Type == MessageType.STATUS_RESPONSE && message.Target == ID && sattusRequested))
+                    {
+                        OnMessageReceived(message);
+                    }
                 }
                 catch (Exception e)
                 {
@@ -80,7 +86,7 @@ public class ArduinoBoard : IMessageUpdatableObject
             catch (ArgumentException ae)
             {
 
-                //Console.WriteLine("Error when handling frame: {0}", e.Message);
+                Console.WriteLine("Error when handling frame: {0}", ae.Message);
             }
         };
         outboundFrame = new Frame(frameSchema, MessageEncoding.BYTES_ARRAY);
@@ -99,11 +105,25 @@ public class ArduinoBoard : IMessageUpdatableObject
             //here should be something like: await RequestSTtaus
             if(connected)
             {
-                RequestStatus();
+                Task<bool> t;
+                statusResponseReceived = false;
+                do
+                {
+                    //Console.WriteLine("Connected so Requesting status,,,");
+                    t = RequestStatus().OnReceivedAsync((response) =>{
+                        if(response.Type == MessageType.STATUS_RESPONSE)
+                        {
+                            statusResponseReceived = true;
+                            Ready?.Invoke(this, IsReady);
+                        }
+                    }, 2);
+                    await t;
+                } while(!statusResponseReceived);
             }
             else
             {
                 statusResponseReceived = false;
+                sattusRequested = false;
                 Ready?.Invoke(this, IsReady);
             }
             
@@ -117,7 +137,7 @@ public class ArduinoBoard : IMessageUpdatableObject
                 }
                 catch(Exception e)
                 {
-                    Console.WriteLine(e.Message);
+                    //Console.WriteLine(e.Message);
                     inboundFrame.Reset();
                 }
             }
@@ -150,34 +170,21 @@ public class ArduinoBoard : IMessageUpdatableObject
                 } 
                 else
                 {
-
                     var dev = getDevice(message.Target);
                     updatedProperties = dev.HandleMessage(message);
                 }
                 break;
         }
-        
         ArduinoRequest.Handle(message); //this trigger callbacks per request
         if(IsReady)
         {
-            MessageReceived?.Invoke(this, updatedProperties);
+            MessageReceived?.Invoke(this, updatedProperties);        
         }
-        
-        
     }
 
     public ArduinoMessageMap.UpdatedProperties HandleMessage(ArduinoMessage message)
     {
-        var updatedProperties = ArduinoMessageMap.AssignMessageValues(this, message);
-        if(message.Type == MessageType.STATUS_RESPONSE)
-        {
-            if(!statusResponseReceived)
-            {
-                statusResponseReceived = true;
-                Ready?.Invoke(this, IsReady);
-            }
-        }
-        return updatedProperties;
+        return ArduinoMessageMap.AssignMessageValues(this, message);
     }
 
     public void SendMessage(ArduinoMessage message)
@@ -211,6 +218,7 @@ public class ArduinoBoard : IMessageUpdatableObject
         msg.Target = target;
         var req = ArduinoRequest.Create(msg);
         SendMessage(msg);
+        sattusRequested = true; //flag that this has been requested
         return req;
     }
     #endregion

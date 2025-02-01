@@ -16,13 +16,17 @@ public interface IMessageUpdatableObject
 public class ArduinoMessageMap : Attribute
 {
     static Dictionary<Type, Dictionary<MessageType, Dictionary<PropertyInfo, byte>>> map = new Dictionary<Type, Dictionary<MessageType, Dictionary<PropertyInfo, byte>>>();
-    
+    static Object mapLock = new object();
+
     public static UpdatedProperties AssignMessageValues(IMessageUpdatableObject obj, ArduinoMessage message)
     {
         var type = obj.GetType();
         if(!map.ContainsKey(type))
         {
-            map[type] = new Dictionary<MessageType, Dictionary<PropertyInfo, byte>>();
+            lock(mapLock)
+            {
+                map[type] = new Dictionary<MessageType, Dictionary<PropertyInfo, byte>>();
+            }
         }
         if(!map[type].ContainsKey(message.Type))
         {
@@ -38,7 +42,11 @@ public class ArduinoMessageMap : Attribute
                     prop2index[prop] = amm.ArgumentIndex;
                 }
             }
-            map[type][message.Type] = prop2index;
+
+            lock(mapLock)
+            {
+                map[type][message.Type] = prop2index;
+            }
         }
         
         var updatedProperties = new UpdatedProperties(obj, message);

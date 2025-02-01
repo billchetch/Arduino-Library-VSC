@@ -16,16 +16,31 @@ public class ArduinoRequest
 
     #region Static stuff
 
-    static readonly ArduinoRequest[] requests = new ArduinoRequest[MAX_TAGS];
+    static readonly ArduinoRequest?[] requests = new ArduinoRequest[MAX_TAGS];
     static System.Timers.Timer? cleanUpTimer = null;
 
+    static int requestCount = 0;
+    static object requestLock = new object();
+
+    
     public static ArduinoRequest Create(ArduinoMessage message)
     {
-        byte i = 0;
-        while(i < MAX_TAGS && requests[i] != null && !requests[i].HasExpired)
+        
+        int i = 0;
+        for(i = 0; i < MAX_TAGS; i++)
         {
-            i++;
+            var r = requests[i];
+            if(r == null)
+            {
+                break;
+            }
+            else if(r.HasExpired)
+            {
+                Release(i);
+                break;
+            }
         }
+
         if(i >= MAX_TAGS)
         {
             throw new Exception(String.Format("Cannot create request as max of {0} tags already exist", MAX_TAGS));
@@ -38,21 +53,33 @@ public class ArduinoRequest
             cleanUpTimer.Interval = CLEANUP_INTERVAL;
             cleanUpTimer.Elapsed += (sender, eargs) => {
                 //Console.WriteLine("Cleanup timer called...");
-                foreach(var req in requests)
-                {
-                    if(req != null && req.HasExpired)
+                if(requestCount > 0){
+                    int cleaned = 0;
+                    for(int i = 0; i < requests.Length; i++)
                     {
-                        req.Release();
+                        var r = requests[i];
+                        if(r != null && r.HasExpired)
+                        {
+                            Release(i);
+                        }
+                        
                     }
+                    Console.WriteLine("Cleaned {0} requests", cleaned);
                 }
             };
             cleanUpTimer.Start();
         }
 
         var req = new ArduinoRequest(i + 1);
-        requests[i] = req;
-        message.Tag = req.Tag;
+        message.Tag = req.Tag;    
+        lock(requestLock)
+        {
+            requests[i] = req;
+            requestCount++;
+        }
+        Console.WriteLine("Adding request {0} at index {1} requestCount is {2}", message.Tag, i, requestCount);
         return req;
+        
     }
 
     public static void Handle(ArduinoMessage message)
@@ -69,17 +96,36 @@ public class ArduinoRequest
             throw new Exception(String.Format("Tag {0} is not valid ", message.Tag));
         }
 
-        if(requests[idx] == null)
+        var req = requests[idx];
+        if(req == null)
         {
             throw new Exception(String.Format("Request for tag {0} does not exist", message.Tag));
         }
 
-        if(requests[idx].HasExpired)
+        if(req.HasExpired)
         {
             throw new Exception(String.Format("Request for tag {0} has expired", message.Tag));
         }
 
-        requests[idx].Release(message);
+        if(requestCount <= 0)
+        {
+            throw new Exception(String.Format("Unexpected error requestCount {0}", requestCount));
+        }
+
+        Release(idx, message);
+    }
+
+    static void Release(int idx, ArduinoMessage? message = null){
+        if(requests[idx] != null)
+        {
+            requests[idx]?.Release(message);
+            lock(requestLock)
+            {
+                requests[idx] = null;
+                requestCount--;
+                Console.WriteLine(String.Format("Released request at index {0}", idx));
+            }
+        }
     }
 
     #endregion
@@ -121,14 +167,14 @@ public class ArduinoRequest
         TTL = ttl;
     }
 
-    public void Release(ArduinoMessage message)
+    public void Release(ArduinoMessage? message)
     {
-        Release();
-        handler?.Invoke(message);
-        handled = true;
-    }
-
-    public void Release(){
         released = true;
+        if(message != null)
+        {
+            handler?.Invoke(message);
+            handled = true;
+        }
     }
+    
 }
