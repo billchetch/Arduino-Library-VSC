@@ -14,12 +14,47 @@ public class ArduinoBoard : IMessageUpdatableObject
     public const byte START_DEVICE_IDS_AT = 10; 
     #endregion
 
+    #region Classes and Enums
+    public class ErrorEventArgs
+    {
+        public ErrorCode Error = ErrorCode.NO_ERROR;
+        public ArduinoMessage? ErrorMessage;
+        public Object? ErrorSource;
+
+        public ErrorEventArgs(ErrorCode error, ArduinoMessage message, Object source)
+        {
+            Error = error;
+            ErrorMessage = message;
+            ErrorSource = source;
+        }
+    }
+
+    public enum ErrorCode
+    {
+        NO_ERROR = 0,
+        MESSAGE_FRAME_ERROR = 10, //To indicate this is a Frame error
+        MESSAGE_ERROR = 20,
+        TARGET_NOT_SUPPLIED = 30,
+        TARGET_NOT_FOUND = 31,
+        MESSAGE_TYPE_PROHIBITED = 32, //if a particular target rejects a message type
+        NO_DEVICE_ID = 40,
+        DEVICE_LIMIT_REACHED = 41,
+        DEVICE_ID_ALREADY_USED = 42,
+        DEVICE_NOT_FOUND = 43,
+        DEVICE_ERROR = 100, //To indicate this is an error from the device (not Board)
+    }
+    #endregion
+
     #region Events
     public event EventHandler<bool>? Ready;
     public event EventHandler<ArduinoMessageMap.UpdatedProperties>? MessageReceived;
+    public event EventHandler<ErrorEventArgs>? ErrorReceived;
     #endregion
 
     #region Properties
+    [ArduinoMessageMap(MessageType.ERROR, 0)]
+    public ErrorCode Error {get; set; } = ErrorCode.NO_ERROR;
+
     public byte ID { get; set; } = DEFAULT_BOARD_ID;
 
     public String Name {get; internal set; } = DEFAULT_NAME;
@@ -163,14 +198,24 @@ public class ArduinoBoard : IMessageUpdatableObject
                 if(message.Target == ID)
                 {
                     updatedProperties = HandleMessage(message);
+                    if(message.Type == MessageType.ERROR)
+                    {
+                        ErrorReceived?.Invoke(this, new ErrorEventArgs(Error, message, this));
+                    }
                 } 
                 else
                 {
                     var dev = getDevice(message.Target);
                     updatedProperties = dev.HandleMessage(message);
+                    if(message.Type == MessageType.ERROR)
+                    {
+                        Error = ErrorCode.DEVICE_ERROR;
+                        ErrorReceived?.Invoke(this, new ErrorEventArgs(Error, message, dev));
+                    }
                 }
                 break;
         }
+
         if(IsReady)
         {
             MessageReceived?.Invoke(this, updatedProperties);        

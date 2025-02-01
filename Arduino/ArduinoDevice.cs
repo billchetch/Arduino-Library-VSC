@@ -40,7 +40,11 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
     #endregion
 
     #region Properties
+
     public ArduinoBoard? Board { get; set; }
+
+    [ArduinoMessageMap(MessageType.ERROR, 1)]
+    public byte Error { get; internal set; } = 0;
 
     public byte ID { get; set; } = 0;
 
@@ -48,6 +52,8 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
 
     public String UID => String.Format("{0}:{1}", Board == null ? "" : Board.Name, Name);
 
+
+    
     #endregion
 
     #region Events
@@ -68,17 +74,6 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
         //use reflection to read
         var updatedProperties = ArduinoMessageMap.AssignMessageValues(this, message);
         Updated?.Invoke(this, updatedProperties);
-        switch(message.Type)
-        {
-            case MessageType.COMMAND_RESPONSE:
-                DeviceCommand originalCommand = message.Get<DeviceCommand>(0);
-                break;
-
-            case MessageType.DATA:
-                break;
-        }
-
-
         return updatedProperties;
     }
 

@@ -5,6 +5,10 @@ namespace Chetch.Arduino.Devices;
 
 public class SwitchDevice : ArduinoDevice
 {
+    #region Constants
+    public const byte ERROR_SWITCH_MODE = 101;
+    
+    #endregion
 
     #region Properties    
     [ArduinoMessageMap(Messaging.MessageType.DATA, 0)]
