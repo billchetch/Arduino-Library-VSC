@@ -54,10 +54,12 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
     public EventHandler<ArduinoMessageMap.UpdatedProperties>? Updated;
     #endregion
 
+    #region Constructors
     public ArduinoDevice(String name)
     {
         Name = name;
     }
+    #endregion
 
     #region Messaging
 
@@ -69,6 +71,10 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
         switch(message.Type)
         {
             case MessageType.COMMAND_RESPONSE:
+                DeviceCommand originalCommand = message.Get<DeviceCommand>(0);
+                break;
+
+            case MessageType.DATA:
                 break;
         }
 
