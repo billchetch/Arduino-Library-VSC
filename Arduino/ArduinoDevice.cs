@@ -18,7 +18,7 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
     #endregion
 
     #region Events
-    EventHandler<ArduinoMessageMap.UpdatedProperties>? Updated;
+    public EventHandler<ArduinoMessageMap.UpdatedProperties>? Updated;
     #endregion
 
     public ArduinoDevice(String name)

@@ -96,27 +96,10 @@ public class ArduinoBoard : IMessageUpdatableObject
         }
         
         connection.Connected += async (sender, connected) => {
-            Console.WriteLine("Connected: {0}", connected);
-
             //here should be something like: await RequestSTtaus
             if(connected)
             {
-                Task<bool> t;
-                statusResponseReceived = false;
-                do
-                {
-                    Console.WriteLine("Connected so Requesting status,,,");
-                    t = RequestStatus().OnReceivedAsync((response) =>{
-                        if(response.Type == MessageType.STATUS_RESPONSE)
-                        {
-                            statusResponseReceived = true;
-                        }
-                    }, 2);
-                    await t;
-                } while(!statusResponseReceived);
-
-                //ok so here we have a status resopnse
-                Ready?.Invoke(this, IsReady);
+                RequestStatus();
             }
             else
             {
@@ -154,35 +137,47 @@ public class ArduinoBoard : IMessageUpdatableObject
         lastMessageReceived = message;
         lastMessageReceivedOn = DateTime.Now;
 
-        ArduinoRequest.Handle(message); //this trigger callbacks per request
+        ArduinoMessageMap.UpdatedProperties updatedProperties = new ArduinoMessageMap.UpdatedProperties();
+        switch(message.Target){
+            case ArduinoMessage.NO_TARGET:
+                //what to do?
+                break;
 
+            default:
+                if(message.Target == ID)
+                {
+                    updatedProperties = HandleMessage(message);
+                } 
+                else
+                {
+
+                    var dev = getDevice(message.Target);
+                    updatedProperties = dev.HandleMessage(message);
+                }
+                break;
+        }
+        
+        ArduinoRequest.Handle(message); //this trigger callbacks per request
         if(IsReady)
         {
-            ArduinoMessageMap.UpdatedProperties updatedProperties = new ArduinoMessageMap.UpdatedProperties();
-            switch(message.Target){
-                case ArduinoMessage.NO_TARGET:
-                    //what to do?
-                    break;
-
-                default:
-                    if(message.Target == ID)
-                    {
-                        updatedProperties = HandleMessage(message);
-                    } 
-                    else
-                    {
-                        var dev = getDevice(message.Target);
-                        updatedProperties = dev.HandleMessage(message);
-                    }
-                    break;
-            }
             MessageReceived?.Invoke(this, updatedProperties);
         }
+        
+        
     }
 
     public ArduinoMessageMap.UpdatedProperties HandleMessage(ArduinoMessage message)
     {
-        return ArduinoMessageMap.AssignMessageValues(this, message);
+        var updatedProperties = ArduinoMessageMap.AssignMessageValues(this, message);
+        if(message.Type == MessageType.STATUS_RESPONSE)
+        {
+            if(!statusResponseReceived)
+            {
+                statusResponseReceived = true;
+                Ready?.Invoke(this, IsReady);
+            }
+        }
+        return updatedProperties;
     }
 
     public void SendMessage(ArduinoMessage message)
