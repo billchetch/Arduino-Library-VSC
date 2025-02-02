@@ -39,7 +39,7 @@ public class SwitchDevice : ArduinoDevice
     #endregion
 
     #region Constructors
-    public SwitchDevice(string name) : base(name)
+    public SwitchDevice(byte id, string name) : base(id, name)
     {
 
     }

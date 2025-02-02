@@ -8,7 +8,7 @@ public class Ticker : ArduinoDevice
     public int Count { get; internal set; } = -1;
 
 
-    public Ticker(string name) : base(name)
+    public Ticker(byte id, string name) : base(id, name)
     {
     }
 

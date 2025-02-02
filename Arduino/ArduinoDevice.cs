@@ -61,8 +61,9 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
     #endregion
 
     #region Constructors
-    public ArduinoDevice(String name)
+    public ArduinoDevice(byte id, String name)
     {
+        ID = id;
         Name = name;
     }
     #endregion

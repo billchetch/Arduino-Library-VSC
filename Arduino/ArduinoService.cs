@@ -43,12 +43,15 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
                 msg.Type = updatedProperties.Message.Type;
                 msg.Sender = updatedProperties.UpdatedObject?.UID;
 
-                foreach(var prop in updatedProperties.Properties)
+                if(updatedProperties.Properties.Count > 0)
                 {
-                    msg.AddValue(prop.Name, prop.GetValue(updatedProperties.UpdatedObject));
+                    foreach(var prop in updatedProperties.Properties)
+                    {
+                        msg.AddValue(prop.Name, prop.GetValue(updatedProperties.UpdatedObject));
+                    }
+                    Console.WriteLine("Received message from board and braodcasting...");
+                    Broadcast(msg);
                 }
-                Console.WriteLine("Received message from board and braodcasting...");
-                Broadcast(msg);
             }
         };
     

@@ -1,5 +1,6 @@
 ﻿using Chetch.Messaging;
 using Pomelo.EntityFrameworkCore.MySql.Storage.Internal;
+using XmppDotNet;
 
 namespace Chetch.Arduino;
 
@@ -92,7 +93,7 @@ public class ArduinoBoard : IMessageUpdatableObject
     bool statusRequested = false;
     bool statusResponseReceived = false;
 
-    List<ArduinoDevice> devices = new List<ArduinoDevice>();
+    Dictionary<byte, ArduinoDevice> devices = new Dictionary<byte, ArduinoDevice>();
     #endregion
 
     #region Constructors
@@ -152,8 +153,6 @@ public class ArduinoBoard : IMessageUpdatableObject
                         Thread.Sleep(1000);
                     } while(!IsReady);
                 });
-
-                Ready?.Invoke(this, IsReady);
             }
             else
             {
@@ -192,10 +191,12 @@ public class ArduinoBoard : IMessageUpdatableObject
         lastMessageReceived = message;
         lastMessageReceivedOn = DateTime.Now;
 
+        bool handled = false;
         ArduinoMessageMap.UpdatedProperties updatedProperties = new ArduinoMessageMap.UpdatedProperties();
         switch(message.Target){
             case ArduinoMessage.NO_TARGET:
                 //what to do?
+                handled = false;
                 break;
 
             default:
@@ -206,8 +207,9 @@ public class ArduinoBoard : IMessageUpdatableObject
                     {
                         ErrorReceived?.Invoke(this, new ErrorEventArgs(Error, message, this));
                     }
+                    handled = true;
                 } 
-                else
+                else if(HasDevice(message.Target))
                 {
                     var dev = getDevice(message.Target);
                     updatedProperties = dev.HandleMessage(message);
@@ -216,11 +218,17 @@ public class ArduinoBoard : IMessageUpdatableObject
                         Error = ErrorCode.DEVICE_ERROR;
                         ErrorReceived?.Invoke(this, new ErrorEventArgs(Error, message, dev));
                     }
+                    handled = true;
+                } 
+                else
+                {
+                    //do nothing if no device
+                    handled = false;
                 }
                 break;
         }
 
-        if(IsReady)
+        if(IsReady && handled)
         {
             MessageReceived?.Invoke(this, updatedProperties);        
         }
@@ -233,6 +241,7 @@ public class ArduinoBoard : IMessageUpdatableObject
         {
             case MessageType.STATUS_RESPONSE:
                 statusResponseReceived = true;
+                Ready?.Invoke(this, IsReady);
                 break;
         }
         return updatedProperties;
@@ -273,31 +282,44 @@ public class ArduinoBoard : IMessageUpdatableObject
     #endregion
 
     #region Device management
-    public void AddDevice(ArduinoDevice device){
-        byte id = (byte)(devices.Count + START_DEVICE_IDS_AT);
-        foreach(var dev in devices)
+    public void AddDevice(ArduinoDevice device)
+    {
+        if(device.ID < START_DEVICE_IDS_AT)
+        {
+            throw new Exception(String.Format("Device ID {0} for device {1} is not allowed", device.ID, device.Name));
+        }
+
+        foreach(var dev in devices.Values)
         {
             if(dev.Name.Equals(device.Name))
             {
                 throw new Exception(String.Format("Name {0} is already being used", device.Name));
             }
+            if(dev.ID == device.ID)
+            {
+                throw new Exception(String.Format("ID {0} is already being used", device.ID));
+            }
         }
-        devices.Add(device);
-        device.ID = id;
+        devices[device.ID] = device;
         device.Board = this;
     }
 
-    public ArduinoDevice getDevice(byte id){
-        if(id < START_DEVICE_IDS_AT || id >= devices.Count + START_DEVICE_IDS_AT)
+    public ArduinoDevice getDevice(byte id)
+    {
+        if(id < START_DEVICE_IDS_AT)
         {
             throw new Exception(String.Format("{0} is nNot a valid device ID", id));
         }
-        var dev = devices[id - START_DEVICE_IDS_AT];
-        if(dev.ID != id)
+        if(!devices.ContainsKey(id))
         {
-            throw new Exception("Device IDs out of sync");
+            throw new Exception(String.Format("Device with ID {0} not found", id));
         }
-        return dev;
+        return devices[id];
+    }
+
+    public bool HasDevice(byte id)
+    {
+        return devices.ContainsKey(id);
     }
     #endregion
 }
