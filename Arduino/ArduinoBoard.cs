@@ -134,13 +134,17 @@ public class ArduinoBoard : IMessageUpdatableObject
     #endregion
 
     #region Lifecycle
-    public void Begin()
+    public void Begin(bool allowEmptyBoard = false)
     {
         if(connection == null)
         {
             throw new Exception("Cannot Begin as no connection has been supplied");
         }
-        
+        if(devices.Count == 0 && !allowEmptyBoard)
+        {
+            throw new Exception("Cannot begin as there are no devices for this board");
+        }
+
         connection.Connected += async (sender, connected) => {
             //here should be something like: await RequestSTtaus
             if(connected)
