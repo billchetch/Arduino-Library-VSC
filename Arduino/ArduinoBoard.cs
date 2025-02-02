@@ -12,6 +12,10 @@ public class ArduinoBoard : IMessageUpdatableObject
     public const String DEFAULT_NAME = "Unknown";
 
     public const byte START_DEVICE_IDS_AT = 10; 
+
+    public const MessageEncoding DEFAULT_MESSAGE_ENCODING = MessageEncoding.BYTES_ARRAY;
+
+    public const int MAX_FRAME_PAYLOAD_SIZE = 50;
     #endregion
 
     #region Classes and Enums
@@ -96,7 +100,7 @@ public class ArduinoBoard : IMessageUpdatableObject
     {
         Name = name;
         connection = new ArduinoSerialConnection(productID, baudRate);
-        inboundFrame = new Frame(frameSchema);
+        inboundFrame = new Frame(frameSchema, DEFAULT_MESSAGE_ENCODING, MAX_FRAME_PAYLOAD_SIZE);
         inboundFrame.FrameComplete +=  async (frame, payload) => {
             Task t = Task.Run(() => {
                 try{
@@ -124,7 +128,7 @@ public class ArduinoBoard : IMessageUpdatableObject
                 Console.WriteLine("Error when handling frame: {0}", ae.Message);
             }
         };
-        outboundFrame = new Frame(frameSchema, MessageEncoding.BYTES_ARRAY);
+        outboundFrame = new Frame(frameSchema, inboundFrame.Encoding, inboundFrame.MaxPayload);
     }
     #endregion
 
@@ -168,7 +172,7 @@ public class ArduinoBoard : IMessageUpdatableObject
                 }
                 catch(Exception e)
                 {
-                    //Console.WriteLine(e.Message);
+                    Console.WriteLine(e.Message);
                     inboundFrame.Reset();
                 }
             }
