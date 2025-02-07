@@ -308,6 +308,14 @@ public class ArduinoBoard : IMessageUpdatableObject
         device.Board = this;
     }
 
+    public void AddDevices(List<ArduinoDevice> devices)
+    {
+        foreach(var device in devices)
+        {
+            AddDevice(device);
+        }
+    }
+    
     public ArduinoDevice getDevice(byte id)
     {
         if(id < START_DEVICE_IDS_AT)
