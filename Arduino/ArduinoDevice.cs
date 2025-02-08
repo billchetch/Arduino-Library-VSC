@@ -101,10 +101,15 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
 
     public void SendCommand(DeviceCommand command, params Object[] arguments)
     {
-        var msg = new ArduinoMessage();
-        msg.Type = MessageType.COMMAND;
+        var msg = new ArduinoMessage(MessageType.COMMAND);
         msg.Add((byte)command);
 
+        SendMessage(msg);
+    }
+
+    public void RequestStatus()
+    {
+        var msg = new ArduinoMessage(MessageType.STATUS_REQUEST);
         SendMessage(msg);
     }
     #endregion
