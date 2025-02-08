@@ -36,10 +36,13 @@ public class ArduinoMessageMap : Attribute
                 prop => Attribute.IsDefined(prop, typeof(ArduinoMessageMap)));
 
             foreach(var prop in props){
-                ArduinoMessageMap amm = (ArduinoMessageMap)prop.GetCustomAttributes(true).First();
-                if(amm.MessageType == message.Type)
+                var amms = prop.GetCustomAttributes(true);
+                foreach(ArduinoMessageMap amm in amms)
                 {
-                    prop2index[prop] = amm.ArgumentIndex;
+                    if(amm.MessageType == message.Type)
+                    {
+                        prop2index[prop] = amm.ArgumentIndex;
+                    }
                 }
             }
 
