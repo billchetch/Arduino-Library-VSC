@@ -308,7 +308,7 @@ public class ArduinoBoard : IMessageUpdatableObject
         device.Board = this;
     }
 
-    public void AddDevices(List<ArduinoDevice> devices)
+    public void AddDevices(ICollection<ArduinoDevice> devices)
     {
         foreach(var device in devices)
         {
