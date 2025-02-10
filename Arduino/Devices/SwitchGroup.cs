@@ -36,4 +36,19 @@ public class SwitchGroup : ArduinoDeviceGroup
         }
     }
 
+    public void TurnOff()
+    {
+        foreach(var dev in this)
+        {
+            ((SwitchDevice)dev).TurnOff();
+        }
+    }
+
+    public void TurnOn()
+    {
+        foreach(var dev in this)
+        {
+            ((SwitchDevice)dev).TurnOn();
+        }
+    }
 }

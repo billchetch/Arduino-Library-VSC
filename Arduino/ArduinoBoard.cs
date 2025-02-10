@@ -246,6 +246,12 @@ public class ArduinoBoard : IMessageUpdatableObject
             case MessageType.STATUS_RESPONSE:
                 statusResponseReceived = true;
                 Ready?.Invoke(this, IsReady);
+
+                //Now reqeust the status of all the devices
+                foreach(var dev in devices.Values)
+                {
+                    dev.RequestStatus();
+                }
                 break;
         }
         return updatedProperties;
