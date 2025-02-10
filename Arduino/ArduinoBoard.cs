@@ -10,7 +10,7 @@ public class ArduinoBoard : IMessageUpdatableObject
     #region Constants
     public const byte DEFAULT_BOARD_ID = 1;
 
-    public const String DEFAULT_NAME = "Unknown";
+    public const String DEFAULT_SID = "Unknown";
 
     public const byte START_DEVICE_IDS_AT = 10; 
 
@@ -62,9 +62,9 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     public byte ID { get; set; } = DEFAULT_BOARD_ID;
 
-    public String Name {get; internal set; } = DEFAULT_NAME;
+    public String SID {get; internal set; } = DEFAULT_SID;
 
-    public String UID => Name; //for IMessageUpdatable interface compliance
+    public String UID => SID; //for IMessageUpdatable interface compliance
 
     public bool IsConnected => connection != null && connection.IsConnected;
     public bool IsReady => IsConnected && statusResponseReceived;
@@ -97,9 +97,9 @@ public class ArduinoBoard : IMessageUpdatableObject
     #endregion
 
     #region Constructors
-    public ArduinoBoard(String name, int productID, int baudRate, Frame.FrameSchema frameSchema = Frame.FrameSchema.SMALL_SIMPLE_CHECKSUM)
+    public ArduinoBoard(String sid, int productID, int baudRate, Frame.FrameSchema frameSchema = Frame.FrameSchema.SMALL_SIMPLE_CHECKSUM)
     {
-        Name = name;
+        SID = sid;
         connection = new ArduinoSerialConnection(productID, baudRate);
         inboundFrame = new Frame(frameSchema, DEFAULT_MESSAGE_ENCODING, MAX_FRAME_PAYLOAD_SIZE);
         inboundFrame.FrameComplete +=  async (frame, payload) => {
@@ -152,7 +152,6 @@ public class ArduinoBoard : IMessageUpdatableObject
                 await Task.Run(()=>{
                     do
                     {
-                        Console.WriteLine("Requesting status...");
                         RequestStatus();
                         Thread.Sleep(1000);
                     } while(!IsReady);
@@ -301,7 +300,7 @@ public class ArduinoBoard : IMessageUpdatableObject
 
         foreach(var dev in devices.Values)
         {
-            if(dev.Name.Equals(device.Name))
+            if(dev.SID.Equals(device.SID))
             {
                 throw new Exception(String.Format("Name {0} is already being used", device.Name));
             }

@@ -60,7 +60,7 @@ public class SwitchDevice : ArduinoDevice
     #endregion
 
     #region Constructors
-    public SwitchDevice(byte id, string name) : base(id, name)
+    public SwitchDevice(byte id, String sid, String? name = null) : base(id, sid, name)
     {}
     #endregion
 

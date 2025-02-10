@@ -22,7 +22,7 @@ public class SwitchGroup : ArduinoDeviceGroup
     {
         if(!(device is SwitchDevice))
         {
-            throw new ArgumentException(String.Format("device {0} is not a switch", device.Name));
+            throw new ArgumentException(String.Format("device {0} is not a switch", device.SID));
         }
 
         ((SwitchDevice)device).Switched += handleSwitched;

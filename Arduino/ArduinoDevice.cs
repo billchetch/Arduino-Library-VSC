@@ -46,13 +46,15 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
     [ArduinoMessageMap(MessageType.ERROR, 1)]
     public byte Error { get; internal set; } = 0;
 
+    //the unique ID for the device on the remote board
     public byte ID { get; set; } = 0;
 
-    public String Name {get; internal set; } = ArduinoBoard.DEFAULT_NAME;
+    //This should be a human readable unique ID
+    public String SID {get; internal set; } = ArduinoBoard.DEFAULT_SID;
 
-    public String UID => String.Format("{0}:{1}", Board == null ? "" : Board.Name, Name);
+    public String UID => String.Format("{0}:{1}", Board == null ? "" : Board.SID, SID);
 
-
+    public String? Name { get; set; } = null;
     
     #endregion
 
@@ -61,11 +63,13 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
     #endregion
 
     #region Constructors
-    public ArduinoDevice(byte id, String name)
+    public ArduinoDevice(byte id, String sid, String? name = null)
     {
         ID = id;
+        SID = sid;
         Name = name;
     }
+
     #endregion
 
     #region Messaging

@@ -29,32 +29,12 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
         //check no name conflicts
         foreach(var b in boards)
         {
-            if(b.Name == board.Name)
+            if(b.SID == board.SID)
             {
-                throw new Exception("Board names must be unique");
+                throw new Exception("Board string IDs must be unique");
             }
         }
-        //
-        board.MessageReceived += (sender, updatedProperties) => {
-
-            if(HandleArduinoMessageReceived(sender, updatedProperties))
-            {
-                var msg = new Message();
-                msg.Type = updatedProperties.Message.Type;
-                msg.Sender = updatedProperties.UpdatedObject?.UID;
-
-                if(updatedProperties.Properties.Count > 0)
-                {
-                    foreach(var prop in updatedProperties.Properties)
-                    {
-                        msg.AddValue(prop.Name, prop.GetValue(updatedProperties.UpdatedObject));
-                    }
-                    Console.WriteLine("Received message from board and braodcasting...");
-                    Broadcast(msg);
-                }
-            }
-        };
-    
+        
         boards.Add(board);
     }
     #endregion
@@ -86,15 +66,6 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
         }
         return base.StopAsync(cancellationToken);
     }
-
-    #endregion
-
-    #region Board message handling
-    protected virtual bool HandleArduinoMessageReceived(Object? sender, ArduinoMessageMap.UpdatedProperties updatedProperties)
-    {
-        return true; //if true then a chetch message will be sent reflecting updated properties
-    }
-
     #endregion
 
     #region Client issued Command handling

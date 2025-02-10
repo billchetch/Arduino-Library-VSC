@@ -15,7 +15,7 @@ public class Buzzer : SwitchDevice
     #endregion
 
     #region Constructors
-    public Buzzer(byte id, string name) : base(id, name)
+    public Buzzer(byte id, String sid, String? name = null) : base(id, sid, name)
     {
         silenceTimer.AutoReset = false;
         silenceTimer.Elapsed += (sender, eargs) => {

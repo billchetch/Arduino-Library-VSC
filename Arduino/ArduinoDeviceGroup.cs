@@ -22,13 +22,13 @@ public class ArduinoDeviceGroup : ICollection<ArduinoDevice>
     public ArduinoDeviceGroup(){}
 
 
-    public ArduinoDevice Get(String name)
+    public ArduinoDevice Get(String sid)
     {
         foreach(var dev in this)
         {
-            if(dev.Name.Equals(name))return dev;
+            if(dev.SID.Equals(sid))return dev;
         }
-        throw new Exception(String.Format("Cannot find device with name {0}", name));
+        throw new Exception(String.Format("Cannot find device with string ID {0}", sid));
     }
 
      public ArduinoDevice Get(byte id)
