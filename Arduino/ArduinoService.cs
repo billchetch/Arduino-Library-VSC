@@ -68,8 +68,16 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
     }
     #endregion
 
-    #region Client issued Command handling
+    #region Messaging to clients
+    protected Message CreateMessageForDevice(ArduinoDevice device, MessageType messageType)
+    {
+        var message = new Message(messageType);
+        message.Sender = device.SID;
+        return message;
+    }
+    #endregion
 
+    #region Client issued Command handling
     protected override void AddCommands()
     {
         //AddCommand(COMMAND_POSITION, "Returns current position info (will error if GPS device is not receiving)");
