@@ -34,7 +34,15 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
                 throw new Exception("Board string IDs must be unique");
             }
         }
-        
+        board.Ready += (sender, ready) => {
+            if(ServiceConnected)
+            {
+                var msg = new Message(MessageType.NOTIFICATION);
+                msg.AddValue("Board", board.SID);
+                msg.AddValue("Ready", ready);
+                Broadcast(msg);
+            }
+        };
         boards.Add(board);
     }
     #endregion
