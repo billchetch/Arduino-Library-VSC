@@ -8,56 +8,53 @@ public class ArduinoSerialConnection : SerialPortConnection, IConnection
 {
 
     #region Fields
-    int productID = -1;
-    String? productName = null;
+    String[] searches;
 
     #endregion
 
     #region Constructors
-    public ArduinoSerialConnection(int productID, int baudRate, Parity parity = Parity.None, int dataBits = 8, StopBits stopBits = StopBits.One) 
+    public ArduinoSerialConnection(String searches, int baudRate, Parity parity = Parity.None, int dataBits = 8, StopBits stopBits = StopBits.One) 
         : base(baudRate, parity, dataBits, stopBits)
     {
-        this.productID = productID;
+        this.searches = searches.Split(',');
     }
 
-    public ArduinoSerialConnection(String productName, int baudRate, Parity parity = Parity.None, int dataBits = 8, StopBits stopBits = StopBits.One) 
-        : base(baudRate, parity, dataBits, stopBits)
-    {
-        this.productName = productName;
-    }
+    
     #endregion
 
-    protected override string getPortName()
+    protected override String getPortName()
     {
-        String searchFor = String.Empty;
         String searchKey = String.Empty;
+        
         if(OperatingSystem.IsMacOS())
         {
             //product ID takes priority
-            if(productID > 0)
-            {
-                searchFor = productID.ToString();
-                searchKey = "idProduct";
-            }
-            else if(!String.IsNullOrEmpty(productName))
-            {
-                //searchFor = "usb-u-blox"; //Full name: usb-u-blox_AG_-_www.u-blox.com_u-blox_7_-_GPS_GNSS_Receiver-if00 
-                //searchFor = "usb-Arduino"; //Full name: usb-Arduino__www.arduino.cc__0043_55936343034351B0A061-if00
-                searchFor = "usb-1a86_USB_Serial"; //Full name (generic arduino nano): usb-1a86_USB_Serial-if00-port0
-            }
-            else
-            {
-                throw new Exception("No valid data to search on for finding port name");
-            }
+            searchKey = "idProduct";
         }
         else if(OperatingSystem.IsLinux())
         {
-            searchFor = "usb-1a86_USB";  //TODO: complete
+            //Currently do nothing (ex: searchFor = "usb-1a86_USB";)
         }
         else
         {
             throw new Exception(String.Format("Operation system {0} is not supported", Environment.OSVersion.Platform));
         }
-        return GetPortNameForDevice(searchFor, searchKey);
+
+        List<Exception> exceptions = [];
+        foreach(var searchFor in searches)
+        {
+            try
+            {
+                return GetPortNameForDevice(searchFor, searchKey);
+            }
+            catch(Exception e)
+            {
+                //do nothing
+                exceptions.Add(e);
+            }
+        }
+
+        //by here we have failed
+        throw new AggregateException(exceptions);
     }
 }

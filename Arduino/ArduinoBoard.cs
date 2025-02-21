@@ -97,10 +97,10 @@ public class ArduinoBoard : IMessageUpdatableObject
     #endregion
 
     #region Constructors
-    public ArduinoBoard(String sid, int productID, int baudRate, Frame.FrameSchema frameSchema = Frame.FrameSchema.SMALL_SIMPLE_CHECKSUM)
+    public ArduinoBoard(String sid, String searches, int baudRate, Frame.FrameSchema frameSchema = Frame.FrameSchema.SMALL_SIMPLE_CHECKSUM)
     {
         SID = sid;
-        connection = new ArduinoSerialConnection(productID, baudRate);
+        connection = new ArduinoSerialConnection(searches, baudRate);
         inboundFrame = new Frame(frameSchema, DEFAULT_MESSAGE_ENCODING, MAX_FRAME_PAYLOAD_SIZE);
         inboundFrame.FrameComplete +=  async (frame, payload) => {
             Task t = Task.Run(() => {
