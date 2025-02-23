@@ -66,7 +66,9 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     public String UID => SID; //for IMessageUpdatable interface compliance
 
-    public bool IsConnected => connection != null && connection.IsConnected;
+    public IConnection Connection { get; set; }
+   
+    public bool IsConnected => Connection != null && Connection.IsConnected;
     public bool IsReady => IsConnected && statusResponseReceived;
 
     [ArduinoMessageMap(MessageType.STATUS_RESPONSE, 0)]
@@ -80,8 +82,6 @@ public class ArduinoBoard : IMessageUpdatableObject
     #endregion
     
     #region Fields
-    IConnection? connection;
-   
     Frame inboundFrame;
     Frame outboundFrame;
 
@@ -97,10 +97,10 @@ public class ArduinoBoard : IMessageUpdatableObject
     #endregion
 
     #region Constructors
-    public ArduinoBoard(String sid, String searches, int baudRate, Frame.FrameSchema frameSchema = Frame.FrameSchema.SMALL_SIMPLE_CHECKSUM)
+    public ArduinoBoard(byte id, String sid, Frame.FrameSchema frameSchema = Frame.FrameSchema.SMALL_SIMPLE_CHECKSUM)
     {
+        ID = id;
         SID = sid;
-        connection = new ArduinoSerialConnection(searches, baudRate);
         inboundFrame = new Frame(frameSchema, DEFAULT_MESSAGE_ENCODING, MAX_FRAME_PAYLOAD_SIZE);
         inboundFrame.FrameComplete +=  async (frame, payload) => {
             Task t = Task.Run(() => {
@@ -131,21 +131,20 @@ public class ArduinoBoard : IMessageUpdatableObject
         };
         outboundFrame = new Frame(frameSchema, inboundFrame.Encoding, inboundFrame.MaxPayload);
     }
+
+    public ArduinoBoard(String sid, Frame.FrameSchema frameSchema = Frame.FrameSchema.SMALL_SIMPLE_CHECKSUM) : this(DEFAULT_BOARD_ID, sid, frameSchema)
+    {}
     #endregion
 
     #region Lifecycle
-    public void Begin(bool allowEmptyBoard = false)
+    public void Begin()
     {
-        if(connection == null)
+        if(Connection == null)
         {
             throw new Exception("Cannot Begin as no connection has been supplied");
         }
-        if(devices.Count == 0 && !allowEmptyBoard)
-        {
-            throw new Exception("Cannot begin as there are no devices for this board");
-        }
-
-        connection.Connected += async (sender, connected) => {
+        
+        Connection.Connected += async (sender, connected) => {
             //here should be something like: await RequestSTtaus
             if(connected)
             {
@@ -166,7 +165,7 @@ public class ArduinoBoard : IMessageUpdatableObject
             
         };
 
-        connection.DataReceived += (sender, data) => {
+        Connection.DataReceived += (sender, data) => {
             //Console.WriteLine("Received {0} bytes", data.Length);
             foreach(var b in data){
                 try{
@@ -180,11 +179,11 @@ public class ArduinoBoard : IMessageUpdatableObject
             }
         };
 
-        connection.Connect();
+        Connection.Connect();
     }
 
     public void End(){
-        connection?.Disconnect();
+        Connection?.Disconnect();
     }
     #endregion
 
@@ -273,7 +272,7 @@ public class ArduinoBoard : IMessageUpdatableObject
             outboundFrame.Reset();
             outboundFrame.Payload = message.Serialize();
             
-            connection?.SendData(outboundFrame.GetBytes().ToArray());
+            Connection.SendData(outboundFrame.GetBytes().ToArray());
         }
     }
 
@@ -281,7 +280,7 @@ public class ArduinoBoard : IMessageUpdatableObject
     {
         if(target == ArduinoMessage.NO_TARGET)
         {
-            target = DEFAULT_BOARD_ID;
+            target = ID;
         }
         var msg = new ArduinoMessage(MessageType.STATUS_REQUEST);
         msg.Target = target;

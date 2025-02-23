@@ -2,6 +2,8 @@ using System;
 using Chetch.ChetchXMPP;
 using Chetch.Database;
 using Chetch.Messaging;
+using Chetch.Utilities;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace Chetch.Arduino;
@@ -9,6 +11,7 @@ namespace Chetch.Arduino;
 public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T>
 {
     #region Constants
+    public const String ARDUINO_CONFIG_SECTION = "Arduino";
     public const String COMMAND_LIST_BOARDS = "list-boards";
     #endregion
 
@@ -34,6 +37,46 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
                 throw new Exception("Board string IDs must be unique");
             }
         }
+
+        //Get connection info
+        var boardConfig = Config.GetSection(ARDUINO_CONFIG_SECTION).GetSection(board.SID);
+        if(!boardConfig.Exists())
+        {
+            throw new Exception(String.Format("No config found for board {0}", board.SID));
+        }
+        else
+        {
+            //Do the conneciton shiii here
+            var cnnConfig = boardConfig.GetSection("Connection");
+            if(!cnnConfig.Exists())
+            {
+                throw new Exception(String.Format("No connection config found for {0}", board.SID));
+            }
+            var cnnType = cnnConfig["Type"]?.ToUpper();
+            IConnection cnn;
+            switch(cnnType)
+            {
+                case "SERIAL":
+                    var path2device = cnnConfig["PathToDevice"];
+                    if(path2device == null)
+                    {
+                        throw new Exception(String.Format("Cannot find path to device in board {0} configuration", board.SID));
+                    }
+                    var pns = SerialPortConnection.GetPortNames(path2device);
+                    var ubdi = SerialPortConnection.GetUSBDeviceInfo(pns[0]);
+
+                    //var baudRate = int.Parse(cnnConfig["BaudRate"]);
+                    //cnn = new ArduinoSerialConnection(path2device, baudRate);
+                    break;
+
+                default:
+                    throw new Exception(String.Format("Unrecodngised connection type {0}", cnnType));
+            }
+            //board.Connection = cnn;
+
+        }
+
+        //Add EventHandler to send  out a message when the board is ready
         board.Ready += (sender, ready) => {
             if(ServiceConnected)
             {
@@ -43,6 +86,8 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
                 Broadcast(msg);
             }
         };
+
+        //Add the board to the collection
         boards.Add(board);
     }
     #endregion

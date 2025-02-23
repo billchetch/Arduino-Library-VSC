@@ -8,53 +8,28 @@ public class ArduinoSerialConnection : SerialPortConnection, IConnection
 {
 
     #region Fields
-    String[] searches;
+    String devicePath;
 
     #endregion
 
     #region Constructors
-    public ArduinoSerialConnection(String searches, int baudRate, Parity parity = Parity.None, int dataBits = 8, StopBits stopBits = StopBits.One) 
+    public ArduinoSerialConnection(String devicePath, int baudRate, Parity parity = Parity.None, int dataBits = 8, StopBits stopBits = StopBits.One) 
         : base(baudRate, parity, dataBits, stopBits)
     {
-        this.searches = searches.Split(',');
+        this.devicePath = devicePath;
     }
 
     
     #endregion
 
-    protected override String getPortName()
+    protected override String GetPortName()
     {
-        String searchKey = String.Empty;
-        
-        if(OperatingSystem.IsMacOS())
+        String[] portNames = GetPortNames(devicePath);
+        foreach(var portName in portNames)
         {
-            //product ID takes priority
-            searchKey = "idProduct";
+            var usbDeviceInfo = GetUSBDeviceInfo(portName);
+            
         }
-        else if(OperatingSystem.IsLinux())
-        {
-            //Currently do nothing (ex: searchFor = "usb-1a86_USB";)
-        }
-        else
-        {
-            throw new Exception(String.Format("Operation system {0} is not supported", Environment.OSVersion.Platform));
-        }
-
-        List<Exception> exceptions = [];
-        foreach(var searchFor in searches)
-        {
-            try
-            {
-                return GetPortNameForDevice(searchFor, searchKey);
-            }
-            catch(Exception e)
-            {
-                //do nothing
-                exceptions.Add(e);
-            }
-        }
-
-        //by here we have failed
-        throw new AggregateException(exceptions);
+        throw new Exception(String.Format("Failed to find port for device path {0}", devicePath));
     }
 }
