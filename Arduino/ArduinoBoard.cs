@@ -39,6 +39,7 @@ public class ArduinoBoard : IMessageUpdatableObject
         NO_ERROR = 0,
         MESSAGE_FRAME_ERROR = 10, //To indicate this is a Frame error
         MESSAGE_ERROR = 20,
+        TARGET_NOT_VALID = 29,
         TARGET_NOT_SUPPLIED = 30,
         TARGET_NOT_FOUND = 31,
         MESSAGE_TYPE_PROHIBITED = 32, //if a particular target rejects a message type
@@ -72,12 +73,15 @@ public class ArduinoBoard : IMessageUpdatableObject
     public bool IsReady => IsConnected && statusResponseReceived;
 
     [ArduinoMessageMap(MessageType.STATUS_RESPONSE, 0)]
+    public String Name { get; internal set; } = "Unknown";
+
+    [ArduinoMessageMap(MessageType.STATUS_RESPONSE, 1)]
     public int Millis { get; internal set; } = -1;
 
-     [ArduinoMessageMap(MessageType.STATUS_RESPONSE, 1)]
+     [ArduinoMessageMap(MessageType.STATUS_RESPONSE, 2)]
     public int DeviceCount { get; internal set; } = -1;
 
-    [ArduinoMessageMap(MessageType.STATUS_RESPONSE, 2)]
+    [ArduinoMessageMap(MessageType.STATUS_RESPONSE, 3)]
     public int FreeMemory { get; internal set; } = -1;
     #endregion
     
@@ -108,7 +112,7 @@ public class ArduinoBoard : IMessageUpdatableObject
                     var message = ArduinoMessage.Deserialize(payload);
 
                     //we check that this message can indeed be processed by this board
-                    if(IsReady || (message.Type == MessageType.STATUS_RESPONSE && message.Target == ID && statusRequested))
+                    if(IsReady || (message.Type == MessageType.STATUS_RESPONSE && message.Target == ID && statusRequested) || message.Type == MessageType.ERROR)
                     {
                         OnMessageReceived(message);
                     }

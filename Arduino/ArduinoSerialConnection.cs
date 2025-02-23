@@ -7,6 +7,11 @@ namespace Chetch.Arduino;
 public class ArduinoSerialConnection : SerialPortConnection, IConnection
 {
 
+    static readonly int[] validProductIDs = [
+        0x7523,
+        0x0043
+    ];
+
     #region Fields
     String devicePath;
 
@@ -24,7 +29,17 @@ public class ArduinoSerialConnection : SerialPortConnection, IConnection
 
     protected override String GetPortName()
     {
-        
+        var dirName = Path.GetDirectoryName(devicePath);
+        var fName = Path.GetFileName(devicePath);
+        var files = Directory.GetFiles(dirName, fName);
+        foreach(var f in files)
+        {
+            SerialPortConnection.USBDeviceInfo di = SerialPortConnection.GetUSBDeviceInfo(f);
+            if(validProductIDs.Contains(di.ProductID))
+            {
+                return di.PortName;
+            }
+        }
         throw new Exception(String.Format("Failed to find port for device path {0}", devicePath));
     }
 }
