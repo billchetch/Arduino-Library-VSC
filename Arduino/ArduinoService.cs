@@ -62,8 +62,18 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
                     {
                         throw new Exception(String.Format("Cannot find path to device in board {0} configuration", board.SID));
                     }
-                    var pns = SerialPortConnection.GetPortNames(path2device);
-                    var ubdi = SerialPortConnection.GetUSBDeviceInfo(pns[0]);
+
+                    var dirName = Path.GetDirectoryName(path2device);
+                    var fName = Path.GetFileName(path2device);
+                    var files = Directory.GetFiles(dirName, fName);
+                    foreach(var f in files)
+                    {
+                        SerialPortConnection.USBDeviceInfo di = SerialPortConnection.GetUSBDeviceInfo(f);
+                    }
+                    //var pns = SerialPortConnection.GetPortNames(path2device);
+                    
+                    
+                    //var ubdi = SerialPortConnection.GetUSBDeviceInfo(pns[0]);
 
                     //var baudRate = int.Parse(cnnConfig["BaudRate"]);
                     //cnn = new ArduinoSerialConnection(path2device, baudRate);

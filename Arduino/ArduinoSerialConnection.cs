@@ -24,12 +24,7 @@ public class ArduinoSerialConnection : SerialPortConnection, IConnection
 
     protected override String GetPortName()
     {
-        String[] portNames = GetPortNames(devicePath);
-        foreach(var portName in portNames)
-        {
-            var usbDeviceInfo = GetUSBDeviceInfo(portName);
-            
-        }
+        
         throw new Exception(String.Format("Failed to find port for device path {0}", devicePath));
     }
 }
