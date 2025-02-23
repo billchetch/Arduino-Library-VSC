@@ -29,10 +29,8 @@ public class ArduinoSerialConnection : SerialPortConnection, IConnection
 
     protected override String GetPortName()
     {
-        var dirName = Path.GetDirectoryName(devicePath);
-        var fName = Path.GetFileName(devicePath);
-        var files = Directory.GetFiles(dirName, fName);
-        foreach(var f in files)
+        var devices = SerialPortConnection.GetUSBDevices(devicePath);
+        foreach(var f in devices)
         {
             SerialPortConnection.USBDeviceInfo di = SerialPortConnection.GetUSBDeviceInfo(f);
             if(validProductIDs.Contains(di.ProductID))
