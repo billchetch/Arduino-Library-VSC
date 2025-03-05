@@ -1,4 +1,5 @@
 ﻿using Chetch.Messaging;
+using Microsoft.Extensions.Logging;
 using Pomelo.EntityFrameworkCore.MySql.Storage.Internal;
 using XmppDotNet;
 
@@ -152,13 +153,20 @@ public class ArduinoBoard : IMessageUpdatableObject
             //here should be something like: await RequestSTtaus
             if(connected)
             {
-                await Task.Run(()=>{
-                    do
-                    {
-                        RequestStatus();
-                        Thread.Sleep(1000);
-                    } while(!IsReady);
-                });
+                try
+                {
+                    await Task.Run(()=>{
+                        do
+                        {
+                            RequestStatus();
+                            Thread.Sleep(1000);
+                        } while(!IsReady);
+                    });
+                }
+                catch(Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
             }
             else
             {
