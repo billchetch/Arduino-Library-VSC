@@ -62,11 +62,14 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
                         bool changed = statusResponseReceived;
                         statusRequested = false;
                         statusResponseReceived = false;
-                        if(changed)Ready?.Invoke(this, IsReady);
+                        if(changed)
+                        {
+                            OnReady(IsReady);
+                        }
                     }
                 };
-            }
-        } 
+            } //end check board has changed (normally from null to a board)
+        } //end set method
     }
 
     [ArduinoMessageMap(MessageType.ERROR, 1)]
@@ -94,7 +97,6 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
 
     #region Events
     public EventHandler<ArduinoMessageMap.UpdatedProperties>? Updated;
-
     public event EventHandler<bool>? Ready;
     #endregion
 
@@ -108,6 +110,13 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
 
     #endregion
 
+    #region Methods
+    public virtual void OnReady(bool ready)
+    {
+        Ready?.Invoke(this, IsReady);
+    }
+    #endregion
+
     #region Messaging
 
     public virtual ArduinoMessageMap.UpdatedProperties HandleMessage(ArduinoMessage message)
@@ -119,7 +128,10 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
             case MessageType.STATUS_RESPONSE:
                 bool changed = !statusResponseReceived;
                 statusResponseReceived = true;
-                if(changed)Ready?.Invoke(this, IsReady);
+                if(changed)
+                {
+                    OnReady(IsReady);
+                }
                 break;
         }
         Updated?.Invoke(this, updatedProperties);

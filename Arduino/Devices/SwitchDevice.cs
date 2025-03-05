@@ -65,6 +65,15 @@ public class SwitchDevice : ArduinoDevice
     #endregion
 
     #region Methods
+    public override void OnReady(bool ready)
+    {
+        base.OnReady(ready);
+        if(!ready)
+        {
+            PinState = false; //return to orignal pin state
+        }
+    }
+
     virtual public void TurnOn()
     {
         if(Mode != SwitchMode.ACITVE)
