@@ -162,9 +162,10 @@ public class ArduinoBoard : IMessageUpdatableObject
             }
             else
             {
+                bool changed = statusResponseReceived;
                 statusResponseReceived = false;
                 statusRequested = false;
-                Ready?.Invoke(this, IsReady);
+                if(changed)Ready?.Invoke(this, IsReady);
             }
             
         };
@@ -246,14 +247,9 @@ public class ArduinoBoard : IMessageUpdatableObject
         switch(message.Type)
         {
             case MessageType.STATUS_RESPONSE:
+                bool changed = !statusResponseReceived;
                 statusResponseReceived = true;
-                Ready?.Invoke(this, IsReady);
-
-                //Now reqeust the status of all the devices
-                foreach(var dev in devices.Values)
-                {
-                    dev.RequestStatus();
-                }
+                if(changed)Ready?.Invoke(this, IsReady);
                 break;
         }
         return updatedProperties;

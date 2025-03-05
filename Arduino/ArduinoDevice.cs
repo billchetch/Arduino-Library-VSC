@@ -41,7 +41,33 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
 
     #region Properties
 
-    public ArduinoBoard? Board { get; set; }
+    public ArduinoBoard Board 
+    { 
+        get
+        {
+            return board;
+        } 
+        set
+        {
+            if(board != value)
+            {
+                board = value;
+                board.Ready += (sender, ready) => {
+                    if(ready)
+                    {
+                        RequestStatus();   
+                    }
+                    else
+                    {
+                        bool changed = statusResponseReceived;
+                        statusRequested = false;
+                        statusResponseReceived = false;
+                        if(changed)Ready?.Invoke(this, IsReady);
+                    }
+                };
+            }
+        } 
+    }
 
     [ArduinoMessageMap(MessageType.ERROR, 1)]
     public byte Error { get; internal set; } = 0;
@@ -56,10 +82,20 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
 
     public String? Name { get; set; } = null;
     
+    public bool IsReady => Board.IsReady && statusResponseReceived;
+
+    #endregion
+
+    #region Fields
+    ArduinoBoard board;
+    bool statusRequested = false;
+    bool statusResponseReceived = false;
     #endregion
 
     #region Events
     public EventHandler<ArduinoMessageMap.UpdatedProperties>? Updated;
+
+    public event EventHandler<bool>? Ready;
     #endregion
 
     #region Constructors
@@ -78,6 +114,14 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
     {
         //use reflection to read
         var updatedProperties = ArduinoMessageMap.AssignMessageValues(this, message);
+        switch(message.Type)
+        {
+            case MessageType.STATUS_RESPONSE:
+                bool changed = !statusResponseReceived;
+                statusResponseReceived = true;
+                if(changed)Ready?.Invoke(this, IsReady);
+                break;
+        }
         Updated?.Invoke(this, updatedProperties);
         return updatedProperties;
     }
@@ -115,6 +159,7 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
     {
         var msg = new ArduinoMessage(MessageType.STATUS_REQUEST);
         SendMessage(msg);
+        statusRequested = true; //flag that this has been requested
     }
     #endregion
 }

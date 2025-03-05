@@ -18,6 +18,8 @@ public class SwitchGroup : ArduinoDeviceGroup
 
     public event EventHandler<EventArgs>? Switched;
 
+    public SwitchGroup(String name) : base(name){}
+
     public override void Add(ArduinoDevice device)
     {
         if(!(device is SwitchDevice))
