@@ -87,6 +87,7 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
     
     public bool IsReady => Board.IsReady && statusResponseReceived;
 
+    public bool StatusRequested => statusRequested;
     #endregion
 
     #region Fields

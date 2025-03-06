@@ -227,13 +227,16 @@ public class ArduinoBoard : IMessageUpdatableObject
                 else if(HasDevice(message.Target))
                 {
                     var dev = getDevice(message.Target);
-                    updatedProperties = dev.HandleMessage(message);
-                    if(message.Type == MessageType.ERROR)
+                    if(dev.IsReady || (message.Type == MessageType.STATUS_RESPONSE && dev.StatusRequested) || (message.Type == MessageType.ERROR))
                     {
-                        Error = ErrorCode.DEVICE_ERROR;
-                        ErrorReceived?.Invoke(this, new ErrorEventArgs(Error, message, dev));
+                        updatedProperties = dev.HandleMessage(message);
+                        if(message.Type == MessageType.ERROR)
+                        {
+                            Error = ErrorCode.DEVICE_ERROR;
+                            ErrorReceived?.Invoke(this, new ErrorEventArgs(Error, message, dev));
+                        }
+                        handled = true;
                     }
-                    handled = true;
                 } 
                 else
                 {
@@ -251,16 +254,23 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     public ArduinoMessageMap.UpdatedProperties HandleMessage(ArduinoMessage message)
     {
-        var updatedProperties = ArduinoMessageMap.AssignMessageValues(this, message);
         switch(message.Type)
         {
             case MessageType.STATUS_RESPONSE:
-                bool changed = !statusResponseReceived;
+                bool readyChange = !statusResponseReceived;
                 statusResponseReceived = true;
-                if(changed)Ready?.Invoke(this, IsReady);
-                break;
+
+                //We update here so that any triggers resulting from property assignments will occur with IsReady = true
+                var updatedProperties = ArduinoMessageMap.AssignMessageValues(this, message);
+                if(readyChange && Ready != null)
+                {
+                    Ready?.Invoke(this, IsReady);
+                }
+                return updatedProperties;
+
+            default:
+                return ArduinoMessageMap.AssignMessageValues(this, message);
         }
-        return updatedProperties;
     }
 
     public void SendMessage(ArduinoMessage message)
