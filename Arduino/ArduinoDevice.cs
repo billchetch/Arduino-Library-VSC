@@ -123,16 +123,21 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
     public virtual ArduinoMessageMap.UpdatedProperties HandleMessage(ArduinoMessage message)
     {
         //use reflection to read
-        var updatedProperties = ArduinoMessageMap.AssignMessageValues(this, message);
+        ArduinoMessageMap.UpdatedProperties updatedProperties;
         switch(message.Type)
         {
             case MessageType.STATUS_RESPONSE:
                 bool changed = !statusResponseReceived;
                 statusResponseReceived = true;
+                updatedProperties = ArduinoMessageMap.AssignMessageValues(this, message);
                 if(changed)
                 {
                     OnReady(IsReady);
                 }
+                break;
+
+            default:
+                updatedProperties = ArduinoMessageMap.AssignMessageValues(this, message);
                 break;
         }
         Updated?.Invoke(this, updatedProperties);
