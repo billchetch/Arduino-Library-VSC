@@ -90,7 +90,7 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
     public bool StatusRequested => statusRequested;
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 0)]
-    public Int16 ReportInterval { get; set; } = 0;
+    public Int16 ReportInterval { get; set; } = -1;
     #endregion
 
     #region Fields
