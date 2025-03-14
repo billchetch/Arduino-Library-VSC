@@ -24,11 +24,11 @@ public class SwitchDevice : ArduinoDevice
     
     #region Properties    
     
-    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 0)]
+    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 1)]
     public SwitchMode Mode { get; internal set; } = SwitchMode.NOT_SET;
     
     [ArduinoMessageMap(Messaging.MessageType.DATA, 0)]
-    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 1)]
+    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 2)]
     public bool PinState 
     { 
         get
