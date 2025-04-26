@@ -19,7 +19,7 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     public const int MAX_FRAME_PAYLOAD_SIZE = 50;
 
-    public const int REQUEST_STATUS_TIMER_INTERVAL = 5; //in secs
+    public const int REQUEST_STATUS_TIMER_INTERVAL = 15; //in secs
     #endregion
 
     #region Classes and Enums
