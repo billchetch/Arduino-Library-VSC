@@ -220,7 +220,11 @@ public class ArduinoBoard : IMessageUpdatableObject
         Ready?.Invoke(this, IsReady);
         if(IsReady)
         {
-
+            requestStatusTimer.Start();
+        }
+        else
+        {
+            requestStatusTimer.Stop();
         }
     }
     #endregion
