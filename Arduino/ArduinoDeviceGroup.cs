@@ -110,4 +110,13 @@ public class ArduinoDeviceGroup : ICollection<ArduinoDevice>
     }
     #endregion
 
+    #region Messaging
+    public void RequestStatus()
+    {
+        foreach(var d in this)
+        {
+            d.RequestStatus();
+        }
+    }
+    #endregion
 }

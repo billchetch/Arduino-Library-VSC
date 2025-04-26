@@ -18,6 +18,8 @@ public class ArduinoBoard : IMessageUpdatableObject
     public const MessageEncoding DEFAULT_MESSAGE_ENCODING = MessageEncoding.BYTES_ARRAY;
 
     public const int MAX_FRAME_PAYLOAD_SIZE = 50;
+
+    public const int REQUEST_STATUS_TIMER_INTERVAL = 5; //in secs
     #endregion
 
     #region Classes and Enums
@@ -94,6 +96,8 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     ArduinoMessage? lastMessageReceived;
     DateTime lastMessageReceivedOn;
+
+    System.Timers.Timer requestStatusTimer = new System.Timers.Timer();
 
     bool statusRequested = false;
     bool statusResponseReceived = false;
@@ -173,7 +177,7 @@ public class ArduinoBoard : IMessageUpdatableObject
                 bool changed = statusResponseReceived;
                 statusResponseReceived = false;
                 statusRequested = false;
-                if(changed)Ready?.Invoke(this, IsReady);
+                if(changed)OnReady();
             }
             
         };
@@ -192,11 +196,32 @@ public class ArduinoBoard : IMessageUpdatableObject
             }
         };
 
+        requestStatusTimer.AutoReset = true;
+        requestStatusTimer.Interval = REQUEST_STATUS_TIMER_INTERVAL * 1000;
+        requestStatusTimer.Elapsed += (sender, eargs) => {
+            if(IsReady && lastMessageReceivedOn != default(DateTime) && (DateTime.Now - lastMessageReceivedOn).TotalSeconds > REQUEST_STATUS_TIMER_INTERVAL)
+            {
+                try
+                {
+                    RequestStatus();
+                } catch {};
+            }
+        };
+
         Connection.Connect();
     }
 
     public void End(){
         Connection?.Disconnect();
+    }
+    
+    protected void OnReady()
+    {
+        Ready?.Invoke(this, IsReady);
+        if(IsReady)
+        {
+
+        }
     }
     #endregion
 
@@ -262,9 +287,9 @@ public class ArduinoBoard : IMessageUpdatableObject
 
                 //We update here so that any triggers resulting from property assignments will occur with IsReady = true
                 var updatedProperties = ArduinoMessageMap.AssignMessageValues(this, message);
-                if(readyChange && Ready != null)
+                if(readyChange)
                 {
-                    Ready?.Invoke(this, IsReady);
+                    OnReady();
                 }
                 return updatedProperties;
 
