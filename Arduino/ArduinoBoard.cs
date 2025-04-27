@@ -90,7 +90,7 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     public String StatusSummary => IsReady ? String.Format("Board: {0}, Memory: {1}, Devices: {2}", Name, FreeMemory, DeviceCount) : "Not Ready";
 
-    public String MessageSummary => IsReady ? String.Format("Received: {0} {1} secs ago", lastMessageReceived.Type, (DateTime.Now - lastMessageReceivedOn).TotalSeconds) : "No messages received";
+    public String MessageSummary => IsReady ? String.Format("Received: {0} {1}s ago", lastMessageReceived.Type, Math.Round((DateTime.Now - lastMessageReceivedOn).TotalSeconds, 1)) : "No messages received";
     #endregion
     
     #region Fields
