@@ -87,6 +87,8 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     [ArduinoMessageMap(MessageType.STATUS_RESPONSE, 3)]
     public int FreeMemory { get; internal set; } = -1;
+
+    public String StatusSummary => IsReady ? "Not Ready " : String.Format("Board: {0}, Memory: {1}, Devices: {2}", Name, FreeMemory, DeviceCount);
     #endregion
     
     #region Fields
