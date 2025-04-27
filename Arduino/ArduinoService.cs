@@ -88,6 +88,10 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
             }
         };
 
+        board.ExceptionThrown += (sender, errorArgs) => {
+            Logger.LogError(errorArgs.GetException(), errorArgs.GetException().Message);
+        };
+
         //Add the board to the collection
         boards.Add(board);
     }
