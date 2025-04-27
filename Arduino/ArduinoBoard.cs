@@ -58,6 +58,7 @@ public class ArduinoBoard : IMessageUpdatableObject
     public event EventHandler<bool>? Ready;
     public event EventHandler<ArduinoMessageMap.UpdatedProperties>? MessageReceived;
     public event EventHandler<ErrorEventArgs>? ErrorReceived;
+    public event ErrorEventHandler ExceptionThrown;
     #endregion
 
     #region Properties
@@ -125,6 +126,7 @@ public class ArduinoBoard : IMessageUpdatableObject
                 catch (Exception e)
                 {
                     Console.WriteLine("Deserialising and processing message resulted in an exception: {0}", e.Message);
+                    ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
                 }
             });
 
@@ -134,8 +136,8 @@ public class ArduinoBoard : IMessageUpdatableObject
             }
             catch (ArgumentException ae)
             {
-
                 Console.WriteLine("Error when handling frame: {0}", ae.Message);
+                ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(ae));
             }
         };
         outboundFrame = new Frame(frameSchema, inboundFrame.Encoding, inboundFrame.MaxPayload);
@@ -170,6 +172,7 @@ public class ArduinoBoard : IMessageUpdatableObject
                 catch(Exception e)
                 {
                     Console.WriteLine(e.Message);
+                    ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
                 }
             }
             else
@@ -190,8 +193,9 @@ public class ArduinoBoard : IMessageUpdatableObject
                 }
                 catch(Exception e)
                 {
-                    Console.WriteLine(e.Message);
                     inboundFrame.Reset();
+                    Console.WriteLine(e.Message);
+                    ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
                 }
             }
         };
