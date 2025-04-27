@@ -88,6 +88,11 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
             }
         };
 
+        //Handle errors either thrown or generated from the board by just logging them
+        board.ErrorReceived += (sender, errorArgs) => {
+            Logger.LogError("Arduino Error Message received.. Code: {0}, Source: {1}", errorArgs.Error, errorArgs.ErrorSource);
+        };
+
         board.ExceptionThrown += (sender, errorArgs) => {
             Logger.LogError(errorArgs.GetException(), errorArgs.GetException().Message);
         };

@@ -125,7 +125,6 @@ public class ArduinoBoard : IMessageUpdatableObject
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine("Deserialising and processing message resulted in an exception: {0}", e.Message);
                     ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
                 }
             });
@@ -136,7 +135,6 @@ public class ArduinoBoard : IMessageUpdatableObject
             }
             catch (ArgumentException ae)
             {
-                Console.WriteLine("Error when handling frame: {0}", ae.Message);
                 ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(ae));
             }
         };
@@ -171,7 +169,6 @@ public class ArduinoBoard : IMessageUpdatableObject
                 }
                 catch(Exception e)
                 {
-                    Console.WriteLine(e.Message);
                     ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
                 }
             }
@@ -186,7 +183,6 @@ public class ArduinoBoard : IMessageUpdatableObject
         };
 
         Connection.DataReceived += (sender, data) => {
-            //Console.WriteLine("Received {0} bytes", data.Length);
             foreach(var b in data){
                 try{
                     inboundFrame.Add(b);    
@@ -194,7 +190,6 @@ public class ArduinoBoard : IMessageUpdatableObject
                 catch(Exception e)
                 {
                     inboundFrame.Reset();
-                    Console.WriteLine(e.Message);
                     ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
                 }
             }
