@@ -89,6 +89,8 @@ public class ArduinoBoard : IMessageUpdatableObject
     public int FreeMemory { get; internal set; } = -1;
 
     public String StatusSummary => IsReady ? String.Format("Board: {0}, Memory: {1}, Devices: {2}", Name, FreeMemory, DeviceCount) : "Not Ready";
+
+    public String MessageSummary => IsReady ? String.Format("Received: {0} {1} secs ago", lastMessageReceived.Type, (DateTime.Now - lastMessageReceivedOn).TotalSeconds) : "No messages received";
     #endregion
     
     #region Fields
@@ -97,7 +99,7 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     Object sendMessageLock = new object(); //make writing bytes to underlying connection thread-safe
 
-    ArduinoMessage? lastMessageReceived;
+    ArduinoMessage lastMessageReceived;
     DateTime lastMessageReceivedOn;
 
     System.Timers.Timer requestStatusTimer = new System.Timers.Timer();
