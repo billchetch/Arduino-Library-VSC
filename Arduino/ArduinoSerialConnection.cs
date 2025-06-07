@@ -24,16 +24,16 @@ public class ArduinoSerialConnection : SerialPortConnection, IConnection
         this.devicePath = devicePath;
     }
 
-    
+
     #endregion
 
     protected override String GetPortName()
     {
         var devices = SerialPortConnection.GetUSBDevices(devicePath);
-        foreach(var f in devices)
+        foreach (var f in devices)
         {
             SerialPortConnection.USBDeviceInfo di = SerialPortConnection.GetUSBDeviceInfo(f);
-            if(validProductIDs.Contains(di.ProductID))
+            if (validProductIDs.Contains(di.ProductID))
             {
                 return di.PortName;
             }
