@@ -55,7 +55,7 @@ public class SwitchDevice : ArduinoDevice
     #endregion
 
     #region Events
-    public EventHandler<bool>? Switched;
+    public event EventHandler<bool>? Switched;
     #endregion
 
     #region Fields
