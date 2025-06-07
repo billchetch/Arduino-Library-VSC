@@ -344,14 +344,14 @@ public class ArduinoBoard : IMessageUpdatableObject
     {
         if(device.ID < START_DEVICE_IDS_AT)
         {
-            throw new Exception(String.Format("Device ID {0} for device {1} is not allowed", device.ID, device.Name));
+            throw new Exception(String.Format("Device ID {0} for device {1} is not allowed", device.ID, device.SID));
         }
 
         foreach(var dev in devices.Values)
         {
             if(dev.SID.Equals(device.SID))
             {
-                throw new Exception(String.Format("Name {0} is already being used", device.Name));
+                throw new Exception(String.Format("SID {0} is already being used", device.SID));
             }
             if(dev.ID == device.ID)
             {
