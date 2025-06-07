@@ -58,7 +58,7 @@ public class ArduinoBoard : IMessageUpdatableObject
     public event EventHandler<bool>? Ready;
     public event EventHandler<ArduinoMessageMap.UpdatedProperties>? MessageReceived;
     public event EventHandler<ErrorEventArgs>? ErrorReceived;
-    public event ErrorEventHandler ExceptionThrown;
+    public event ErrorEventHandler? ExceptionThrown;
     #endregion
 
     #region Properties
@@ -71,7 +71,7 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     public String UID => SID; //for IMessageUpdatable interface compliance
 
-    public IConnection Connection { get; set; }
+    public IConnection? Connection { get; set; }
    
     public bool IsConnected => Connection != null && Connection.IsConnected;
     public bool IsReady => IsConnected && statusResponseReceived;
@@ -90,7 +90,7 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     public String StatusSummary => IsReady ? String.Format("Board: {0}, Memory: {1}, Devices: {2}", Name, FreeMemory, DeviceCount) : "Not Ready";
 
-    public String MessageSummary => IsReady ? String.Format("Received: {0} {1}s ago", lastMessageReceived.Type, Math.Round((DateTime.Now - lastMessageReceivedOn).TotalSeconds, 1)) : "No messages received";
+    public String MessageSummary => IsReady && lastMessageReceived != null ? String.Format("Received: {0} {1}s ago", lastMessageReceived.Type, Math.Round((DateTime.Now - lastMessageReceivedOn).TotalSeconds, 1)) : "No messages received";
     #endregion
     
     #region Fields
@@ -99,7 +99,7 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     Object sendMessageLock = new object(); //make writing bytes to underlying connection thread-safe
 
-    ArduinoMessage lastMessageReceived;
+    ArduinoMessage? lastMessageReceived;
     DateTime lastMessageReceivedOn;
 
     System.Timers.Timer requestStatusTimer = new System.Timers.Timer();
@@ -322,7 +322,7 @@ public class ArduinoBoard : IMessageUpdatableObject
             outboundFrame.Reset();
             outboundFrame.Payload = message.Serialize();
             
-            Connection.SendData(outboundFrame.GetBytes().ToArray());
+            Connection?.SendData(outboundFrame.GetBytes().ToArray());
         }
     }
 

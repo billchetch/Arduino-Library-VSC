@@ -41,7 +41,7 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
 
     #region Properties
 
-    public ArduinoBoard Board 
+    public ArduinoBoard? Board 
     { 
         get
         {
@@ -52,6 +52,8 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
             if(board != value)
             {
                 board = value;
+                if (board == null) return;
+
                 board.Ready += (sender, ready) => {
                     if(ready)
                     {
@@ -85,7 +87,7 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
 
     public String? Name { get; set; } = null;
     
-    public bool IsReady => Board.IsReady && statusResponseReceived;
+    public bool IsReady => Board != null && Board.IsReady && statusResponseReceived;
 
     public bool StatusRequested => statusRequested;
 
