@@ -94,7 +94,7 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
     #endregion
 
     #region Fields
-    ArduinoBoard board;
+    ArduinoBoard? board;
     bool statusRequested = false;
     bool statusResponseReceived = false;
     #endregion
