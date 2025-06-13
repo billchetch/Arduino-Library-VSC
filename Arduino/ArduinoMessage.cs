@@ -100,6 +100,11 @@ public class ArduinoMessage
         Add(bytes);
     }
 
+    public void Add(uint arg)
+    {
+        Add((UInt16)arg);
+    }
+
     public void Add(long arg)
     {
         byte[] bytes = Chetch.Utilities.Convert.ToBytes((Int32)arg, LittleEndian, true, -1);
