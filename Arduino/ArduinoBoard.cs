@@ -164,11 +164,13 @@ public class ArduinoBoard : IMessageUpdatableObject
                 try
                 {
                     await Task.Run(()=>{
+                        Thread.Sleep(2000); //allow a bit of time for the board to fire up
                         do
                         {
+                            //Console.WriteLine("Requesting status...");
                             RequestStatus();
                             Thread.Sleep(1000);
-                        } while(!IsReady);
+                        } while (!IsReady);
                     });
                 }
                 catch(Exception e)
