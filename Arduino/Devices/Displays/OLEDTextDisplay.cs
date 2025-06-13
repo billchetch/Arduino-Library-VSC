@@ -1,4 +1,5 @@
 using System;
+using Microsoft.EntityFrameworkCore.Storage.Json;
 
 namespace Chetch.Arduino.Devices.Displays;
 
@@ -17,8 +18,8 @@ public class OLEDTextDisplay : ArduinoDevice
         //empty for now
     }
 
-    public void DiplsayPreset(DisplayPreset preset)
+    public void DiplsayPreset(DisplayPreset preset, uint lockFor = 3000)
     {
-        SendCommand(DeviceCommand.DISPLAY, preset);
+        SendCommand(DeviceCommand.DISPLAY, preset, lockFor);
     }
 }
