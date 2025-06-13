@@ -18,7 +18,7 @@ public class OLEDTextDisplay : ArduinoDevice
         //empty for now
     }
 
-    public void DiplsayPreset(DisplayPreset preset, uint lockFor = 3000)
+    public void DiplsayPreset(DisplayPreset preset, UInt16 lockFor = 3000)
     {
         SendCommand(DeviceCommand.DISPLAY, preset, lockFor);
     }
