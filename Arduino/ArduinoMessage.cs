@@ -112,6 +112,16 @@ public class ArduinoMessage
         Add(bytes);
     }
 
+    public void Add(Enum arg)
+    {
+        Add(System.Convert.ToInt32(arg));
+    }
+
+    public void Add(Object arg)
+    {
+        var bytes = Chetch.Utilities.Convert.ToBytes(arg);
+        Add(bytes);
+    }
     public void WriteBytes(List<byte> bytes)
     {
 

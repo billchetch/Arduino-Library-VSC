@@ -174,7 +174,10 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
     {
         var msg = new ArduinoMessage(MessageType.COMMAND);
         msg.Add((byte)command);
-
+        foreach (var arg in arguments)
+        {
+            msg.Add(arg);
+        }
         SendMessage(msg);
     }
 
