@@ -1,4 +1,5 @@
-﻿using Chetch.Messaging;
+﻿using System.Reflection;
+using Chetch.Messaging;
 using Microsoft.Extensions.Logging;
 using Pomelo.EntityFrameworkCore.MySql.Storage.Internal;
 using XmppDotNet;
@@ -235,6 +236,11 @@ public class ArduinoBoard : IMessageUpdatableObject
     #endregion
 
     #region Messaging
+    public bool CanUpdateProperty(PropertyInfo propertyInfo, ArduinoMessage message)
+    {
+        return true;
+    }
+    
     protected void OnMessageReceived(ArduinoMessage message)
     {
         lastMessageReceived = message;
@@ -242,36 +248,37 @@ public class ArduinoBoard : IMessageUpdatableObject
 
         bool handled = false;
         ArduinoMessageMap.UpdatedProperties updatedProperties = new ArduinoMessageMap.UpdatedProperties();
-        switch(message.Target){
+        switch (message.Target)
+        {
             case ArduinoMessage.NO_TARGET:
                 //what to do?
                 handled = false;
                 break;
 
             default:
-                if(message.Target == ID)
+                if (message.Target == ID)
                 {
                     updatedProperties = HandleMessage(message);
-                    if(message.Type == MessageType.ERROR)
+                    if (message.Type == MessageType.ERROR)
                     {
                         ErrorReceived?.Invoke(this, new ErrorEventArgs(Error, message, this));
                     }
                     handled = true;
-                } 
-                else if(HasDevice(message.Target))
+                }
+                else if (HasDevice(message.Target))
                 {
                     var dev = getDevice(message.Target);
-                    if(dev.IsReady || (message.Type == MessageType.STATUS_RESPONSE && dev.StatusRequested) || (message.Type == MessageType.ERROR))
+                    if (dev.IsReady || (message.Type == MessageType.STATUS_RESPONSE && dev.StatusRequested) || (message.Type == MessageType.ERROR))
                     {
                         updatedProperties = dev.HandleMessage(message);
-                        if(message.Type == MessageType.ERROR)
+                        if (message.Type == MessageType.ERROR)
                         {
                             Error = ErrorCode.DEVICE_ERROR;
                             ErrorReceived?.Invoke(this, new ErrorEventArgs(Error, message, dev));
                         }
                         handled = true;
                     }
-                } 
+                }
                 else
                 {
                     //do nothing if no device
@@ -280,9 +287,9 @@ public class ArduinoBoard : IMessageUpdatableObject
                 break;
         }
 
-        if(IsReady && handled)
+        if (IsReady && handled)
         {
-            MessageReceived?.Invoke(this, updatedProperties);        
+            MessageReceived?.Invoke(this, updatedProperties);
         }
     }
 

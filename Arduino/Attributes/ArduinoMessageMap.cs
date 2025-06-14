@@ -8,8 +8,9 @@ public interface IMessageUpdatableObject
 {
     byte ID { get; set; }
 
-    String UID { get;  }
+    String UID { get; }
 
+    bool CanUpdateProperty(PropertyInfo propertyInfo, ArduinoMessage message);
 }
 
 [AttributeUsage(AttributeTargets.Property, AllowMultiple = true)]
@@ -59,8 +60,12 @@ public class ArduinoMessageMap : Attribute
             var argIdx = kv.Value;
             var val = message.Get(argIdx, prop2set.PropertyType);
             var oldVal = kv.Key.GetValue(obj);
-            kv.Key.SetValue(obj, val);
-            updatedProperties.Properties.Add(prop2set);
+
+            if(obj.CanUpdateProperty(prop2set, message))
+            {
+                kv.Key.SetValue(obj, val);
+                updatedProperties.Properties.Add(prop2set);
+            }
         }
         return updatedProperties;
     }

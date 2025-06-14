@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using Chetch.Messaging;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
@@ -92,6 +93,7 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
     public bool StatusRequested => statusRequested;
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 0)]
+    [ArduinoMessageMap(Messaging.MessageType.COMMAND_RESPONSE, 0)]
     public Int16 ReportInterval { get; set; } = -1;
     #endregion
 
@@ -124,18 +126,27 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
     #endregion
 
     #region Messaging
-
+    virtual public bool CanUpdateProperty(PropertyInfo propertyInfo, ArduinoMessage message)
+    {
+        switch (message.Type)
+        {
+            case MessageType.COMMAND_RESPONSE:
+                return true;
+        }
+        return true;
+    }
+    
     public virtual ArduinoMessageMap.UpdatedProperties HandleMessage(ArduinoMessage message)
     {
         //use reflection to read
         ArduinoMessageMap.UpdatedProperties updatedProperties;
-        switch(message.Type)
+        switch (message.Type)
         {
             case MessageType.STATUS_RESPONSE:
                 bool changed = !statusResponseReceived;
                 statusResponseReceived = true;
                 updatedProperties = ArduinoMessageMap.AssignMessageValues(this, message);
-                if(changed)
+                if (changed)
                 {
                     OnReady(IsReady);
                 }
@@ -179,6 +190,11 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
             msg.Add(arg);
         }
         SendMessage(msg);
+    }
+
+    public void SetReportInterval(Int16 reportInterval)
+    {
+        SendCommand(DeviceCommand.SET_REPORT_INTERVAL, reportInterval);
     }
 
     public void RequestStatus()
