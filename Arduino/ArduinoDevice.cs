@@ -126,12 +126,18 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
     #endregion
 
     #region Messaging
-    virtual public bool CanUpdateProperty(PropertyInfo propertyInfo, ArduinoMessage message)
+    virtual public bool CanAssignMessageValue(PropertyInfo propertyInfo, ArduinoMessage message)
     {
         switch (message.Type)
         {
             case MessageType.COMMAND_RESPONSE:
-                return true;
+                if (propertyInfo.Name == "ReportInterval")
+                {
+                    var cmd = message.GetLast<DeviceCommand>();
+                    if (cmd != DeviceCommand.SET_REPORT_INTERVAL)
+                        return false;
+                }
+                break;
         }
         return true;
     }
