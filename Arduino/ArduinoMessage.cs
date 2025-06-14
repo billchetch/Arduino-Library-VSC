@@ -62,6 +62,16 @@ public class ArduinoMessage
         return Chetch.Utilities.Convert.To<T>(Arguments[idx], LittleEndian);
     }
 
+    public T GetFirst<T>()
+    {
+        return Get<T>(0);
+    }
+
+    public T GetLast<T>()
+    {
+        return Get<T>(Arguments.Count - 1);
+    }
+
     public void Add(byte[] bytes)
     {
         Arguments.Add(bytes);
