@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 using XmppDotNet.Xmpp.ExtendedStanzaAddressing;
 
 namespace Chetch.Arduino.Devices.Infrared;
@@ -10,10 +11,17 @@ public class IRData
         SAMSUNG = 20,
     }
 
+    [JsonPropertyName("protocol")]
     public IRProtocol Protocol { get; set; }
+
+    [JsonPropertyName("address")]
     public UInt16 Address { get; set; }
 
+    [JsonPropertyName("command")]
     public UInt16 Command { get; set; }
+
+    [JsonPropertyName("command_alias")]
+    public String CommandAlias { get; set; } = String.Empty;
 
     public IRData(IRProtocol protocol, UInt16 address, UInt16 command)
     {
