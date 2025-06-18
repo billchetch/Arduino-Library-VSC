@@ -29,4 +29,14 @@ public class IRData
         Address = address;
         Command = command;
     }
+
+    override public String ToString()
+    {
+        String s = String.Format("({0},{1},{2})", Protocol, Address, Command);
+        if (!String.IsNullOrEmpty(CommandAlias))
+        {
+            s = CommandAlias + " " + s;
+        }
+        return s;
+    }
 }
