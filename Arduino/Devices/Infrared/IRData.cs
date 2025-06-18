@@ -23,20 +23,23 @@ public class IRData
     [JsonPropertyName("command_alias")]
     public String CommandAlias { get; set; } = String.Empty;
 
+    public String Description
+    {
+        get 
+        {
+            String s = String.Format("({0},{1},{2})", Protocol, Address, Command);
+            if (!String.IsNullOrEmpty(CommandAlias))
+            {
+                s = CommandAlias + " " + s;
+            }
+            return s;
+        }
+    }
+
     public IRData(IRProtocol protocol, UInt16 address, UInt16 command)
     {
         Protocol = protocol;
         Address = address;
         Command = command;
-    }
-
-    override public String ToString()
-    {
-        String s = String.Format("({0},{1},{2})", Protocol, Address, Command);
-        if (!String.IsNullOrEmpty(CommandAlias))
-        {
-            s = CommandAlias + " " + s;
-        }
-        return s;
     }
 }
