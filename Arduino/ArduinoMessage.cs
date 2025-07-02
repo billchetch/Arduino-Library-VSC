@@ -43,11 +43,16 @@ public class ArduinoMessage
 
     public bool IsInitRelated => Type == MessageType.INITIALISE || Type == MessageType.INITIALISE_RESPONSE;
 
+    public DateTime Created { get; internal set; }
 
-    public ArduinoMessage(){}
+    public ArduinoMessage()
+    {
+        Created = DateTime.Now;
+    }
     public ArduinoMessage(MessageType type)
     {
         Type = type;
+        Created = DateTime.Now;
     }
 
     public dynamic Get(int idx, Type? type = null)
