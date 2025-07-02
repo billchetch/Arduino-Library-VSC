@@ -57,7 +57,8 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     #region Events
     public event EventHandler<bool>? Ready;
-    public event EventHandler<ArduinoMessageMap.UpdatedProperties>? MessageReceived;
+    public event EventHandler<ArduinoMessage>? MessageReceived;
+    public event EventHandler<ArduinoMessage>? MessageSent;
     public event EventHandler<ErrorEventArgs>? ErrorReceived;
     public event ErrorEventHandler? ExceptionThrown;
     #endregion
@@ -289,7 +290,7 @@ public class ArduinoBoard : IMessageUpdatableObject
 
         if (IsReady && handled)
         {
-            MessageReceived?.Invoke(this, updatedProperties);
+            MessageReceived?.Invoke(this, message);
         }
     }
 
@@ -316,23 +317,25 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     public void SendMessage(ArduinoMessage message)
     {
-        if(!IsConnected)
+        if (!IsConnected)
         {
             throw new Exception("Board is not connected");
         }
 
-        if(message.Sender == ArduinoMessage.NO_SENDER)
+        if (message.Sender == ArduinoMessage.NO_SENDER)
         {
             message.Sender = ID; //this is the default
         }
-        
-        lock(sendMessageLock)
+
+        lock (sendMessageLock)
         {
             outboundFrame.Reset();
             outboundFrame.Payload = message.Serialize();
-            
+
             Connection?.SendData(outboundFrame.GetBytes().ToArray());
         }
+
+        MessageSent?.Invoke(this, message);
     }
 
     public void RequestStatus(byte target = ArduinoMessage.NO_TARGET)
