@@ -19,11 +19,16 @@ public class ArduinoMessage
     public const byte NO_SENDER = 0;
     #endregion
 
-    static public ArduinoMessage Deserialize(byte[] bytes)
+    static public ArduinoMessage Deserialize(byte[] bytes, MessageEncoding encoding)
     {
         var msg = new ArduinoMessage();
         msg.ReadBytes(bytes);
         return msg;
+    }
+
+    static public byte[] Serialize(ArduinoMessage message, MessageEncoding encoding)
+    {
+        return message.Serialize();
     }
 
     public MessageType Type { get; set; }

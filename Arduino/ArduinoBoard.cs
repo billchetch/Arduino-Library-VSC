@@ -58,7 +58,7 @@ public class ArduinoBoard : IMessageUpdatableObject
     #region Events
     public event EventHandler<bool>? Ready;
     public event EventHandler<ArduinoMessage>? MessageReceived;
-    public event EventHandler<ArduinoMessage>? MessageSent;
+    //public event EventHandler<ArduinoMessage>? MessageSent;
     public event EventHandler<ErrorEventArgs>? ErrorReceived;
     public event ErrorEventHandler? ExceptionThrown;
     #endregion
@@ -92,18 +92,23 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     public String StatusSummary => IsReady ? String.Format("Board: {0}, Memory: {1}, Devices: {2}", Name, FreeMemory, DeviceCount) : "Not Ready";
 
-    public String MessageSummary => IsReady && lastMessageReceived != null ? String.Format("Received: {0} {1}s ago", lastMessageReceived.Type, Math.Round((DateTime.Now - lastMessageReceivedOn).TotalSeconds, 1)) : "No messages received";
+    public String MessageSummary => IsReady && lastMessageReceived != null ? String.Format("Received: {0} {1}s ago", lastMessageReceived.Type, Math.Round((DateTime.Now - lastMessageReceived.Created).TotalSeconds, 1)) : "No messages received";
     #endregion
     
     #region Fields
-    Frame inboundFrame;
-    Frame outboundFrame;
+    MessageQueue<ArduinoMessage> qin = new MessageQueue<ArduinoMessage>(Frame.FrameSchema.SMALL_SIMPLE_CHECKSUM,
+                                                                    MessageEncoding.BYTES_ARRAY,
+                                                                    ArduinoMessage.Deserialize);
+    MessageQueue<ArduinoMessage> qout = new MessageQueue<ArduinoMessage>(Frame.FrameSchema.SMALL_SIMPLE_CHECKSUM,
+                                                                    MessageEncoding.BYTES_ARRAY,
+                                                                    ArduinoMessage.Serialize);
 
     Object sendMessageLock = new object(); //make writing bytes to underlying connection thread-safe
 
     ArduinoMessage? lastMessageReceived;
-    DateTime lastMessageReceivedOn;
 
+    ArduinoMessage? lastMessageSent;
+    
     System.Timers.Timer requestStatusTimer = new System.Timers.Timer();
 
     bool statusRequested = false;
@@ -113,11 +118,12 @@ public class ArduinoBoard : IMessageUpdatableObject
     #endregion
 
     #region Constructors
-    public ArduinoBoard(byte id, String sid, Frame.FrameSchema frameSchema = Frame.FrameSchema.SMALL_SIMPLE_CHECKSUM)
+    public ArduinoBoard(byte id, String sid)
     {
         ID = id;
         SID = sid;
-        inboundFrame = new Frame(frameSchema, DEFAULT_MESSAGE_ENCODING, MAX_FRAME_PAYLOAD_SIZE);
+
+        /*inboundFrame = new Frame(frameSchema, DEFAULT_MESSAGE_ENCODING, MAX_FRAME_PAYLOAD_SIZE);
         inboundFrame.FrameComplete +=  async (frame, payload) => {
             Task t = Task.Run(() => {
                 try{
@@ -144,28 +150,30 @@ public class ArduinoBoard : IMessageUpdatableObject
                 ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(ae));
             }
         };
-        outboundFrame = new Frame(frameSchema, inboundFrame.Encoding, inboundFrame.MaxPayload);
+        outboundFrame = new Frame(frameSchema, inboundFrame.Encoding, inboundFrame.MaxPayload);*/
     }
 
-    public ArduinoBoard(String sid, Frame.FrameSchema frameSchema = Frame.FrameSchema.SMALL_SIMPLE_CHECKSUM) : this(DEFAULT_BOARD_ID, sid, frameSchema)
+    public ArduinoBoard(String sid) : this(DEFAULT_BOARD_ID, sid)
     {}
     #endregion
 
     #region Lifecycle
     public void Begin()
     {
-        if(Connection == null)
+        if (Connection == null)
         {
             throw new Exception("Cannot Begin as no connection has been supplied");
         }
-        
-        Connection.Connected += async (sender, connected) => {
+
+        Connection.Connected += async (sender, connected) =>
+        {
             //here should be something like: await RequestSTtaus
-            if(connected)
+            if (connected)
             {
                 try
                 {
-                    await Task.Run(()=>{
+                    await Task.Run(() =>
+                    {
                         Thread.Sleep(2000); //allow a bit of time for the board to fire up
                         do
                         {
@@ -175,7 +183,7 @@ public class ArduinoBoard : IMessageUpdatableObject
                         } while (!IsReady);
                     });
                 }
-                catch(Exception e)
+                catch (Exception e)
                 {
                     ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
                 }
@@ -185,41 +193,88 @@ public class ArduinoBoard : IMessageUpdatableObject
                 bool changed = statusResponseReceived;
                 statusResponseReceived = false;
                 statusRequested = false;
-                if(changed)OnReady();
+                if (changed) OnReady();
+            }
+
+        };
+
+        Connection.DataReceived += (sender, data) =>
+        {
+            try
+            {
+                qin.Add(data);
+            }
+            catch (Exception e)
+            {
+                ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
             }
             
         };
 
-        Connection.DataReceived += (sender, data) => {
-            foreach(var b in data){
-                try{
-                    inboundFrame.Add(b);    
-                }
-                catch(Exception e)
-                {
-                    inboundFrame.Reset();
-                    ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
-                }
-            }
-        };
-
+        //Configure request status timer, this effectively pings the board if no message has been
+        //received for some period
         requestStatusTimer.AutoReset = true;
         requestStatusTimer.Interval = REQUEST_STATUS_TIMER_INTERVAL * 1000;
-        requestStatusTimer.Elapsed += (sender, eargs) => {
-            if(IsReady && lastMessageReceivedOn != default(DateTime) && (DateTime.Now - lastMessageReceivedOn).TotalSeconds > REQUEST_STATUS_TIMER_INTERVAL)
+        requestStatusTimer.Elapsed += (sender, eargs) =>
+        {
+            if (IsReady && lastMessageReceived.Created != default(DateTime) && (DateTime.Now - lastMessageReceived.Created).TotalSeconds > REQUEST_STATUS_TIMER_INTERVAL)
             {
                 try
                 {
                     RequestStatus();
-                } catch {};
+                }
+                catch { }
+                ;
             }
         };
 
+        //Configure message IN queue...(message enqueu via the connection DataReceived event and dequeu here)
+        qin.Dequeued += (sender, message) =>
+        {
+            if (IsReady || (message.Type == MessageType.STATUS_RESPONSE && message.Target == ID && statusRequested) || message.Type == MessageType.ERROR)
+            {
+                lastMessageReceived = message;
+                try
+                {
+                    OnMessageReceived(message); //this will route the message
+                }
+                catch (Exception e)
+                {
+                    ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
+                }
+            }
+            else
+            {
+                //Currently do nothing but maybe we should throw an exception here ...
+                //not sure when this happens
+            }
+        };
+
+        //Configure OUT queue .. messages enter via teh ArduinoBoard.SendMessage
+        //Here they are dequeued in byte stream form ready for the connection
+        qout.MessageDequeued += (sender, data) =>
+        {
+            try
+            {
+                Connection?.SendData(data);
+            }
+            catch (Exception e)
+            {
+                ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
+            }
+        };
+
+        //Connect and start thigns up!
         Connection.Connect();
+        qin.Start();
+        qout.Start();
     }
 
-    public void End(){
+    public void End()
+    {
         Connection?.Disconnect();
+        qin.Stop();
+        qout.Stop();
     }
     
     protected void OnReady()
@@ -242,11 +297,16 @@ public class ArduinoBoard : IMessageUpdatableObject
         return true;
     }
     
+
+    /// <summary>
+    /// Handles message routing
+    /// </summary>
+    /// <param name="message">The messaget to be routed.</param>
+    /// <returns>void</returns>
     protected void OnMessageReceived(ArduinoMessage message)
     {
         lastMessageReceived = message;
-        lastMessageReceivedOn = DateTime.Now;
-
+        
         bool handled = false;
         ArduinoMessageMap.UpdatedProperties updatedProperties = new ArduinoMessageMap.UpdatedProperties();
         switch (message.Target)
@@ -294,9 +354,14 @@ public class ArduinoBoard : IMessageUpdatableObject
         }
     }
 
+    /// <summary>
+    /// Processes the message for this board, other targets (devices) will have their own version
+    /// </summary>
+    /// <param name="message">The messaget to be routed.</param>
+    /// <returns>A map of properties updated by the message according to code attriutes (see ArduinoMessageMap)</returns>
     public ArduinoMessageMap.UpdatedProperties HandleMessage(ArduinoMessage message)
     {
-        switch(message.Type)
+        switch (message.Type)
         {
             case MessageType.STATUS_RESPONSE:
                 bool readyChange = !statusResponseReceived;
@@ -304,7 +369,7 @@ public class ArduinoBoard : IMessageUpdatableObject
 
                 //We update here so that any triggers resulting from property assignments will occur with IsReady = true
                 var updatedProperties = ArduinoMessageMap.AssignMessageValues(this, message);
-                if(readyChange)
+                if (readyChange)
                 {
                     OnReady();
                 }
@@ -327,15 +392,7 @@ public class ArduinoBoard : IMessageUpdatableObject
             message.Sender = ID; //this is the default
         }
 
-        lock (sendMessageLock)
-        {
-            outboundFrame.Reset();
-            outboundFrame.Payload = message.Serialize();
-
-            Connection?.SendData(outboundFrame.GetBytes().ToArray());
-        }
-
-        MessageSent?.Invoke(this, message);
+        qout.Enqueue(message);
     }
 
     public void RequestStatus(byte target = ArduinoMessage.NO_TARGET)
