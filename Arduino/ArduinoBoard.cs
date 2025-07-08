@@ -14,7 +14,7 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     public const String DEFAULT_SID = "Unknown";
 
-    public const byte START_DEVICE_IDS_AT = 10; 
+    public const byte START_DEVICE_IDS_AT = 10;
 
     public const MessageEncoding DEFAULT_MESSAGE_ENCODING = MessageEncoding.BYTES_ARRAY;
 
@@ -65,16 +65,16 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     #region Properties
     [ArduinoMessageMap(MessageType.ERROR, 0)]
-    public ErrorCode Error {get; set; } = ErrorCode.NO_ERROR;
+    public ErrorCode Error { get; set; } = ErrorCode.NO_ERROR;
 
     public byte ID { get; set; } = DEFAULT_BOARD_ID;
 
-    public String SID {get; internal set; } = DEFAULT_SID;
+    public String SID { get; internal set; } = DEFAULT_SID;
 
     public String UID => SID; //for IMessageUpdatable interface compliance
 
     public IConnection? Connection { get; set; }
-   
+
     public bool IsConnected => Connection != null && Connection.IsConnected;
     public bool IsReady => IsConnected && statusResponseReceived;
 
@@ -84,7 +84,7 @@ public class ArduinoBoard : IMessageUpdatableObject
     [ArduinoMessageMap(MessageType.STATUS_RESPONSE, 1)]
     public int Millis { get; internal set; } = -1;
 
-     [ArduinoMessageMap(MessageType.STATUS_RESPONSE, 2)]
+    [ArduinoMessageMap(MessageType.STATUS_RESPONSE, 2)]
     public int DeviceCount { get; internal set; } = -1;
 
     [ArduinoMessageMap(MessageType.STATUS_RESPONSE, 3)]
@@ -94,7 +94,7 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     public String MessageSummary => IsReady && lastMessageReceived != null ? String.Format("Received: {0} {1}s ago", lastMessageReceived.Type, Math.Round((DateTime.Now - lastMessageReceived.Created).TotalSeconds, 1)) : "No messages received";
     #endregion
-    
+
     #region Fields
     MessageQueue<ArduinoMessage> qin = new MessageQueue<ArduinoMessage>(Frame.FrameSchema.SMALL_SIMPLE_CHECKSUM,
                                                                     MessageEncoding.BYTES_ARRAY,
@@ -103,12 +103,10 @@ public class ArduinoBoard : IMessageUpdatableObject
                                                                     MessageEncoding.BYTES_ARRAY,
                                                                     ArduinoMessage.Serialize);
 
-    Object sendMessageLock = new object(); //make writing bytes to underlying connection thread-safe
-
     ArduinoMessage? lastMessageReceived;
 
     ArduinoMessage? lastMessageSent;
-    
+
     System.Timers.Timer requestStatusTimer = new System.Timers.Timer();
 
     bool statusRequested = false;
@@ -122,39 +120,10 @@ public class ArduinoBoard : IMessageUpdatableObject
     {
         ID = id;
         SID = sid;
-
-        /*inboundFrame = new Frame(frameSchema, DEFAULT_MESSAGE_ENCODING, MAX_FRAME_PAYLOAD_SIZE);
-        inboundFrame.FrameComplete +=  async (frame, payload) => {
-            Task t = Task.Run(() => {
-                try{
-                    var message = ArduinoMessage.Deserialize(payload);
-
-                    //we check that this message can indeed be processed by this board
-                    if(IsReady || (message.Type == MessageType.STATUS_RESPONSE && message.Target == ID && statusRequested) || message.Type == MessageType.ERROR)
-                    {
-                        OnMessageReceived(message);
-                    }
-                }
-                catch (Exception e)
-                {
-                    ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
-                }
-            });
-
-            try
-            {
-                await t;
-            }
-            catch (ArgumentException ae)
-            {
-                ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(ae));
-            }
-        };
-        outboundFrame = new Frame(frameSchema, inboundFrame.Encoding, inboundFrame.MaxPayload);*/
     }
 
     public ArduinoBoard(String sid) : this(DEFAULT_BOARD_ID, sid)
-    {}
+    { }
     #endregion
 
     #region Lifecycle
@@ -208,7 +177,7 @@ public class ArduinoBoard : IMessageUpdatableObject
             {
                 ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
             }
-            
+
         };
 
         //Configure request status timer, this effectively pings the board if no message has been
@@ -276,11 +245,11 @@ public class ArduinoBoard : IMessageUpdatableObject
         qin.Stop();
         qout.Stop();
     }
-    
+
     protected void OnReady()
     {
         Ready?.Invoke(this, IsReady);
-        if(IsReady)
+        if (IsReady)
         {
             requestStatusTimer.Start();
         }
@@ -296,7 +265,7 @@ public class ArduinoBoard : IMessageUpdatableObject
     {
         return true;
     }
-    
+
 
     /// <summary>
     /// Handles message routing
@@ -306,7 +275,7 @@ public class ArduinoBoard : IMessageUpdatableObject
     protected void OnMessageReceived(ArduinoMessage message)
     {
         lastMessageReceived = message;
-        
+
         bool handled = false;
         ArduinoMessageMap.UpdatedProperties updatedProperties = new ArduinoMessageMap.UpdatedProperties();
         switch (message.Target)
@@ -398,7 +367,7 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     public void RequestStatus(byte target = ArduinoMessage.NO_TARGET)
     {
-        if(target == ArduinoMessage.NO_TARGET)
+        if (target == ArduinoMessage.NO_TARGET)
         {
             target = ID;
         }
@@ -412,18 +381,18 @@ public class ArduinoBoard : IMessageUpdatableObject
     #region Device management
     public void AddDevice(ArduinoDevice device)
     {
-        if(device.ID < START_DEVICE_IDS_AT)
+        if (device.ID < START_DEVICE_IDS_AT)
         {
             throw new Exception(String.Format("Device ID {0} for device {1} is not allowed", device.ID, device.SID));
         }
 
-        foreach(var dev in devices.Values)
+        foreach (var dev in devices.Values)
         {
-            if(dev.SID.Equals(device.SID))
+            if (dev.SID.Equals(device.SID))
             {
                 throw new Exception(String.Format("SID {0} is already being used", device.SID));
             }
-            if(dev.ID == device.ID)
+            if (dev.ID == device.ID)
             {
                 throw new Exception(String.Format("ID {0} is already being used", device.ID));
             }
@@ -434,19 +403,19 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     public void AddDevices(ICollection<ArduinoDevice> devices)
     {
-        foreach(var device in devices)
+        foreach (var device in devices)
         {
             AddDevice(device);
         }
     }
-    
+
     public ArduinoDevice getDevice(byte id)
     {
-        if(id < START_DEVICE_IDS_AT)
+        if (id < START_DEVICE_IDS_AT)
         {
             throw new Exception(String.Format("{0} is nNot a valid device ID", id));
         }
-        if(!devices.ContainsKey(id))
+        if (!devices.ContainsKey(id))
         {
             throw new Exception(String.Format("Device with ID {0} not found", id));
         }
@@ -456,6 +425,23 @@ public class ArduinoBoard : IMessageUpdatableObject
     public bool HasDevice(byte id)
     {
         return devices.ContainsKey(id);
+    }
+
+    public ArduinoDevice? GetDevice(String sid)
+    {
+        if (sid == null)
+        {
+            throw new ArgumentException("SID cannot be null");
+        }
+
+        foreach (var device in devices.Values)
+        {
+            if (device.SID != null && sid.Equals(device.SID, StringComparison.InvariantCultureIgnoreCase))
+            {
+                return device;
+            }
+        }
+        return null;
     }
     #endregion
 }
