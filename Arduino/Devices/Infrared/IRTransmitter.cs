@@ -32,7 +32,10 @@ public class IRTransmitter : ArduinoDevice
             foreach (var d in data)
             {
                 Transmit(d);
-                Thread.Sleep(delay);
+                if (d != data.Last())
+                {
+                    Thread.Sleep(delay);
+                }
             }
         });
     }
