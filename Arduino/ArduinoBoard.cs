@@ -393,6 +393,7 @@ public class ArduinoBoard : IMessageUpdatableObject
         }
 
         qout.Enqueue(message);
+        lastMessageSent = message;
     }
 
     public void RequestStatus(byte target = ArduinoMessage.NO_TARGET)
