@@ -22,6 +22,10 @@ public class IRTransmitter : ArduinoDevice
 
     public Task TransmitAsync(List<IRData> data, int delay)
     {
+        if (Board == null || !Board.IsConnected)
+        {
+            throw new Exception("Board is not connected");
+        }
         if (delay <= 0)
         {
             throw new ArgumentException("Delay must be positive");
