@@ -58,7 +58,7 @@ public class ArduinoBoard : IMessageUpdatableObject
     #region Events
     public event EventHandler<bool>? Ready;
     public event EventHandler<ArduinoMessage>? MessageReceived;
-    //public event EventHandler<ArduinoMessage>? MessageSent;
+    public event EventHandler<ArduinoMessage>? MessageSent;
     public event EventHandler<ErrorEventArgs>? ErrorReceived;
     public event ErrorEventHandler? ExceptionThrown;
     #endregion
@@ -167,6 +167,7 @@ public class ArduinoBoard : IMessageUpdatableObject
 
         };
 
+        //Add bytes to messsage queue
         Connection.DataReceived += (sender, data) =>
         {
             try
@@ -197,7 +198,7 @@ public class ArduinoBoard : IMessageUpdatableObject
             }
         };
 
-        //Configure message IN queue...(message enqueu via the connection DataReceived event and dequeu here)
+        //Configure message IN queue...(message enqueue via the connection DataReceived event and dequeu here)
         qin.Dequeued += (sender, message) =>
         {
             if (IsReady || (message.Type == MessageType.STATUS_RESPONSE && message.Target == ID && statusRequested) || message.Type == MessageType.ERROR)
@@ -219,13 +220,15 @@ public class ArduinoBoard : IMessageUpdatableObject
             }
         };
 
-        //Configure OUT queue .. messages enter via teh ArduinoBoard.SendMessage
-        //Here they are dequeued in byte stream form ready for the connection
-        qout.MessageDequeued += (sender, data) =>
+        //Configure OUT queue .. messages enter via the ArduinoBoard.SendMessage
+        //Here they are dequeued in as a message and also as a byte stream form ready for the connection
+        qout.MessageDequeued += (sender, eargs) =>
         {
             try
             {
-                Connection?.SendData(data);
+                Connection?.SendData(eargs.Bytes);
+                lastMessageSent = eargs.Message;
+                MessageSent?.Invoke(this, lastMessageSent);
             }
             catch (Exception e)
             {
@@ -362,7 +365,6 @@ public class ArduinoBoard : IMessageUpdatableObject
         }
 
         qout.Enqueue(message);
-        lastMessageSent = message;
     }
 
     public void RequestStatus(byte target = ArduinoMessage.NO_TARGET)
