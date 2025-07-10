@@ -1,5 +1,7 @@
 {
-  "sdk": {
-    "version": "SDK_VERSION"
-  }
+   "Connection" : {
+      "Type" : "Serial",
+      "BaudRate" : 9600,
+      "PathToDevice" : "tty.usb"
+    }
 }

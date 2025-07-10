@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../Utilities/Utilities/Utilities.csproj" />
+    <ProjectReference Include="../Arduino/Arduino.csproj" />
   </ItemGroup>
 
   <ItemGroup>
