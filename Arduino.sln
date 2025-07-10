@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Database", "..\Database\Dat
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Messaging", "..\Messaging\Messaging\Messaging.csproj", "{B125A96A-8C0D-44C5-B7EF-51BB1F7886A9}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arduino.Tests", "Arduino.Tests\Arduino.Tests.csproj", "{47E7676E-1D82-45B5-80BA-AC37B1C6C537}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,5 +44,9 @@ Global
 		{B125A96A-8C0D-44C5-B7EF-51BB1F7886A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B125A96A-8C0D-44C5-B7EF-51BB1F7886A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B125A96A-8C0D-44C5-B7EF-51BB1F7886A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{47E7676E-1D82-45B5-80BA-AC37B1C6C537}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{47E7676E-1D82-45B5-80BA-AC37B1C6C537}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{47E7676E-1D82-45B5-80BA-AC37B1C6C537}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{47E7676E-1D82-45B5-80BA-AC37B1C6C537}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
