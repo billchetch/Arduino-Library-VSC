@@ -2,6 +2,6 @@
    "Connection" : {
       "Type" : "Serial",
       "BaudRate" : 9600,
-      "PathToDevice" : "tty.usb"
+      "PathToDevice" : "/dev/tty.usb*"
     }
 }

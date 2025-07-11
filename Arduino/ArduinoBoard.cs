@@ -97,10 +97,10 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     #region Fields
     MessageQueue<ArduinoMessage> qin = new MessageQueue<ArduinoMessage>(Frame.FrameSchema.SMALL_SIMPLE_CHECKSUM,
-                                                                    MessageEncoding.BYTES_ARRAY,
+                                                                    MessageEncoding.SYSTEM_DEFINED,
                                                                     ArduinoMessage.Deserialize);
     MessageQueue<ArduinoMessage> qout = new MessageQueue<ArduinoMessage>(Frame.FrameSchema.SMALL_SIMPLE_CHECKSUM,
-                                                                    MessageEncoding.BYTES_ARRAY,
+                                                                    MessageEncoding.SYSTEM_DEFINED,
                                                                     ArduinoMessage.Serialize);
 
     ArduinoMessage? lastMessageReceived;
@@ -134,14 +134,14 @@ public class ArduinoBoard : IMessageUpdatableObject
             throw new Exception("Cannot Begin as no connection has been supplied");
         }
 
-        Connection.Connected += async (sender, connected) =>
+        Connection.Connected += (sender, connected) =>
         {
             //here should be something like: await RequestSTtaus
             if (connected)
             {
                 try
                 {
-                    await Task.Run(() =>
+                    Task.Run(() =>
                     {
                         Thread.Sleep(2000); //allow a bit of time for the board to fire up
                         do
@@ -149,7 +149,7 @@ public class ArduinoBoard : IMessageUpdatableObject
                             //Console.WriteLine("Requesting status...");
                             RequestStatus();
                             Thread.Sleep(1000);
-                        } while (!IsReady);
+                        } while (IsConnected && !IsReady);
                     });
                 }
                 catch (Exception e)
@@ -219,6 +219,7 @@ public class ArduinoBoard : IMessageUpdatableObject
                 //not sure when this happens
             }
         };
+        qin.ExceptionThrown += ExceptionThrown;
 
         //Configure OUT queue .. messages enter via the ArduinoBoard.SendMessage
         //Here they are dequeued in as a message and also as a byte stream form ready for the connection
@@ -235,6 +236,7 @@ public class ArduinoBoard : IMessageUpdatableObject
                 ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
             }
         };
+        qout.ExceptionThrown += ExceptionThrown;
 
         //Connect and start thigns up!
         Connection.Connect();
