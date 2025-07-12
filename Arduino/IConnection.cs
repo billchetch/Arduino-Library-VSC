@@ -19,6 +19,8 @@ public interface IConnection
     public void Connect();
 
     public void Disconnect();
+
+    public void Reconnect();
     
     public void SendData(byte[] data);
     #endregion

@@ -21,7 +21,7 @@ public sealed class TestBoard
             };
             board.Connection.DataReceived += (sender, bytes) =>
             {
-                //Console.WriteLine("Connection for board {0} received: {1} bytes", board.SID, bytes.Length);
+                Console.WriteLine("Connection for board {0} received: {1} bytes", board.SID, bytes.Length);
             };
             
             board.Ready += (sender, ready) =>
@@ -37,6 +37,13 @@ public sealed class TestBoard
             board.MessageReceived += (sender, message) =>
             {
                 Console.WriteLine("Message received of type {0} from {1} targeting {2}", message.Type, message.Sender, message.Target);
+                switch (message.Type)
+                {
+                    case Chetch.Messaging.MessageType.STATUS_RESPONSE:
+                        Console.WriteLine("Devices: {0}", board.DeviceCount);
+                        Console.WriteLine("Memory Available: {0}", board.FreeMemory);
+                        break;
+                }
             };
 
             board.ExceptionThrown += (sender, eargs) =>
@@ -60,9 +67,22 @@ public sealed class TestBoard
         }
         finally
         {
+            Console.WriteLine("Ending test for board {0}", board.SID);
             board.End();
             Thread.Sleep(500);
             Console.WriteLine("Board {0} has ended", board.SID);
+        }
+    }
+
+    [TestMethod]
+    public void RepeatConnect()
+    {
+        for (int i = 0; i < 10; i++)
+        {
+            Console.WriteLine("Connect number {0}", i + 1);
+            Connect();
+            Thread.Sleep(1000);
+            Console.WriteLine("-----------");
         }
     }
 
@@ -75,9 +95,9 @@ public sealed class TestBoard
         try
         {
             ticker.ReportInterval = 500;
-            ticker.Ticked += (sender, tick) =>
+            ticker.Ticked += (sender, count) =>
             {
-                Console.WriteLine("Ticker tick = {0}", tick);
+                Console.WriteLine("Ticker count = {0}", count);
             };
             board.AddDevice(ticker);
             board.Connection = Settings.GetConnection();
@@ -85,13 +105,16 @@ public sealed class TestBoard
             {
                 Console.WriteLine("Board {0} ready: {1}", board.SID, ready);
             };
-
+            board.ExceptionThrown += (sender, eargs) =>
+            {
+                Console.WriteLine("Board {0} throws exception: {1}", board.SID, eargs.GetException().Message);
+            };
 
             Console.WriteLine("Beginning board {0}...", board.SID);
             board.Begin();
             Console.WriteLine("Board {0} has begun!", board.SID);
 
-            while (!board.IsReady && ticker.Count < 5)
+            while (ticker.Count < 10)
             {
                 Thread.Sleep(1000);
             }

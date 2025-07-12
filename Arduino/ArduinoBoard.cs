@@ -144,12 +144,23 @@ public class ArduinoBoard : IMessageUpdatableObject
                     Task.Run(() =>
                     {
                         Thread.Sleep(2000); //allow a bit of time for the board to fire up
+                        int attempts = 0;
                         do
                         {
                             //Console.WriteLine("Requesting status...");
-                            RequestStatus();
-                            Thread.Sleep(1000);
-                        } while (IsConnected && !IsReady);
+                            try
+                            {
+                                RequestStatus();
+                            }
+                            catch { }
+                            Thread.Sleep(250);
+                        } while (IsConnected && !IsReady && ++attempts < 3);
+
+                        if (!IsReady && IsConnected)
+                        {
+                            //try again
+                            Connection.Reconnect();
+                        }
                     });
                 }
                 catch (Exception e)
@@ -246,9 +257,9 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     public void End()
     {
-        Connection?.Disconnect();
         qin.Stop();
         qout.Stop();
+        Connection?.Disconnect();
     }
 
     protected void OnReady()
