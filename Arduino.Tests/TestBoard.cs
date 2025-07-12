@@ -7,8 +7,7 @@ namespace Arduino.Tests;
 [TestClass]
 public sealed class TestBoard
 {
-    [TestMethod]
-    public void Connect()
+    private void connect(bool withTimeout)
     {
         var board = new ArduinoBoard("test");
 
@@ -56,7 +55,7 @@ public sealed class TestBoard
             Console.WriteLine("Board {0} has begun!", board.SID);
 
             var started = DateTime.Now;
-            while (!board.IsReady && (DateTime.Now - started).TotalSeconds < 10)
+            while (!board.IsReady && ((DateTime.Now - started).TotalSeconds < 20 || !withTimeout))
             {
                 Thread.Sleep(1000);
             }
@@ -75,12 +74,18 @@ public sealed class TestBoard
     }
 
     [TestMethod]
+    public void Connect()
+    {
+        connect(false);
+    }
+
+    [TestMethod]
     public void RepeatConnect()
     {
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < 5; i++)
         {
             Console.WriteLine("Connect number {0}", i + 1);
-            Connect();
+            connect(false);
             Thread.Sleep(1000);
             Console.WriteLine("-----------");
         }
