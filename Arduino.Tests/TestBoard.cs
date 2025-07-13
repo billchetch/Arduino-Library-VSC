@@ -150,7 +150,8 @@ public sealed class TestBoard
             ticker.Ticked += (sender, count) =>
             {
                 Console.WriteLine("Ticker count = {0}", count);
-                oled.Print(String.Format("C={0}", ticker.Count));
+                oled.Clear();
+                oled.Print(String.Format("Count = {0}", ticker.Count), 0, 2);
             };
             board.Connection = Settings.GetConnection();
             board.Ready += (sender, ready) =>
@@ -158,7 +159,7 @@ public sealed class TestBoard
                 Console.WriteLine("Board {0} ready: {1}", board.SID, ready);
                 if (ready)
                 {
-                    oled.DiplsayPreset(OLEDTextDisplay.DisplayPreset.BOARD_STATS);
+                    oled.DiplsayPreset(OLEDTextDisplay.DisplayPreset.BOARD_STATS, 1000);
                 }
             };
             board.ExceptionThrown += (sender, eargs) =>
