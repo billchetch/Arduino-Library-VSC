@@ -65,13 +65,16 @@ public class SwitchDevice : ArduinoDevice
     #region Constructors
     public SwitchDevice(byte id, String sid, String? name = null) : base(id, sid, name)
     {}
+    
+    public SwitchDevice(String sid, String? name = null) : base(sid, name)
+    {}
     #endregion
 
     #region Methods
     public override void OnReady(bool ready)
     {
         base.OnReady(ready);
-        if(!ready)
+        if (!ready)
         {
             PinState = false; //return to orignal pin state
         }

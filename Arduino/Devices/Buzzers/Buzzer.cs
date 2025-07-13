@@ -29,17 +29,19 @@ public class Buzzer : SwitchDevice
             }
         };
     }
+
+    public Buzzer(String sid, String? name = null) : this(0, sid, name) { }
     #endregion
 
     #region Methods
     //If the buzzer is on then we flag as silenced and turn it off for a while
     public void Silence(int durationInSecs)
     {
-        if(durationInSecs <= 0)
+        if (durationInSecs <= 0)
         {
             throw new ArgumentException("Duration for buzzer must be positive");
         }
-        if(Silenced || IsOff)return; // fail silently if the buzzer isn't even on or has very recently been silenced
+        if (Silenced || IsOff) return; // fail silently if the buzzer isn't even on or has very recently been silenced
 
         TurnOff();
         Silenced = true;

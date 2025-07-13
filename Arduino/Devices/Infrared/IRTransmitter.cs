@@ -12,6 +12,8 @@ public class IRTransmitter : ArduinoDevice
     {
         //empty for now
     }
+
+    public IRTransmitter(String sid, String? name = null) : this(0, sid, name) { }
     #endregion
 
     #region Methods

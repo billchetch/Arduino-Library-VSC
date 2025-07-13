@@ -190,16 +190,26 @@ public class ArduinoMessage
 
         //... and convert arguments
         int argumentIndex = 4;
+        int bytesTotal = 4;
         while (argumentIndex < bytes.Length)
         {
             int length = bytes[argumentIndex];
+            if (length > bytes.Length - argumentIndex - 1)
+            {
+                throw new IndexOutOfRangeException(
+                    String.Format("Argument index {0}={1} but there are only {2} bytes remaining",
+                                    argumentIndex,
+                                    length,
+                                    bytes.Length - argumentIndex - 1));
+            }
             byte[] arg = new byte[length];
             for (int i = 0; i < length; i++)
             {
                 arg[i] = bytes[argumentIndex + i + 1];
             }
             Add(arg);
-            argumentIndex += length + 1;
+            argumentIndex += length + 1; //go to next argument
+            bytesTotal += length;
         }
     }
 }

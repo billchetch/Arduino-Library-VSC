@@ -9,4 +9,6 @@ public class IRReceiver : ArduinoDevice
     {
         //empty for now
     }
+
+    public IRReceiver(String sid, String? name = null) : this(0, sid, name) { }
 }

@@ -32,7 +32,6 @@ public class Ticker : ArduinoDevice
     int count = -1;
     #endregion
 
-    public Ticker(byte id, string name) : base(id, name)
-    {
-    }
+    public Ticker(byte id, String sid) : base(id, sid) { }
+    public Ticker(string sid) : this(0, sid){}
 }

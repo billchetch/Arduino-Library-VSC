@@ -37,6 +37,8 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
         RESUME,
         ZERO,
         ANALYSE,
+        LOCK,
+        UNLOCK
     }
     #endregion
 
@@ -115,6 +117,9 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
         SID = sid;
         Name = name;
     }
+
+    public ArduinoDevice(String sid, String? name = null) : this(0, sid, name)
+    {}
 
     #endregion
 

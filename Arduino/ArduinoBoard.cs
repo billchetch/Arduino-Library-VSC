@@ -396,7 +396,7 @@ public class ArduinoBoard : IMessageUpdatableObject
     #region Device management
     public void AddDevice(ArduinoDevice device)
     {
-        if (device.ID < START_DEVICE_IDS_AT)
+        if (device.ID > 0 && device.ID < START_DEVICE_IDS_AT)
         {
             throw new Exception(String.Format("Device ID {0} for device {1} is not allowed", device.ID, device.SID));
         }
@@ -412,6 +412,11 @@ public class ArduinoBoard : IMessageUpdatableObject
                 throw new Exception(String.Format("ID {0} is already being used", device.ID));
             }
         }
+        if (device.ID == 0)
+        {
+            device.ID = (byte)(devices.Count + START_DEVICE_IDS_AT);
+        }
+
         devices[device.ID] = device;
         device.Board = this;
     }

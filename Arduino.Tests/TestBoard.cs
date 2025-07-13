@@ -1,5 +1,6 @@
 ﻿using Chetch.Arduino;
 using Chetch.Arduino.Devices;
+using Chetch.Arduino.Devices.Displays;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client.Payloads;
 
 namespace Arduino.Tests;
@@ -22,7 +23,7 @@ public sealed class TestBoard
             {
                 Console.WriteLine("Connection for board {0} received: {1} bytes", board.SID, bytes.Length);
             };
-            
+
             board.Ready += (sender, ready) =>
             {
                 Console.WriteLine("Board {0} ready: {1}", board.SID, ready);
@@ -92,14 +93,13 @@ public sealed class TestBoard
     }
 
     [TestMethod]
-    public void ConnectToBoardWithTicker()
+    public void BoardWithTicker()
     {
         var board = new ArduinoBoard("test");
-        var ticker = new Ticker(ArduinoBoard.START_DEVICE_IDS_AT, "ticker");
+        var ticker = new Ticker("ticker");
 
         try
         {
-            ticker.ReportInterval = 500;
             ticker.Ticked += (sender, count) =>
             {
                 Console.WriteLine("Ticker count = {0}", count);
@@ -112,7 +112,7 @@ public sealed class TestBoard
             };
             board.ExceptionThrown += (sender, eargs) =>
             {
-                Console.WriteLine("Board {0} throws exception: {1}", board.SID, eargs.GetException().Message);
+                Console.WriteLine("Board {0} throws exception {1}: {2}", board.SID, eargs.GetException().GetType().Name, eargs.GetException());
             };
 
             Console.WriteLine("Beginning board {0}...", board.SID);
@@ -123,6 +123,58 @@ public sealed class TestBoard
             {
                 Thread.Sleep(1000);
             }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+        }
+        finally
+        {
+            board.End();
+            Thread.Sleep(500);
+            Console.WriteLine("Board {0} has ended", board.SID);
+        }
+    }
+    
+    [TestMethod]
+    public void BoardWithOLEDAndTicker()
+    {
+        var board = new ArduinoBoard("oled");
+        var oled = new OLEDTextDisplay("oled");
+        var ticker = new Ticker("ticker");
+
+        try
+        {
+            board.AddDevice(oled);
+            board.AddDevice(ticker);
+            ticker.Ticked += (sender, count) =>
+            {
+                Console.WriteLine("Ticker count = {0}", count);
+                oled.Print(String.Format("C={0}", ticker.Count));
+            };
+            board.Connection = Settings.GetConnection();
+            board.Ready += (sender, ready) =>
+            {
+                Console.WriteLine("Board {0} ready: {1}", board.SID, ready);
+                if (ready)
+                {
+                    oled.DiplsayPreset(OLEDTextDisplay.DisplayPreset.BOARD_STATS);
+                }
+            };
+            board.ExceptionThrown += (sender, eargs) =>
+            {
+                Console.WriteLine("Board {0} throws exception: {1}", board.SID, eargs.GetException().Message);
+            };
+
+            Console.WriteLine("Beginning board {0}...", board.SID);
+            board.Begin();
+            Console.WriteLine("Board {0} has begun!", board.SID);
+
+            while (ticker.Count < 20)
+            {
+                Thread.Sleep(1000);
+            }
+            oled.DiplsayPreset(OLEDTextDisplay.DisplayPreset.HELLO_WORLD);
         }
         catch (Exception e)
         {
