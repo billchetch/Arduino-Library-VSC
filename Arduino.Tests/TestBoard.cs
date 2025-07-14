@@ -113,7 +113,7 @@ public sealed class TestBoard
             };
             board.ExceptionThrown += (sender, eargs) =>
             {
-                Console.WriteLine("Board {0} throws exception {1}: {2}", board.SID, eargs.GetException().GetType().Name, eargs.GetException());
+                Console.WriteLine("Board {0} throws exception {1}: {2}", board.SID, eargs.GetException().GetType().Name, eargs.GetException().Message);
             };
 
             Console.WriteLine("Beginning board {0}...", board.SID);

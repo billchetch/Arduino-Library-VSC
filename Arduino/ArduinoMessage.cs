@@ -12,7 +12,7 @@ namespace Chetch.Arduino;
 /// <summary>
 /// Messages sent to board
 /// </summary>
-public class ArduinoMessage
+public class ArduinoMessage : IMessageQueueItem<ArduinoMessage>
 {
     #region Consttants
     public const byte NO_TARGET = 0;
