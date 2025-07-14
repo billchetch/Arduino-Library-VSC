@@ -21,8 +21,9 @@ public class SwitchDevice : ArduinoDevice
     }
 
     #endregion
-    
-    #region Properties    
+
+    #region Properties
+    public override bool IsReady => base.IsReady && Mode != SwitchMode.NOT_SET;
     
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 1)]
     public SwitchMode Mode { get; internal set; } = SwitchMode.NOT_SET;

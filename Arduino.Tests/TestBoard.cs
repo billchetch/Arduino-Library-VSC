@@ -1,4 +1,5 @@
-﻿using Chetch.Arduino;
+﻿using System.Diagnostics;
+using Chetch.Arduino;
 using Chetch.Arduino.Devices;
 using Chetch.Arduino.Devices.Displays;
 using Microsoft.VisualStudio.TestPlatform.ObjectModel.Client.Payloads;
@@ -135,7 +136,7 @@ public sealed class TestBoard
             Console.WriteLine("Board {0} has ended", board.SID);
         }
     }
-    
+
     [TestMethod]
     public void BoardWithOLEDAndTicker()
     {
@@ -176,6 +177,121 @@ public sealed class TestBoard
                 Thread.Sleep(1000);
             }
             oled.DiplsayPreset(OLEDTextDisplay.DisplayPreset.HELLO_WORLD);
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+        }
+        finally
+        {
+            board.End();
+            Thread.Sleep(500);
+            Console.WriteLine("Board {0} has ended", board.SID);
+        }
+    }
+
+    [TestMethod]
+    public void BoardWithTickerGroup()
+    {
+        var board = new ArduinoBoard("dgtest");
+        var tg = new TickerGroup("tg")
+        {
+            new Ticker("ticker1"),
+            new Ticker("ticker2"),
+            new Ticker("ticker3")
+        };
+
+        try
+        {
+            board.AddDevices(tg);
+
+            tg.Ready += (sender, ready) =>
+            {
+                Console.WriteLine("Ticker group ready: {0}", ready);
+            };
+            tg.Ticked += (sender, count) =>
+            {
+                if (sender != null)
+                {
+                    Console.WriteLine("Ticker {0} count = {1}", ((Ticker)sender).SID, count);
+                }
+            };
+            board.Connection = Settings.GetConnection();
+            board.Ready += (sender, ready) =>
+            {
+                Console.WriteLine("Board {0} ready: {1}", board.SID, ready);
+            };
+            board.ExceptionThrown += (sender, eargs) =>
+            {
+                Console.WriteLine("Board {0} throws exception: {1}", board.SID, eargs.GetException().Message);
+            };
+
+            Console.WriteLine("Beginning board {0}...", board.SID);
+            board.Begin();
+            Console.WriteLine("Board {0} has begun!", board.SID);
+
+            var started = DateTime.Now;
+            while (!board.IsReady || ((DateTime.Now - started).TotalSeconds < 20))
+            {
+                Thread.Sleep(1000);
+            }
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e.Message);
+        }
+        finally
+        {
+            board.End();
+            Thread.Sleep(500);
+            Console.WriteLine("Board {0} has ended", board.SID);
+        }
+    }
+    
+    [TestMethod]
+    public void BoardWithSwitches()
+    {
+        var board = new ArduinoBoard("switches");
+        var sw1 = new SwitchDevice("sw1"); //Expected to be Active (set by Arduino Sketch)
+        var sw2 = new SwitchDevice("sw2"); //Expected to be Passive (set by Arduino Sketch)
+        
+        try
+        {
+            board.AddDevice(sw1);
+            board.AddDevice(sw2);
+            sw2.Switched += (sender, on) =>
+            {
+                if (sender != null)
+                {
+                    Console.WriteLine("Switch {0} is: {1}", ((SwitchDevice)sender).SID, on);
+                }
+            };
+            
+            board.Connection = Settings.GetConnection();
+            board.Ready += (sender, ready) =>
+            {
+                Console.WriteLine("Board {0} ready: {1}", board.SID, ready);
+            };
+            board.ExceptionThrown += (sender, eargs) =>
+            {
+                Console.WriteLine("Board {0} throws exception: {1}", board.SID, eargs.GetException().Message);
+            };
+
+            Console.WriteLine("Beginning board {0}...", board.SID);
+            board.Begin();
+            Console.WriteLine("Board {0} has begun!", board.SID);
+
+            var started = DateTime.Now;
+            while (!board.IsReady || ((DateTime.Now - started).TotalSeconds < 20))
+            {
+                if (sw1.IsReady)
+                {
+                    sw1.TurnOn();
+                    Thread.Sleep(1000);
+                    sw1.TurnOff();
+                    Thread.Sleep(1000);
+                }
+            }
         }
         catch (Exception e)
         {

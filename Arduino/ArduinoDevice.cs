@@ -90,7 +90,7 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
 
     public String? Name { get; set; } = null;
     
-    public bool IsReady => Board != null && Board.IsReady && statusResponseReceived;
+    virtual public bool IsReady => Board != null && Board.IsReady && statusResponseReceived;
 
     public bool StatusRequested => statusRequested;
 
