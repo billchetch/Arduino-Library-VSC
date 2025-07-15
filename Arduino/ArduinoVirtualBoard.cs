@@ -3,7 +3,7 @@ using Chetch.Arduino;
 using Chetch.Messaging;
 using Chetch.Utilities;
 
-namespace Arduino;
+namespace Chetch.Arduino;
 
 public class ArduinoVirtualBoard
 {
