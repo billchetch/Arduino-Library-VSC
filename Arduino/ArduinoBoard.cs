@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using Chetch.Messaging;
+using Chetch.Arduino.Connections;
 using Microsoft.Extensions.Logging;
 using Pomelo.EntityFrameworkCore.MySql.Storage.Internal;
 using XmppDotNet;

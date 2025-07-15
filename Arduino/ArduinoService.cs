@@ -2,7 +2,7 @@ using System;
 using Chetch.ChetchXMPP;
 using Chetch.Database;
 using Chetch.Messaging;
-using Chetch.Utilities;
+using Chetch.Arduino.Connections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -68,6 +68,15 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
                     }
                     int baudRate = System.Convert.ToInt32(cnnConfig["BaudRate"]);
                     cnn = new ArduinoSerialConnection(path2device, baudRate);
+                    break;
+
+                case "LOCAL_SOCKET":
+                    var path = cnnConfig["Path"];
+                    if(path == null)
+                    {
+                        path = ArduinoLocalSocketConnection.SocketPathForBoard(board);
+                    }
+                    cnn = new ArduinoLocalSocketConnection(path);
                     break;
 
                 default:

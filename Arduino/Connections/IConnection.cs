@@ -1,7 +1,7 @@
 using System;
 using System.Management;
 
-namespace Chetch.Arduino;
+namespace Chetch.Arduino.Connections;
 
 public interface IConnection
 {

@@ -2,11 +2,11 @@ using System;
 using System.IO.Ports;
 using Chetch.Utilities;
 
-namespace Chetch.Arduino;
+namespace Chetch.Arduino.Connections;
 
 public class ArduinoSerialConnection : SerialPortConnection, IConnection
 {
-
+    
     static readonly int[] validProductIDs = [
         0x7523,
         0x0043
