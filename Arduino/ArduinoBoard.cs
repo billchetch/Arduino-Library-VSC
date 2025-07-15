@@ -97,7 +97,7 @@ public class ArduinoBoard : IMessageUpdatableObject
     #endregion
 
     #region Fields
-    MessageIO<ArduinoMessage> io = new MessageIO<ArduinoMessage>(Frame.FrameSchema.SMALL_SIMPLE_CHECKSUM, MessageEncoding.SYSTEM_DEFINED);                                                                
+    MessageIO<ArduinoMessage> io = new MessageIO<ArduinoMessage>(Frame.FrameSchema.SMALL_SIMPLE_CHECKSUM, MessageEncoding.SYSTEM_DEFINED); 
 
     System.Timers.Timer requestStatusTimer = new System.Timers.Timer();
 

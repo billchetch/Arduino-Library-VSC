@@ -1,7 +1,11 @@
 {
    "Connection" : {
-      "Type" : "Serial",
-      "BaudRate" : 9600,
-      "PathToDevice" : "/dev/tty.usb*"
+      "Serial" : {
+         "BaudRate" : 9600,
+         "PathToDevice" : "/dev/tty.usb*"
+      },
+      "LocalSocket" : {
+         "Path" : "/tmp/unix_socket_arduino_test"
+      }
     }
 }

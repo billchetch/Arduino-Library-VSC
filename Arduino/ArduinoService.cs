@@ -71,6 +71,7 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
                     break;
 
                 case "LOCAL_SOCKET":
+                case "LOCALSOCKET":
                     var path = cnnConfig["Path"];
                     if(path == null)
                     {

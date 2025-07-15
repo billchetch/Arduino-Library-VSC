@@ -15,7 +15,7 @@ public sealed class TestBoard
 
         try
         {
-            board.Connection = Settings.GetConnection();
+            board.Connection = Settings.GetConnection("LocalSocket");
             board.Connection.Connected += (sender, connected) =>
             {
                 Console.WriteLine("Board {0} connected: {1}", board.SID, connected);
@@ -106,7 +106,7 @@ public sealed class TestBoard
                 Console.WriteLine("Ticker count = {0}", count);
             };
             board.AddDevice(ticker);
-            board.Connection = Settings.GetConnection();
+            board.Connection = Settings.GetConnection("SERIAL");
             board.Ready += (sender, ready) =>
             {
                 Console.WriteLine("Board {0} ready: {1}", board.SID, ready);
