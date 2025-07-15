@@ -10,12 +10,18 @@ public class ArduinoVirtualBoard
     #region Events
     public event EventHandler<ArduinoMessage>? MessageReceived;
     public event EventHandler<ArduinoMessage>? MessageSent;
-    
+
     public event ErrorEventHandler? ExceptionThrown;
     #endregion
 
     #region Properties
+    public byte ID { get; set; } = ArduinoBoard.DEFAULT_BOARD_ID;
+    public bool IsConnected => Connection != null && Connection.IsConnected;
     public LocalSocket Connection { get; internal set; }
+
+    public String Name { get; set; } = "Virtual";
+
+    public byte DeviceCount => 0;
     #endregion
 
     #region Fields
@@ -29,7 +35,7 @@ public class ArduinoVirtualBoard
             throw new Exception("No path for Arduino Local Socket connection");
         }
         Connection = new LocalSocket(path);
-        Connection.Connected += (sender, skt) =>
+        Connection.Connected += (sender, connected) =>
         {
             Thread.Sleep(2000);  //Pauses simulates Serial connection
         };
@@ -49,8 +55,13 @@ public class ArduinoVirtualBoard
         {
             try
             {
-                HandleMessageReceived(message);
+                ArduinoMessage response = new ArduinoMessage();
+                bool respond = HandleMessageReceived(message, response);
                 MessageReceived?.Invoke(this, message);
+                if (respond)
+                {
+                    SendMessage(response);
+                }
             }
             catch (Exception e)
             {
@@ -72,22 +83,52 @@ public class ArduinoVirtualBoard
 
     public void Begin()
     {
+        io.Start();
         Connection.StartListening();
-
     }
 
     public void End()
     {
         Connection?.StopListening();
+        io.Stop();
     }
 
-    virtual protected bool HandleMessageReceived(ArduinoMessage message)
+    virtual protected bool HandleMessageReceived(ArduinoMessage message, ArduinoMessage response)
     {
-        switch (message.Type)
+        bool handled = false;
+        if (message.Target == ID)
         {
-            case MessageType.STATUS_REQUEST:
-                break;  
+            switch (message.Type)
+            {
+                case MessageType.STATUS_REQUEST:
+                    response.Type = MessageType.STATUS_RESPONSE;
+                    response.Add(Name);
+                    response.Add(DateTime.Now.Millisecond);
+                    response.Add(DeviceCount);
+                    response.Add(0);
+                    handled = true;
+                    break;
+            }
+
+            response.Target = message.Target;
         }
-        return false;
+        return handled;
+    }
+    
+    public void SendMessage(ArduinoMessage message)
+    {
+        if (!IsConnected)
+        {
+            throw new Exception("Board is not connected");
+        }
+
+        if (message.Sender == ArduinoMessage.NO_SENDER)
+        {
+            message.Sender = ID; //this is the default
+        }
+
+        //adds this message to the IO out queue which will then send based on the MessageDispatched event
+        //See (io configuration in Begin method above)
+        io.Add(message);
     }
 }
