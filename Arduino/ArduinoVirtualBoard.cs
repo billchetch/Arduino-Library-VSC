@@ -16,7 +16,7 @@ public class ArduinoVirtualBoard
 
     #region Properties
     public byte ID { get; set; } = ArduinoBoard.DEFAULT_BOARD_ID;
-    public bool IsConnected => Connection != null && Connection.IsConnected;
+    public bool IsConnected => Connection != null && Connection.IsListening;
     public LocalSocket Connection { get; internal set; }
 
     public String Name { get; set; } = "Virtual";
@@ -105,7 +105,13 @@ public class ArduinoVirtualBoard
                     response.Add(Name);
                     response.Add(DateTime.Now.Millisecond);
                     response.Add(DeviceCount);
-                    response.Add(0);
+                    response.Add(255);
+                    handled = true;
+                    break;
+
+                case MessageType.PING:
+                    response.Type = MessageType.PING_RESPONSE;
+                    response.Add(DateTime.Now.Millisecond);
                     handled = true;
                     break;
             }

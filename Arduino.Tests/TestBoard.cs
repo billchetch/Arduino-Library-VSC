@@ -61,6 +61,10 @@ public sealed class TestBoard
             {
                 Thread.Sleep(1000);
             }
+            if (board.IsReady)
+            {
+                board.Ping();
+            }
         }
         catch (Exception e)
         {

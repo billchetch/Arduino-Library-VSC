@@ -377,6 +377,17 @@ public class ArduinoBoard : IMessageUpdatableObject
         SendMessage(msg);
         statusRequested = true; //flag that this has been requested
     }
+
+    public void Ping(byte target = ArduinoMessage.NO_TARGET)
+    {
+        if (target == ArduinoMessage.NO_TARGET)
+        {
+            target = ID;
+        }
+        var msg = new ArduinoMessage(MessageType.PING);
+        msg.Target = target;
+        SendMessage(msg);
+    }
     #endregion
 
     #region Device management
