@@ -7,6 +7,10 @@ namespace Chetch.Arduino;
 
 abstract public class ArduinoDevice : IMessageUpdatableObject
 {
+    #region Constants
+    public const Int16 DEFAULT_REPORT_INTEVAL = -1;
+    #endregion
+
     #region Classes and Enums
     public enum DeviceCommand
     {
@@ -96,7 +100,7 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 0)]
     [ArduinoMessageMap(Messaging.MessageType.COMMAND_RESPONSE, 0)]
-    public Int16 ReportInterval { get; set; } = -1;
+    public Int16 ReportInterval { get; set; } = DEFAULT_REPORT_INTEVAL;
     #endregion
 
     #region Fields

@@ -110,7 +110,7 @@ public sealed class TestBoard
                 Console.WriteLine("Ticker count = {0}", count);
             };
             board.AddDevice(ticker);
-            board.Connection = Settings.GetConnection("SERIAL");
+            board.Connection = Settings.GetConnection("LocalSocket");
             board.Ready += (sender, ready) =>
             {
                 Console.WriteLine("Board {0} ready: {1}", board.SID, ready);
@@ -124,7 +124,9 @@ public sealed class TestBoard
             board.Begin();
             Console.WriteLine("Board {0} has begun!", board.SID);
 
-            while (ticker.Count < 10)
+
+            var started = DateTime.Now;
+            while (!board.IsReady || ((DateTime.Now - started).TotalSeconds < 20))
             {
                 Thread.Sleep(1000);
             }

@@ -42,6 +42,8 @@ public class ArduinoVirtualBoard
 
         public int RepeatCount { get; set; } = 0;
 
+        public bool StartOnReady { get; set; } = false;
+
         public List<RegimeItem> Items = new List<RegimeItem>();
 
         public Regime(String name, int defaultDelay = DEFAULT_DELAY, int repeatCount = 0)
@@ -51,7 +53,7 @@ public class ArduinoVirtualBoard
             RepeatCount = repeatCount;
         }
 
-        public void AddMessage(MessageType messageType, byte target, params Object[] args)
+        public void AddMessage(byte target, MessageType messageType, params Object[] args)
         {
             var message = new ArduinoMessage(messageType);
             message.Target = target;
@@ -84,7 +86,7 @@ public class ArduinoVirtualBoard
     #region Properties
     public byte ID { get; set; } = ArduinoBoard.DEFAULT_BOARD_ID;
     public bool IsConnected => Connection != null && Connection.IsListening;
-    public bool IsReady => IsConnected && statusRequestReceived;
+    public bool IsReady => IsConnected && statusRequestReceived && statusResponseSent;
     public LocalSocket Connection { get; internal set; }
 
     public String Name { get; set; } = "Virtual";
@@ -96,6 +98,7 @@ public class ArduinoVirtualBoard
     MessageIO<ArduinoMessage> io = new MessageIO<ArduinoMessage>(Frame.FrameSchema.SMALL_SIMPLE_CHECKSUM, MessageEncoding.SYSTEM_DEFINED);
 
     bool statusRequestReceived = false;
+    bool statusResponseSent = false;
 
     List<Regime> regimes = new List<Regime>();
 
@@ -111,12 +114,13 @@ public class ArduinoVirtualBoard
         Connection = new LocalSocket(path);
         Connection.Connected += (sender, connected) =>
         {
-            Thread.Sleep(2000);  //Pauses simulates Serial connection
-            if (!connected)
+            try
             {
-                bool changed = statusRequestReceived;
-                statusRequestReceived = false;
-                if (changed) OnReady();
+                OnConnected(connected);
+            }
+            catch (Exception e)
+            {
+                ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
             }
         };
         Connection.DataReceived += (sender, data) =>
@@ -141,6 +145,11 @@ public class ArduinoVirtualBoard
                 if (respond)
                 {
                     SendMessage(response);
+                    if (response.Type == MessageType.STATUS_RESPONSE && statusRequestReceived && !statusResponseSent)
+                    {
+                        statusResponseSent = true;
+                        OnReady();
+                    }
                 }
             }
             catch (Exception e)
@@ -174,12 +183,37 @@ public class ArduinoVirtualBoard
         io.Stop();
     }
 
+
+    protected void OnConnected(bool connected)
+    {
+        if (connected)
+        {
+            Thread.Sleep(2000);  //Pauses simulates Serial connection
+        }
+        else
+        {
+            bool changed = statusRequestReceived;
+            statusRequestReceived = false;
+            statusResponseSent = false;
+            if (changed) OnReady();
+        }
+    }
+
+    /// <summary>
+    /// Called when board changes Ready state.  If board is Ready it means it's sent a status response for a status request.
+    /// The board is not ready once the connection has eneded.
+    /// </summary>
     protected void OnReady()
     {
         Ready?.Invoke(this, IsReady);
 
-        //start up message sequence
-        executeRegimes();
+        foreach (var reg in regimes)
+        {
+            if (reg.StartOnReady)
+            {
+                executeRegime(reg);
+            }
+        }
     }
 
     public void AddRegime(Regime regime)
@@ -187,39 +221,51 @@ public class ArduinoVirtualBoard
         regimes.Add(regime);
     }
 
-    private void executeRegimes()
+    public Regime GetRegime(String regimeName)
     {
-        if (regimes.Count == 0) return;
+        if (regimeName == null)
+        {
+            throw new ArgumentNullException("Regime name cannot be null");
+        }
+        foreach (var reg in regimes)
+        {
+            if (reg.Name.Equals(regimeName, StringComparison.InvariantCultureIgnoreCase))
+            {
+                return reg;
+            }
+        }
+        throw new Exception(String.Format("Cannot find regime with name {0}", regimeName));
+    }
 
+    private void executeRegime(Regime regime)
+    {
         Task.Run(() =>
         {
-            foreach (var regime in regimes)
+            Thread.Sleep(1000);
+            for (int i = 0; i <= regime.RepeatCount; i++)
             {
                 foreach (var regimeItem in regime.Items)
                 {
-                    for (int i = 0; i <= regime.RepeatCount; i++)
+                    try
                     {
-                        try
+                        if (regimeItem.Message != null)
                         {
-                            if (regimeItem.Message != null)
-                            {
-                                SendMessage(regimeItem.Message);
-                            }
-                            else if (regimeItem.Delay > 0)
-                            {
-                                Thread.Sleep(regimeItem.Delay);
-                            }
-                            else if (regime.DefaultDelay > 0)
-                            {
-                                Thread.Sleep(regime.DefaultDelay);
-                            }
+                            SendMessage(regimeItem.Message);
                         }
-                        catch (Exception e)
+                        else if (regimeItem.Delay > 0)
                         {
-                            ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
+                            Thread.Sleep(regimeItem.Delay);
                         }
-                        if (regimeTokenSource.Token.IsCancellationRequested) break;
+                        else if (regime.DefaultDelay > 0)
+                        {
+                            Thread.Sleep(regime.DefaultDelay);
+                        }
                     }
+                    catch (Exception e)
+                    {
+                        ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
+                    }
+                    if (regimeTokenSource.Token.IsCancellationRequested) break;
                 }
                 if (regimeTokenSource.Token.IsCancellationRequested) break;
             }
@@ -240,9 +286,7 @@ public class ArduinoVirtualBoard
                     response.Add(DeviceCount);
                     response.Add(255);
                     handled = true;
-                    bool changed = !statusRequestReceived;
                     statusRequestReceived = true;
-                    if (changed) OnReady();
                     break;
 
                 case MessageType.PING:
@@ -250,11 +294,48 @@ public class ArduinoVirtualBoard
                     response.Add(DateTime.Now.Millisecond);
                     handled = true;
                     break;
-            }
 
+                case MessageType.COMMAND:
+                    response.Type = MessageType.COMMAND_RESPONSE;
+                    var cmd = message.Get<ArduinoDevice.DeviceCommand>(0);
+                    switch (cmd)
+                    {
+                        case ArduinoDevice.DeviceCommand.TEST:
+                            break;
+
+                        default:
+                            break;
+                    }
+                    break;
+            }
             response.Target = message.Target;
         }
+        else if (message.Target >= ArduinoBoard.START_DEVICE_IDS_AT)
+        {
+            //we will assume this is a device but use a virtual method to allow specific board overrides
+            handled = HandleDeviceMessageReceived(message, response);
+        }
         return handled;
+    }
+
+    virtual protected bool HandleDeviceMessageReceived(ArduinoMessage message, ArduinoMessage response)
+    {
+        bool handled = false;
+        switch (message.Type)
+        {
+            case MessageType.STATUS_REQUEST:
+                response.Type = MessageType.STATUS_RESPONSE;
+                handled = HandleDeviceStatusRequest(message, response);
+                break;
+        }
+        response.Target = message.Target;
+        return handled;
+    }
+
+    virtual protected bool HandleDeviceStatusRequest(ArduinoMessage message, ArduinoMessage response)
+    {
+        response.Add(ArduinoDevice.DEFAULT_REPORT_INTEVAL); //This is the report interval
+        return true;
     }
     
     public void SendMessage(ArduinoMessage message)
