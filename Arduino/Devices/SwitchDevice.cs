@@ -17,7 +17,7 @@ public class SwitchDevice : ArduinoDevice
     {
         NOT_SET = 0,
         ACITVE = 1,
-        PASSIVE =2,  
+        PASSIVE = 2,  
     }
 
     #endregion
@@ -28,8 +28,8 @@ public class SwitchDevice : ArduinoDevice
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 1)]
     public SwitchMode Mode { get; internal set; } = SwitchMode.NOT_SET;
     
-    [ArduinoMessageMap(Messaging.MessageType.DATA, 0)]
-    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 2)]
+    [ArduinoMessageMap(Messaging.MessageType.DATA, 0)] //Operational value (will change depending on switch activity)
+    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 2)] //Initial value
     public bool PinState 
     { 
         get

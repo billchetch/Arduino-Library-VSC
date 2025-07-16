@@ -50,29 +50,35 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
             var cnnConfig = boardConfig.GetSection("Connection");
             if(!cnnConfig.Exists())
             {
-                throw new Exception(String.Format("No connection config found for {0}", board.SID));
+                throw new Exception(String.Format("No connection config found for board {0}", board.SID));
             }
-            var cnnType = cnnConfig["Type"]?.ToUpper();
+            var useCnnType = cnnConfig["Use"];
+            if (useCnnType == null || !cnnConfig.GetSection(useCnnType).Exists())
+            {
+                throw new Exception(String.Format("No {0} config found for board {1} ", useCnnType, board.SID));
+            }
+            var useCnnConfig = cnnConfig.GetSection(useCnnType);
             IConnection cnn;
-            switch(cnnType)
+            switch(useCnnType.ToUpper())
             {
                 case "SERIAL":
-                    var path2device = cnnConfig["PathToDevice"];
+
+                    var path2device = useCnnConfig["PathToDevice"];
                     if(path2device == null)
                     {
                         throw new Exception(String.Format("Cannot find path to device in board {0} configuration", board.SID));
                     }
-                    if(String.IsNullOrEmpty(cnnConfig["BaudRate"]))
+                    if(String.IsNullOrEmpty(useCnnConfig["BaudRate"]))
                     {
                         throw new Exception(String.Format("Cannot find baud rate in board {0} configuration", board.SID));
                     }
-                    int baudRate = System.Convert.ToInt32(cnnConfig["BaudRate"]);
+                    int baudRate = System.Convert.ToInt32(useCnnConfig["BaudRate"]);
                     cnn = new ArduinoSerialConnection(path2device, baudRate);
                     break;
 
                 case "LOCAL_SOCKET":
                 case "LOCALSOCKET":
-                    var path = cnnConfig["Path"];
+                    var path = useCnnConfig["Path"];
                     if(path == null)
                     {
                         path = ArduinoLocalSocketConnection.SocketPathForBoard(board);
@@ -81,10 +87,9 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
                     break;
 
                 default:
-                    throw new Exception(String.Format("Unrecodngised connection type {0}", cnnType));
+                    throw new Exception(String.Format("Unrecodngised connection type {0}", useCnnType));
             }
             board.Connection = cnn;
-
         }
 
         //Add EventHandler to send  out a message when the board is ready

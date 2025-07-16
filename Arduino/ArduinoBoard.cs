@@ -74,7 +74,54 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     public String UID => SID; //for IMessageUpdatable interface compliance
 
-    public IConnection? Connection { get; set; }
+    public IConnection? Connection
+    {
+        get
+        {
+            return cnn;
+        }
+        set
+        {
+            if (value == null && cnn != null)
+            {
+                if (cnn.IsConnected)
+                {
+                    throw new Exception("Connecdtion is still connected");
+                }
+                cnn = null;
+            }
+            else if (cnn != null)
+            {
+                throw new Exception("Cannot set Connection twice.  Set to null first");
+            }
+            else if(value != null)
+            {
+                cnn = value;
+                cnn.Connected += (sender, connected) =>
+                {
+                    try
+                    {
+                        OnConnected(connected);
+                    }
+                    catch (Exception e)
+                    {
+                        ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
+                    }
+                };
+                cnn.DataReceived += (sender, data) =>
+                {
+                    try
+                    {
+                        io.Add(data);
+                    }
+                    catch (Exception e)
+                    {
+                        ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
+                    }
+                };
+            }
+        }
+    }
 
     public bool IsConnected => Connection != null && Connection.IsConnected;
     public bool IsReady => IsConnected && statusResponseReceived;
@@ -101,6 +148,8 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     System.Timers.Timer requestStatusTimer = new System.Timers.Timer();
 
+    IConnection? cnn;
+
     bool statusRequested = false;
     bool statusResponseReceived = false;
 
@@ -112,79 +161,6 @@ public class ArduinoBoard : IMessageUpdatableObject
     {
         ID = id;
         SID = sid;
-    }
-
-    public ArduinoBoard(String sid) : this(DEFAULT_BOARD_ID, sid)
-    { }
-    #endregion
-
-    #region Lifecycle
-    public void Begin()
-    {
-        if (Connection == null)
-        {
-            throw new Exception("Cannot Begin as no connection has been supplied");
-        }
-
-        //When a connection is made then run a task to request status as the response is crucial for IsReady property
-        //When a connecton is ended update stuff so IsReady = false
-        Connection.Connected += (sender, connected) =>
-        {
-            //here should be something like: await RequestSTtaus
-            if (connected)
-            {
-                try
-                {
-                    Task.Run(() =>
-                    {
-                        Thread.Sleep(2000); //allow a bit of time for the board to fire up
-                        int attempts = 0;
-                        do
-                        {
-                            //Console.WriteLine("Requesting status...");
-                            try
-                            {
-                                RequestStatus();
-                            }
-                            catch { }
-                            Thread.Sleep(250);
-                        } while (IsConnected && !IsReady && ++attempts < 3);
-
-                        if (!IsReady && IsConnected)
-                        {
-                            //try again
-                            Connection.Reconnect();
-                        }
-                    });
-                }
-                catch (Exception e)
-                {
-                    ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
-                }
-            }
-            else
-            {
-                bool changed = statusResponseReceived;
-                statusResponseReceived = false;
-                statusRequested = false;
-                if (changed) OnReady();
-            }
-
-        };
-
-        //Add bytes to message io
-        Connection.DataReceived += (sender, data) =>
-        {
-            try
-            {
-                io.Add(data);
-            }
-            catch (Exception e)
-            {
-                ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
-            }
-
-        };
 
         //Configure request status timer, this effectively pings the board if no message has been
         //received for some period .. starts based on board being ready or not (see OnReady)
@@ -236,7 +212,20 @@ public class ArduinoBoard : IMessageUpdatableObject
                 ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
             }
         };
+    }
 
+    public ArduinoBoard(String sid) : this(DEFAULT_BOARD_ID, sid)
+    { }
+    #endregion
+
+    #region Lifecycle
+    public void Begin()
+    {
+        if (Connection == null)
+        {
+            throw new Exception("Cannot Begin as no connection has been supplied");
+        }
+   
         //Start message IO and Connect
         io.Start();
         Connection.Connect();
@@ -246,6 +235,59 @@ public class ArduinoBoard : IMessageUpdatableObject
     {
         io.Stop();
         Connection?.Disconnect();
+    }
+
+    /// <summary>
+    /// When a connection is made then run a task to request status as the response is crucial for IsReady property
+    /// When a connecton is ended update stuff so IsReady = false
+    /// </summary>
+    /// <param name="connected"></param>
+    /// <exception cref="Exception"></exception>
+    protected void OnConnected(bool connected)
+    {
+        if (Connection == null)
+        {
+            throw new Exception("No connection object!");
+        }
+
+        if (connected)
+        {
+            try
+            {
+                Task.Run(() =>
+                {
+                    Thread.Sleep(2000); //allow a bit of time for the board to fire up
+                    int attempts = 0;
+                    do
+                    {
+                        //Console.WriteLine("Requesting status...");
+                        try
+                        {
+                            RequestStatus();
+                        }
+                        catch { }
+                        Thread.Sleep(250);
+                    } while (IsConnected && !IsReady && ++attempts < 3);
+
+                    if (!IsReady && IsConnected)
+                    {
+                        //try again
+                        Connection.Reconnect();
+                    }
+                });
+            }
+            catch (Exception e)
+            {
+                ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
+            }
+        }
+        else
+        {
+            bool changed = statusResponseReceived;
+            statusResponseReceived = false;
+            statusRequested = false;
+            if (changed) OnReady();
+        }
     }
 
     protected void OnReady()
