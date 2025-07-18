@@ -219,7 +219,7 @@ public class ArduinoBoard : IMessageUpdatableObject
     #endregion
 
     #region Lifecycle
-    public void Begin()
+    virtual public void Begin()
     {
         if (Connection == null)
         {
@@ -231,7 +231,7 @@ public class ArduinoBoard : IMessageUpdatableObject
         Connection.Connect();
     }
 
-    public void End()
+    virtual public void End()
     {
         io.Stop();
         Connection?.Disconnect();

@@ -67,6 +67,15 @@ public class ArduinoVirtualBoard
             Items.Add(new RegimeItem(message));
         }
 
+        public void AddMessage(ArduinoDevice device, MessageType messageType, String? propName = null, Object? propVal = null)
+        {
+            var message = ArduinoMessageMap.CreateMessageFor(device, messageType, propName, propVal);
+            message.Target = device.ID;
+            message.Sender = device.ID;
+
+            Items.Add(new RegimeItem(message));
+        }
+
         public void AddDelay(int delay)
         {
             Items.Add(new RegimeItem(delay));
@@ -89,7 +98,7 @@ public class ArduinoVirtualBoard
     public bool IsListening => Connection != null && Connection.IsListening;
     public bool IsReady => IsListening && statusRequestReceived && statusResponseSent;
 
-    public ArduinoBoard Board { get; set; }
+    public ArduinoBoard Board { get; internal set; }
 
     public IConnectionListener? Connection
     {
@@ -158,9 +167,9 @@ public class ArduinoVirtualBoard
     CancellationTokenSource regimeTokenSource = new CancellationTokenSource();
     #endregion
 
-    public ArduinoVirtualBoard(ArduinoBoard? board = null)
+    public ArduinoVirtualBoard(ArduinoBoard board)
     {
-        Board = board == null ? new ArduinoBoard("virtual") : board;
+        Board = board;
         io.ExceptionThrown += ExceptionThrown;
         io.MessageReceived += (sender, message) =>
         {

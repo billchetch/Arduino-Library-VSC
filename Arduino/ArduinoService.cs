@@ -140,7 +140,14 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
         
         foreach(var board in boards)
         {
-            board.End();
+            try
+            {
+                board.End();
+            }
+            catch (Exception e)
+            {
+                Logger.LogError(e, e.Message);
+            }
         }
         return base.StopAsync(cancellationToken);
     }
