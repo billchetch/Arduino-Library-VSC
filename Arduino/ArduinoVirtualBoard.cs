@@ -1,6 +1,7 @@
 using System;
 using System.Xml;
 using Chetch.Arduino;
+using Chetch.Arduino.Connections;
 using Chetch.Messaging;
 using Chetch.Utilities;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
@@ -87,7 +88,54 @@ public class ArduinoVirtualBoard
     public byte ID { get; set; } = ArduinoBoard.DEFAULT_BOARD_ID;
     public bool IsConnected => Connection != null && Connection.IsListening;
     public bool IsReady => IsConnected && statusRequestReceived && statusResponseSent;
-    public LocalSocket Connection { get; internal set; }
+    public LocalSocket? Connection
+    {
+        get
+        {
+            return cnn;
+        }
+        set
+        {
+            if (value == null && cnn != null)
+            {
+                if (cnn.IsConnected)
+                {
+                    throw new Exception("Connecdtion is still connected");
+                }
+                cnn = null;
+            }
+            else if (cnn != null)
+            {
+                throw new Exception("Cannot set Connection twice.  Set to null first");
+            }
+            else if(value != null)
+            {
+                cnn = value;
+                cnn.Connected += (sender, connected) =>
+                {
+                    try
+                    {
+                        OnConnected(connected);
+                    }
+                    catch (Exception e)
+                    {
+                        ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
+                    }
+                };
+                cnn.DataReceived += (sender, data) =>
+                {
+                    try
+                    {
+                        io.Add(data);
+                    }
+                    catch (Exception e)
+                    {
+                        ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
+                    }
+                };
+            }
+        }
+    }
 
     public String Name { get; set; } = "Virtual";
 
@@ -95,6 +143,10 @@ public class ArduinoVirtualBoard
     #endregion
 
     #region Fields
+    ArduinoBoard board;
+
+    LocalSocket? cnn;
+
     MessageIO<ArduinoMessage> io = new MessageIO<ArduinoMessage>(Frame.FrameSchema.SMALL_SIMPLE_CHECKSUM, MessageEncoding.SYSTEM_DEFINED);
 
     bool statusRequestReceived = false;
@@ -105,35 +157,9 @@ public class ArduinoVirtualBoard
     CancellationTokenSource regimeTokenSource = new CancellationTokenSource();
     #endregion
 
-    public ArduinoVirtualBoard(String path)
+    public ArduinoVirtualBoard(ArduinoBoard? board = null)
     {
-        if (path == null)
-        {
-            throw new Exception("No path for Arduino Local Socket connection");
-        }
-        Connection = new LocalSocket(path);
-        Connection.Connected += (sender, connected) =>
-        {
-            try
-            {
-                OnConnected(connected);
-            }
-            catch (Exception e)
-            {
-                ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
-            }
-        };
-        Connection.DataReceived += (sender, data) =>
-        {
-            try
-            {
-                io.Add(data);
-            }
-            catch (Exception e)
-            {
-                ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
-            }
-        };
+        this.board = board == null ? new ArduinoBoard("virtual") : board;
         io.ExceptionThrown += ExceptionThrown;
         io.MessageReceived += (sender, message) =>
         {
@@ -172,6 +198,10 @@ public class ArduinoVirtualBoard
 
     public void Begin()
     {
+        if (Connection == null)
+        {
+            throw new Exception("Connecdtion is null");
+        }
         io.Start();
         Connection.StartListening();
     }
@@ -215,7 +245,7 @@ public class ArduinoVirtualBoard
             }
         }
     }
-
+    
     public void AddRegime(Regime regime)
     {
         regimes.Add(regime);
@@ -334,7 +364,17 @@ public class ArduinoVirtualBoard
 
     virtual protected bool HandleDeviceStatusRequest(ArduinoMessage message, ArduinoMessage response)
     {
-        response.Add(ArduinoDevice.DEFAULT_REPORT_INTEVAL); //This is the report interval
+        try
+        {
+            var device = board.GetDevice(message.Target);
+            var msg = ArduinoMessageMap.CreateMessageFor(device, MessageType.STATUS_RESPONSE);
+            response.Arguments.AddRange(msg.Arguments);
+        }
+        catch (Exception e)
+        {
+            ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
+        }
+        
         return true;
     }
     

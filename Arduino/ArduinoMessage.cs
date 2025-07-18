@@ -35,7 +35,7 @@ public class ArduinoMessage : IMessageQueueItem<ArduinoMessage>
     public byte Tag { get; set; } = 0; //can be used to track messages
     public byte Target { get; set; } = 0; //ID number on board to determine what is beig targeted
     public byte Sender { get; set; } = 0; //
-    public List<byte[]> Arguments { get; } = new List<byte[]>();
+    public List<byte[]?> Arguments { get; } = new List<byte[]?>();
     public bool LittleEndian { get; set; } = true;
 
     //Convenience properties
@@ -82,70 +82,88 @@ public class ArduinoMessage : IMessageQueueItem<ArduinoMessage>
         return Get<T>(Arguments.Count - 1);
     }
 
-    public void Add(byte[] bytes)
+    public void Add(byte[] bytes, int idx = -1)
     {
-        Arguments.Add(bytes);
+        if (idx == -1)
+        {
+            Arguments.Add(bytes);
+        }
+        else if (idx >= 0)
+        {
+            if (idx < Arguments.Count)
+            {
+                Arguments[idx] = bytes;
+            }
+            else
+            {
+                for (int i = Arguments.Count; i < idx; i++)
+                {
+                    Arguments.Add(null);
+                }
+                Arguments.Add(bytes);
+            }
+        }
     }
 
-    public void Add(byte b)
+    public void Add(byte b, int idx = -1)
     {
-        Add(new byte[] { b });
+        Add(new byte[] { b }, idx);
     }
 
-    public void Add(bool b)
+    public void Add(bool b, int idx = -1)
     {
-        Add(b ? (byte)1 : (byte)0);
+        Add(b ? (byte)1 : (byte)0, idx);
     }
 
-    public void Add(String s)
+    public void Add(String s, int idx = -1)
     {
-        Add(Chetch.Utilities.Convert.ToBytes(s));
+        Add(Chetch.Utilities.Convert.ToBytes(s), idx);
     }
 
-    public void Add(Int16 arg)
+    public void Add(Int16 arg, int idx = -1)
     {
         byte[] bytes = Chetch.Utilities.Convert.ToBytes(arg, LittleEndian, true, -1);
-        Add(bytes);
+        Add(bytes, idx);
     }
 
-    public void Add(UInt16 arg)
+    public void Add(UInt16 arg, int idx = -1)
     {
         byte[] bytes = Chetch.Utilities.Convert.ToBytes(arg, LittleEndian, true, -1);
-        Add(bytes);
+        Add(bytes, idx);
     }
 
-    public void Add(int arg)
+    public void Add(int arg, int idx = -1)
     {
         byte[] bytes = Chetch.Utilities.Convert.ToBytes((Int16)arg, LittleEndian, true, -1);
-        Add(bytes);
+        Add(bytes, idx);
     }
 
-    public void Add(uint arg)
+    public void Add(uint arg, int idx = -1)
     {
-        Add((UInt16)arg);
+        Add((UInt16)arg, idx);
     }
 
-    public void Add(long arg)
+    public void Add(long arg, int idx = -1)
     {
         byte[] bytes = Chetch.Utilities.Convert.ToBytes((Int32)arg, LittleEndian, true, -1);
-        Add(bytes);
+        Add(bytes, idx);
     }
 
-    public void Add(ulong arg)
+    public void Add(ulong arg, int idx = -1)
     {
         byte[] bytes = Chetch.Utilities.Convert.ToBytes((UInt32)arg, LittleEndian, true, -1);
-        Add(bytes);
+        Add(bytes, idx);
     }
 
-    public void Add(Enum arg)
+    public void Add(Enum arg, int idx = -1)
     {
-        Add(System.Convert.ToInt32(arg));
+        Add(System.Convert.ToInt32(arg), idx);
     }
 
-    public void Add(Object arg)
+    public void Add(Object arg, int idx = -1)
     {
         var bytes = Chetch.Utilities.Convert.ToBytes(arg);
-        Add(bytes);
+        Add(bytes, idx);
     }
     public void WriteBytes(List<byte> bytes)
     {
@@ -157,10 +175,16 @@ public class ArduinoMessage : IMessageQueueItem<ArduinoMessage>
         bytes.Add(Sender);
 
         //2. add arguments (length of argument followed by argment bytes)
+        int idx = 0;
         foreach (var b in Arguments)
         {
+            if (b == null)
+            {
+                throw new Exception(String.Format("Argument at index {0} is null", idx));
+            }
             bytes.Add((byte)b.Length);
             bytes.AddRange(b);
+            idx++;
         }
     }
 

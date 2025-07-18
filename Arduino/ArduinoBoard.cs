@@ -339,7 +339,7 @@ public class ArduinoBoard : IMessageUpdatableObject
                 }
                 else if (HasDevice(message.Target))
                 {
-                    var dev = getDevice(message.Target);
+                    var dev = GetDevice(message.Target);
                     if (dev.IsReady || (message.Type == MessageType.STATUS_RESPONSE && dev.StatusRequested) || (message.Type == MessageType.ERROR))
                     {
                         updatedProperties = dev.HandleMessage(message);
@@ -468,7 +468,7 @@ public class ArduinoBoard : IMessageUpdatableObject
         }
     }
 
-    public ArduinoDevice getDevice(byte id)
+    public ArduinoDevice GetDevice(byte id)
     {
         if (id < START_DEVICE_IDS_AT)
         {

@@ -1,6 +1,7 @@
 using System;
 using System.Reflection;
 using Chetch.Messaging;
+using XmppDotNet.Xmpp.PubSub;
 
 namespace Chetch.Arduino;
 
@@ -31,22 +32,8 @@ public class ArduinoMessageMap : Attribute
         }
         if(!map[type].ContainsKey(message.Type))
         {
-            var prop2index = new Dictionary<PropertyInfo, byte>();
-
-            var props = type.GetProperties().Where(
-                prop => Attribute.IsDefined(prop, typeof(ArduinoMessageMap)));
-
-            foreach(var prop in props){
-                var amms = prop.GetCustomAttributes(true);
-                foreach(ArduinoMessageMap amm in amms)
-                {
-                    if(amm.MessageType == message.Type)
-                    {
-                        prop2index[prop] = amm.ArgumentIndex;
-                    }
-                }
-            }
-
+            var prop2index = GetArduinoMessageMapProperties(type, message.Type);
+            
             lock(mapLock)
             {
                 map[type][message.Type] = prop2index;
@@ -70,6 +57,45 @@ public class ArduinoMessageMap : Attribute
         return updatedProperties;
     }
 
+    public static Dictionary<PropertyInfo, byte> GetArduinoMessageMapProperties(Type type, MessageType messageType)
+    {
+        var prop2index = new Dictionary<PropertyInfo, byte>();
+
+        var props = type.GetProperties().Where(
+            prop => Attribute.IsDefined(prop, typeof(ArduinoMessageMap)));
+
+        foreach (var prop in props) {
+            var amms = prop.GetCustomAttributes(true);
+            foreach (ArduinoMessageMap amm in amms)
+            {
+                if (amm.MessageType == messageType)
+                {
+                    prop2index[prop] = amm.ArgumentIndex;
+                }
+            }
+        }
+
+        return prop2index;
+    }
+
+    public static ArduinoMessage CreateMessageFor(Object obj, MessageType messageType)
+    {
+        var message = new ArduinoMessage(messageType);
+        var prop2index = GetArduinoMessageMapProperties(obj.GetType(), message.Type);
+
+        foreach (var kv in prop2index)
+        {
+            var prop2set = kv.Key;
+            var argIdx = kv.Value;
+            var val = kv.Key.GetValue(obj);
+            if (val != null)
+            {
+                message.Add(val, argIdx);
+            }
+        }
+        return message;
+    }
+
     public class UpdatedProperties
     {
         public ArduinoMessage? Message { get; internal set; }
@@ -77,8 +103,8 @@ public class ArduinoMessageMap : Attribute
 
         public List<PropertyInfo> Properties { get; internal set; } = new List<PropertyInfo>();
 
-        public UpdatedProperties(){}
-        
+        public UpdatedProperties() { }
+
         public UpdatedProperties(IMessageUpdatableObject obj, ArduinoMessage message)
         {
             UpdatedObject = obj;
