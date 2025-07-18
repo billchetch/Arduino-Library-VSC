@@ -86,9 +86,12 @@ public class ArduinoVirtualBoard
 
     #region Properties
     public byte ID { get; set; } = ArduinoBoard.DEFAULT_BOARD_ID;
-    public bool IsConnected => Connection != null && Connection.IsListening;
-    public bool IsReady => IsConnected && statusRequestReceived && statusResponseSent;
-    public LocalSocket? Connection
+    public bool IsListening => Connection != null && Connection.IsListening;
+    public bool IsReady => IsListening && statusRequestReceived && statusResponseSent;
+
+    public ArduinoBoard Board { get; set; }
+
+    public IConnectionListener? Connection
     {
         get
         {
@@ -98,9 +101,9 @@ public class ArduinoVirtualBoard
         {
             if (value == null && cnn != null)
             {
-                if (cnn.IsConnected)
+                if (cnn.IsListening)
                 {
-                    throw new Exception("Connecdtion is still connected");
+                    throw new Exception("Connecdtion is still listening");
                 }
                 cnn = null;
             }
@@ -108,7 +111,7 @@ public class ArduinoVirtualBoard
             {
                 throw new Exception("Cannot set Connection twice.  Set to null first");
             }
-            else if(value != null)
+            else if (value != null)
             {
                 cnn = value;
                 cnn.Connected += (sender, connected) =>
@@ -143,9 +146,7 @@ public class ArduinoVirtualBoard
     #endregion
 
     #region Fields
-    ArduinoBoard board;
-
-    LocalSocket? cnn;
+    IConnectionListener? cnn;
 
     MessageIO<ArduinoMessage> io = new MessageIO<ArduinoMessage>(Frame.FrameSchema.SMALL_SIMPLE_CHECKSUM, MessageEncoding.SYSTEM_DEFINED);
 
@@ -159,7 +160,7 @@ public class ArduinoVirtualBoard
 
     public ArduinoVirtualBoard(ArduinoBoard? board = null)
     {
-        this.board = board == null ? new ArduinoBoard("virtual") : board;
+        Board = board == null ? new ArduinoBoard("virtual") : board;
         io.ExceptionThrown += ExceptionThrown;
         io.MessageReceived += (sender, message) =>
         {
@@ -212,7 +213,6 @@ public class ArduinoVirtualBoard
         Connection?.StopListening();
         io.Stop();
     }
-
 
     protected void OnConnected(bool connected)
     {
@@ -366,7 +366,7 @@ public class ArduinoVirtualBoard
     {
         try
         {
-            var device = board.GetDevice(message.Target);
+            var device = Board.GetDevice(message.Target);
             var msg = ArduinoMessageMap.CreateMessageFor(device, MessageType.STATUS_RESPONSE);
             response.Arguments.AddRange(msg.Arguments);
         }
@@ -380,9 +380,9 @@ public class ArduinoVirtualBoard
     
     public void SendMessage(ArduinoMessage message)
     {
-        if (!IsConnected)
+        if (!IsListening) //TODO: not reall the right logic here
         {
-            throw new Exception("Board is not connected");
+            throw new Exception("Board connection is not yet listeining");
         }
 
         if (message.Sender == ArduinoMessage.NO_SENDER)

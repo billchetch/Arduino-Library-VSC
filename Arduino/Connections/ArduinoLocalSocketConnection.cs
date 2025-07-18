@@ -4,7 +4,7 @@ using Chetch.Utilities;
 
 namespace Chetch.Arduino.Connections;
 
-public class ArduinoLocalSocketConnection : LocalSocket, IConnection
+public class ArduinoLocalSocketConnection : LocalSocketConnection, IConnection, IConnectionListener
 {
     static public String SocketPathForBoard(String boardName)
     {

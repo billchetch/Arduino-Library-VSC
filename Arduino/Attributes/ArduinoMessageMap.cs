@@ -78,7 +78,7 @@ public class ArduinoMessageMap : Attribute
         return prop2index;
     }
 
-    public static ArduinoMessage CreateMessageFor(Object obj, MessageType messageType)
+    public static ArduinoMessage CreateMessageFor(Object obj, MessageType messageType, String? propName = null, Object? propVal = null)
     {
         var message = new ArduinoMessage(messageType);
         var prop2index = GetArduinoMessageMapProperties(obj.GetType(), message.Type);
@@ -88,6 +88,7 @@ public class ArduinoMessageMap : Attribute
             var prop2set = kv.Key;
             var argIdx = kv.Value;
             var val = kv.Key.GetValue(obj);
+            if (propName != null && prop2set.Name == propName) val = propVal;
             if (val != null)
             {
                 message.Add(val, argIdx);
