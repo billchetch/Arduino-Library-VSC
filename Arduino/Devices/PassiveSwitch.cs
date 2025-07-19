@@ -4,5 +4,5 @@ namespace Chetch.Arduino.Devices;
 
 public class PassiveSwitch : SwitchDevice
 {
-    public PassiveSwitch(String sid, String? name) : base(sid, SwitchMode.PASSIVE, name) { }
+    public PassiveSwitch(String sid, String? name = null) : base(sid, SwitchMode.PASSIVE, name) { }
 }
