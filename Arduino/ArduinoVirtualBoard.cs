@@ -246,11 +246,14 @@ public class ArduinoVirtualBoard
     {
         Ready?.Invoke(this, IsReady);
 
-        foreach (var reg in regimes)
+        if (IsReady)
         {
-            if (reg.StartOnReady)
+            foreach (var reg in regimes)
             {
-                executeRegime(reg);
+                if (reg.StartOnReady)
+                {
+                    executeRegime(reg);
+                }
             }
         }
     }

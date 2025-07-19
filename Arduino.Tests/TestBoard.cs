@@ -222,7 +222,7 @@ public sealed class TestBoard
                     Console.WriteLine("Ticker {0} count = {1}", ((Ticker)sender).SID, count);
                 }
             };
-            board.Connection = Settings.GetConnection();
+            board.Connection = Settings.GetConnection("LocalSocket");
             board.Ready += (sender, ready) =>
             {
                 Console.WriteLine("Board {0} ready: {1}", board.SID, ready);
@@ -258,22 +258,28 @@ public sealed class TestBoard
     public void BoardWithSwitches()
     {
         var board = new ArduinoBoard("switches");
-        var sw1 = new SwitchDevice("sw1"); //Expected to be Active (set by Arduino Sketch)
-        var sw2 = new SwitchDevice("sw2"); //Expected to be Passive (set by Arduino Sketch)
+        var sg = new SwitchGroup("sg"){
+            new SwitchDevice("sw1"),
+            new SwitchDevice("sw2", SwitchDevice.SwitchMode.PASSIVE)
+        };
         
         try
         {
-            board.AddDevice(sw1);
-            board.AddDevice(sw2);
-            sw2.Switched += (sender, on) =>
+            board.AddDevices(sg);
+
+            sg.Ready += (sender, ready) =>
+            {
+                Console.WriteLine("All switches ready: {0}", ready);
+            };
+            sg.Switched += (sender, eargs) =>
             {
                 if (sender != null)
                 {
-                    Console.WriteLine("Switch {0} is: {1}", ((SwitchDevice)sender).SID, on);
+                    Console.WriteLine("Switch {0} pinstate: {1}", eargs.Switch.SID, eargs.PinState);
                 }
             };
-            
-            board.Connection = Settings.GetConnection();
+
+            board.Connection = Settings.GetConnection("LocalSocket");
             board.Ready += (sender, ready) =>
             {
                 Console.WriteLine("Board {0} ready: {1}", board.SID, ready);
@@ -290,13 +296,7 @@ public sealed class TestBoard
             var started = DateTime.Now;
             while (!board.IsReady || ((DateTime.Now - started).TotalSeconds < 20))
             {
-                if (sw1.IsReady)
-                {
-                    sw1.TurnOn();
-                    Thread.Sleep(1000);
-                    sw1.TurnOff();
-                    Thread.Sleep(1000);
-                }
+                Thread.Sleep(1000);
             }
         }
         catch (Exception e)

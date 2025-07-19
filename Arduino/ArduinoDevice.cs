@@ -135,7 +135,7 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
     #endregion
 
     #region Messaging
-    virtual public bool CanAssignMessageValue(PropertyInfo propertyInfo, ArduinoMessage message)
+    virtual public bool AssignMessageValue(PropertyInfo propertyInfo, Object propertyValue, ArduinoMessage message)
     {
         switch (message.Type)
         {
@@ -148,6 +148,9 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
                 }
                 break;
         }
+
+        propertyInfo.SetValue(this, propertyValue);
+
         return true;
     }
     

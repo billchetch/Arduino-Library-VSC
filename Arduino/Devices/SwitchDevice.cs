@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
@@ -23,7 +24,7 @@ public class SwitchDevice : ArduinoDevice
     #endregion
 
     #region Properties
-    public override bool IsReady => base.IsReady && Mode != SwitchMode.NOT_SET;
+    public override bool IsReady => base.IsReady && modeAssigned;
     
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 1)]
     public SwitchMode Mode { get; internal set; } = SwitchMode.NOT_SET;
@@ -61,14 +62,44 @@ public class SwitchDevice : ArduinoDevice
 
     #region Fields
     bool pinState = false;
+    bool modeAssigned = false;
     #endregion
 
     #region Constructors
     public SwitchDevice(byte id, String sid, String? name = null) : base(id, sid, name)
-    {}
+    { }
     
     public SwitchDevice(String sid, String? name = null) : base(sid, name)
     {}
+
+    public SwitchDevice(String sid, SwitchMode mode, String? name = null) : this(sid, name)
+    {
+        Mode = mode;
+    }
+    #endregion
+
+    #region Messaging
+    public override bool AssignMessageValue(PropertyInfo propertyInfo, object propertyValue, ArduinoMessage message)
+    {
+        if (propertyInfo.Name == "Mode")
+        {
+            if (Mode == SwitchMode.NOT_SET || (SwitchMode)propertyValue == Mode)
+            {
+                base.AssignMessageValue(propertyInfo, propertyValue, message);
+                modeAssigned = true;
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            return base.AssignMessageValue(propertyInfo, propertyValue, message);
+        }
+
+    }
     #endregion
 
     #region Methods
@@ -78,6 +109,7 @@ public class SwitchDevice : ArduinoDevice
         if (!ready)
         {
             PinState = false; //return to orignal pin state
+            modeAssigned = false;
         }
     }
 
