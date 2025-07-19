@@ -13,7 +13,7 @@ public class ArduinoLocalSocketConnection : LocalSocketConnection, IConnection, 
 
     static public String SocketPathForBoard(ArduinoBoard board)
     {
-        return String.Format("/tmp/unix_socket_{0}", board.SID);
+        return SocketPathForBoard(board.SID);
     }
 
     public ArduinoLocalSocketConnection(string path) : base(path)
