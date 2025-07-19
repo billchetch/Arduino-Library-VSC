@@ -11,8 +11,19 @@ namespace Chetch.Arduino;
 
 public class ArduinoVirtualBoard
 {
-    #region Constants
+    #region Constants and Static methods
+
+    public static ArduinoMessage CreateExecuteRegimeMessage(String regimeName)
+    {
+        var message = new ArduinoMessage(MessageType.COMMAND);
+        message.Target = ArduinoBoard.DEFAULT_BOARD_ID;
+        message.Add(ArduinoDevice.DeviceCommand.TEST);
+        message.Add(regimeName);
+
+        return message;
+    }
     #endregion
+
 
     #region Classes and Enums
     public class Regime
@@ -94,7 +105,7 @@ public class ArduinoVirtualBoard
             xTask = Task.Run(() =>
             {
                 if (delay > 0) Thread.Sleep(delay);
-                
+
                 try
                 {
                     for (int i = 0; i <= RepeatCount; i++)
@@ -255,6 +266,7 @@ public class ArduinoVirtualBoard
             try
             {
                 Connection.SendData(bytes);
+                MessageSent?.Invoke(this, io.LastMessageDispatched);
             }
             catch (Exception e)
             {
@@ -370,6 +382,12 @@ public class ArduinoVirtualBoard
                     switch (cmd)
                     {
                         case ArduinoDevice.DeviceCommand.TEST:
+                            String testName = message.Get<String>(1);
+                            var regime = GetRegime(testName);
+                            if (regime != null)
+                            {
+                                regime.Execute();
+                            }
                             break;
 
                         default:
@@ -396,8 +414,14 @@ public class ArduinoVirtualBoard
                 response.Type = MessageType.STATUS_RESPONSE;
                 handled = HandleDeviceStatusRequest(message, response);
                 break;
+
+            case MessageType.COMMAND:
+                response.Type = MessageType.COMMAND_RESPONSE;
+                handled = true;
+                break;
         }
         response.Target = message.Target;
+        response.Sender = message.Sender;
         return handled;
     }
 

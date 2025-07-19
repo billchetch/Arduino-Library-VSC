@@ -2,7 +2,7 @@ using System;
 
 namespace Chetch.Arduino.Devices.Buzzers;
 
-public class Buzzer : SwitchDevice
+public class Buzzer : ActiveSwitch
 {
 
     #region Properties
@@ -15,7 +15,7 @@ public class Buzzer : SwitchDevice
     #endregion
 
     #region Constructors
-    public Buzzer(byte id, String sid, String? name = null) : base(id, sid, name)
+    public Buzzer(String sid, String? name = null) : base(sid, name)
     {
         silenceTimer.AutoReset = false;
         silenceTimer.Elapsed += (sender, eargs) => {
@@ -29,8 +29,6 @@ public class Buzzer : SwitchDevice
             }
         };
     }
-
-    public Buzzer(String sid, String? name = null) : this(0, sid, name) { }
     #endregion
 
     #region Methods
