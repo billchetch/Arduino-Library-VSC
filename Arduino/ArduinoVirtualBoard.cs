@@ -95,6 +95,9 @@ public class ArduinoVirtualBoard
 
     #region Properties
     public byte ID { get; set; } = ArduinoBoard.DEFAULT_BOARD_ID;
+
+    public String SID => String.Format("virtual-{0}", Board.SID);
+
     public bool IsListening => Connection != null && Connection.IsListening;
 
     public bool IsConnected => Connection != null && Connection.IsConnected;
