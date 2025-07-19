@@ -96,7 +96,10 @@ public class ArduinoVirtualBoard
     #region Properties
     public byte ID { get; set; } = ArduinoBoard.DEFAULT_BOARD_ID;
     public bool IsListening => Connection != null && Connection.IsListening;
-    public bool IsReady => IsListening && statusRequestReceived && statusResponseSent;
+
+    public bool IsConnected => Connection != null && Connection.IsConnected;
+
+    public bool IsReady => IsConnected && statusRequestReceived && statusResponseSent;
 
     public ArduinoBoard Board { get; internal set; }
 
@@ -392,9 +395,9 @@ public class ArduinoVirtualBoard
     
     public void SendMessage(ArduinoMessage message)
     {
-        if (!IsListening) //TODO: not reall the right logic here
+        if (!IsConnected)
         {
-            throw new Exception("Board connection is not yet listeining");
+            throw new Exception("Board is not connected");
         }
 
         if (message.Sender == ArduinoMessage.NO_SENDER)

@@ -6,6 +6,8 @@ public interface IConnectionListener
 {
     public bool IsListening { get; }
 
+    public bool IsConnected { get; }
+
 
     #region Events
     public event EventHandler<byte[]> DataReceived;
