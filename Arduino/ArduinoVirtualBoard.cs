@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using System.Xml;
 using Chetch.Arduino;
 using Chetch.Arduino.Connections;
@@ -37,6 +38,8 @@ public class ArduinoVirtualBoard
 
         public const int DEFAULT_DELAY = 100;
 
+        public event ErrorEventHandler? ExceptionThrown;
+
         public String Name { get; internal set; }
 
         public int DefaultDelay { get; set; } = DEFAULT_DELAY;
@@ -46,6 +49,12 @@ public class ArduinoVirtualBoard
         public bool StartOnReady { get; set; } = false;
 
         public List<RegimeItem> Items = new List<RegimeItem>();
+
+        public Action<ArduinoMessage>? SendMessage { get; set; }
+
+        Task xTask;
+
+        CancellationTokenSource ctTokenSource = new CancellationTokenSource();
 
         public Regime(String name, int defaultDelay = DEFAULT_DELAY, int repeatCount = 0)
         {
@@ -75,10 +84,54 @@ public class ArduinoVirtualBoard
 
             Items.Add(new RegimeItem(message));
         }
-
         public void AddDelay(int delay)
         {
             Items.Add(new RegimeItem(delay));
+        }
+
+        public void Execute(int delay = 0)
+        {
+            xTask = Task.Run(() =>
+            {
+                if (delay > 0) Thread.Sleep(delay);
+                
+                try
+                {
+                    for (int i = 0; i <= RepeatCount; i++)
+                    {
+                        foreach (var regimeItem in Items)
+                        {
+                            if (regimeItem.Message != null)
+                            {
+                                if (SendMessage != null)
+                                {
+                                    SendMessage(regimeItem.Message);
+                                }
+                            }
+                            else if (regimeItem.Delay > 0)
+                            {
+                                Thread.Sleep(regimeItem.Delay);
+                            }
+                            else if (DefaultDelay > 0)
+                            {
+                                Thread.Sleep(DefaultDelay);
+                            }
+                            if (ctTokenSource.Token.IsCancellationRequested) break;
+                        }
+                        if (ctTokenSource.Token.IsCancellationRequested) break;
+                    }
+                }
+                catch (Exception e)
+                {
+                    ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
+                }
+            }, ctTokenSource.Token);
+        }
+
+        public Task Cancel()
+        {
+            ctTokenSource.Cancel();
+            return xTask == null ? Task.CompletedTask : xTask;
         }
     }
     #endregion
@@ -86,9 +139,7 @@ public class ArduinoVirtualBoard
     #region Events
     public event EventHandler<ArduinoMessage>? MessageReceived;
     public event EventHandler<ArduinoMessage>? MessageSent;
-
     public event EventHandler<bool>? Ready;
-
     public event ErrorEventHandler? ExceptionThrown;
     
     #endregion
@@ -222,9 +273,12 @@ public class ArduinoVirtualBoard
         Connection.StartListening();
     }
 
-    public void End()
+    public async Task End()
     {
-        regimeTokenSource?.Cancel();
+        foreach (var regime in regimes)
+        {
+            await regime.Cancel();
+        }
         Connection?.StopListening();
         io.Stop();
     }
@@ -258,14 +312,16 @@ public class ArduinoVirtualBoard
             {
                 if (reg.StartOnReady)
                 {
-                    executeRegime(reg);
+                    reg.Execute(2000);
                 }
             }
         }
     }
-    
+
     public void AddRegime(Regime regime)
     {
+        regime.SendMessage = SendMessage;
+        regime.ExceptionThrown += ExceptionThrown;
         regimes.Add(regime);
     }
 
@@ -283,41 +339,6 @@ public class ArduinoVirtualBoard
             }
         }
         throw new Exception(String.Format("Cannot find regime with name {0}", regimeName));
-    }
-
-    private void executeRegime(Regime regime)
-    {
-        Task.Run(() =>
-        {
-            Thread.Sleep(1000);
-            for (int i = 0; i <= regime.RepeatCount; i++)
-            {
-                foreach (var regimeItem in regime.Items)
-                {
-                    try
-                    {
-                        if (regimeItem.Message != null)
-                        {
-                            SendMessage(regimeItem.Message);
-                        }
-                        else if (regimeItem.Delay > 0)
-                        {
-                            Thread.Sleep(regimeItem.Delay);
-                        }
-                        else if (regime.DefaultDelay > 0)
-                        {
-                            Thread.Sleep(regime.DefaultDelay);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
-                    }
-                    if (regimeTokenSource.Token.IsCancellationRequested) break;
-                }
-                if (regimeTokenSource.Token.IsCancellationRequested) break;
-            }
-        }, regimeTokenSource.Token);
     }
 
     virtual protected bool HandleMessageReceived(ArduinoMessage message, ArduinoMessage response)
