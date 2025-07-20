@@ -6,6 +6,7 @@ using Chetch.Arduino.Connections;
 using Chetch.Messaging;
 using Chetch.Utilities;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using XmppDotNet.Xmpp.Jingle;
 
 namespace Chetch.Arduino;
 
@@ -17,10 +18,16 @@ public class ArduinoVirtualBoard
     {
         var message = new ArduinoMessage(MessageType.COMMAND);
         message.Target = ArduinoBoard.DEFAULT_BOARD_ID;
-        message.Add(ArduinoDevice.DeviceCommand.TEST);
+        message.Add(ArduinoBoard.BoardCommand.BEGIN_TEST);
         message.Add(regimeName);
 
         return message;
+    }
+
+    public static void BeginRegime(ArduinoBoard board, String regimeName)
+    {
+        var message = CreateExecuteRegimeMessage(regimeName);
+        board.SendMessage(message);
     }
     #endregion
 
@@ -28,6 +35,13 @@ public class ArduinoVirtualBoard
     #region Classes and Enums
     public class Regime
     {
+        public enum RegimeEvent
+        {
+            EXECUTION_BEGUN = 1,
+            EXECUTION_ENDED,
+            EXECUTION_CANCELLED
+        }
+
         public class RegimeItem
         {
             public ArduinoMessage? Message { get; internal set; }
@@ -50,6 +64,7 @@ public class ArduinoVirtualBoard
         public const int DEFAULT_DELAY = 100;
 
         public event ErrorEventHandler? ExceptionThrown;
+        public event EventHandler<RegimeEvent>? ExecutionChanged;
 
         public String Name { get; internal set; }
 
@@ -106,6 +121,7 @@ public class ArduinoVirtualBoard
             {
                 if (delay > 0) Thread.Sleep(delay);
 
+                ExecutionChanged?.Invoke(this, RegimeEvent.EXECUTION_BEGUN);
                 try
                 {
                     for (int i = 0; i <= RepeatCount; i++)
@@ -137,12 +153,22 @@ public class ArduinoVirtualBoard
                     ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
                 }
             }, ctTokenSource.Token);
+
+            ExecutionChanged?.Invoke(this, RegimeEvent.EXECUTION_ENDED);
         }
 
         public Task Cancel()
         {
             ctTokenSource.Cancel();
-            return xTask == null ? Task.CompletedTask : xTask;
+            if (xTask != null)
+            {
+                ExecutionChanged?.Invoke(this, RegimeEvent.EXECUTION_CANCELLED);
+                return xTask;
+            }
+            else
+            {
+                return Task.CompletedTask;
+            }
         }
     }
     #endregion
@@ -334,6 +360,25 @@ public class ArduinoVirtualBoard
     {
         regime.SendMessage = SendMessage;
         regime.ExceptionThrown += ExceptionThrown;
+        regime.ExecutionChanged += (sender, regimeEvent) =>
+        {
+            var msg = new ArduinoMessage(MessageType.NOTIFICATION);
+            switch (regimeEvent)
+            {
+                case Regime.RegimeEvent.EXECUTION_BEGUN:
+                    msg.Add(ArduinoBoard.NotificationEvent.TEST_BEGUN);
+                    break;
+                case Regime.RegimeEvent.EXECUTION_ENDED:
+                    msg.Add(ArduinoBoard.NotificationEvent.TEST_ENDED);
+                    break;
+
+                case Regime.RegimeEvent.EXECUTION_CANCELLED:
+                    msg.Add(ArduinoBoard.NotificationEvent.TEST_CANCELLED);
+                    break;
+            }
+            msg.Add(regime.Name);
+            SendMessage(msg);
+        };
         regimes.Add(regime);
     }
 
@@ -378,10 +423,10 @@ public class ArduinoVirtualBoard
 
                 case MessageType.COMMAND:
                     response.Type = MessageType.COMMAND_RESPONSE;
-                    var cmd = message.Get<ArduinoDevice.DeviceCommand>(0);
+                    var cmd = message.Get<ArduinoBoard.BoardCommand>(0);
                     switch (cmd)
                     {
-                        case ArduinoDevice.DeviceCommand.TEST:
+                        case ArduinoBoard.BoardCommand.BEGIN_TEST:
                             String testName = message.Get<String>(1);
                             var regime = GetRegime(testName);
                             if (regime != null)

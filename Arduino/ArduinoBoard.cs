@@ -39,6 +39,21 @@ public class ArduinoBoard : IMessageUpdatableObject
         }
     }
 
+    public class NotificationEventArgs
+    {
+        public NotificationEvent Event = NotificationEvent.UNKNOWN;
+
+        public ArduinoMessage? Message;
+        public Object? Source;
+
+        public NotificationEventArgs(NotificationEvent eventID, ArduinoMessage message, Object source)
+        {
+            Event = eventID;
+            Message = message;
+            Source = source;
+        }
+    }
+
     public enum ErrorCode
     {
         NO_ERROR = 0,
@@ -54,6 +69,21 @@ public class ArduinoBoard : IMessageUpdatableObject
         DEVICE_NOT_FOUND = 43,
         DEVICE_ERROR = 100, //To indicate this is an error from the device (not Board)
     }
+
+    public enum NotificationEvent
+    {
+        UNKNOWN = 0,
+        TEST_BEGUN,
+        TEST_ENDED,
+        TEST_CANCELLED,
+    }
+
+    public enum BoardCommand
+    {
+        NONE = 0,
+        BEGIN_TEST,
+        END_TEST,
+    }
     #endregion
 
     #region Events
@@ -61,6 +91,7 @@ public class ArduinoBoard : IMessageUpdatableObject
     public event EventHandler<ArduinoMessage>? MessageReceived;
     public event EventHandler<ArduinoMessage>? MessageSent;
     public event EventHandler<ErrorEventArgs>? ErrorReceived;
+    public event EventHandler<NotificationEventArgs>? NotificationReceived;
     public event ErrorEventHandler? ExceptionThrown;
     #endregion
 
@@ -187,7 +218,11 @@ public class ArduinoBoard : IMessageUpdatableObject
             {
                 try
                 {
-                    OnMessageReceived(message); //this will route the message
+                    //this will route the message
+                    if (!OnMessageReceived(message))
+                    {
+                        //TODO: if here means the message has not been processed
+                    } 
                 }
                 catch (Exception e)
                 {
@@ -316,8 +351,8 @@ public class ArduinoBoard : IMessageUpdatableObject
     /// Handles message routing
     /// </summary>
     /// <param name="message">The messaget to be routed.</param>
-    /// <returns>void</returns>
-    protected void OnMessageReceived(ArduinoMessage message)
+    /// <returns>bool</returns>
+    protected bool OnMessageReceived(ArduinoMessage message)
     {
         bool handled = false;
         ArduinoMessageMap.UpdatedProperties updatedProperties = new ArduinoMessageMap.UpdatedProperties();
@@ -331,15 +366,13 @@ public class ArduinoBoard : IMessageUpdatableObject
             default:
                 if (message.Target == ID)
                 {
+                    //Direct messages for this board
                     updatedProperties = HandleMessage(message);
-                    if (message.Type == MessageType.ERROR)
-                    {
-                        ErrorReceived?.Invoke(this, new ErrorEventArgs(Error, message, this));
-                    }
                     handled = true;
                 }
                 else if (HasDevice(message.Target))
                 {
+                    //Direct message to device
                     var dev = GetDevice(message.Target);
                     if (dev.IsReady || (message.Type == MessageType.STATUS_RESPONSE && dev.StatusRequested) || (message.Type == MessageType.ERROR))
                     {
@@ -364,6 +397,7 @@ public class ArduinoBoard : IMessageUpdatableObject
         {
             MessageReceived?.Invoke(this, message);
         }
+        return handled;
     }
 
     /// <summary>
@@ -387,9 +421,29 @@ public class ArduinoBoard : IMessageUpdatableObject
                 }
                 return updatedProperties;
 
+            case MessageType.ERROR:
+                updatedProperties = ArduinoMessageMap.AssignMessageValues(this, message);
+                ErrorReceived?.Invoke(this, new ErrorEventArgs(Error, message, this));    
+                return updatedProperties;
+
+            case MessageType.NOTIFICATION:
+                updatedProperties = ArduinoMessageMap.AssignMessageValues(this, message);
+                var notificationEvent = message.Get<NotificationEvent>(0);
+                if (HandleNotification(notificationEvent, message))
+                {
+                    NotificationReceived?.Invoke(this, new NotificationEventArgs(notificationEvent, message, this));
+                }
+                return updatedProperties;
+
             default:
                 return ArduinoMessageMap.AssignMessageValues(this, message);
         }
+    }
+
+    virtual public bool HandleNotification(NotificationEvent notificationEvent, ArduinoMessage message)
+    {
+        //A hook
+        return true;
     }
 
     public void SendMessage(ArduinoMessage message)
