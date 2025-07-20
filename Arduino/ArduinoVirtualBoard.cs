@@ -404,6 +404,12 @@ public class ArduinoVirtualBoard
         throw new Exception(String.Format("Cannot find regime with name {0}", regimeName));
     }
 
+    //TODO: Add search options if required
+    public List<Regime> GetRegimes()
+    {
+        return regimes;
+    }
+
     public bool RegimeExists(String regime)
     {
         return GetRegime(regime) != null;
