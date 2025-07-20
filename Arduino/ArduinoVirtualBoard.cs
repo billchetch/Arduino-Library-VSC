@@ -442,6 +442,7 @@ public class ArduinoVirtualBoard
                             {
                                 regime.Execute();
                             }
+                            handled = true;
                             break;
 
                         default:
