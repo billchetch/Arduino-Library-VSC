@@ -404,6 +404,19 @@ public class ArduinoVirtualBoard
         throw new Exception(String.Format("Cannot find regime with name {0}", regimeName));
     }
 
+    public bool RegimeExists(String regime)
+    {
+        return GetRegime(regime) != null;
+    }
+
+    public void ExecuteRegime(String regimeName, int delay = 0)
+    {
+        var regime = GetRegime(regimeName);
+        if (regime != null)
+        {
+            regime.Execute(delay); 
+        }
+    }
     #endregion
 
     #region Messaging
@@ -437,10 +450,9 @@ public class ArduinoVirtualBoard
                     {
                         case ArduinoBoard.BoardCommand.BEGIN_TEST:
                             String testName = message.Get<String>(1);
-                            var regime = GetRegime(testName);
-                            if (regime != null)
+                            if (RegimeExists(testName))
                             {
-                                regime.Execute();
+                                ExecuteRegime(testName);
                             }
                             handled = true;
                             break;
