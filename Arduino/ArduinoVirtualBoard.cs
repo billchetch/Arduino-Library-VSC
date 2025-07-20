@@ -32,7 +32,6 @@ public class ArduinoVirtualBoard
     }
     #endregion
 
-
     #region Classes and Enums
     public class Regime
     {
@@ -115,7 +114,6 @@ public class ArduinoVirtualBoard
         {
             Items.Add(new RegimeItem(delay));
         }
-
         public void Execute(int delay = 0)
         {
             xTask = Task.Run(() =>
@@ -153,9 +151,9 @@ public class ArduinoVirtualBoard
                 {
                     ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
                 }
+                ExecutionChanged?.Invoke(this, RegimeEvent.EXECUTION_ENDED);
             }, ctTokenSource.Token);
 
-            ExecutionChanged?.Invoke(this, RegimeEvent.EXECUTION_ENDED);
         }
 
         public Task Cancel()
