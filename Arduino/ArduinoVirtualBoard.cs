@@ -472,7 +472,7 @@ public class ArduinoVirtualBoard
 
             case MessageType.COMMAND:
                 response.Type = MessageType.COMMAND_RESPONSE;
-                handled = true;
+                handled = HandleDeviceCommand(message, response);
                 break;
         }
         response.Target = message.Target;
@@ -493,6 +493,21 @@ public class ArduinoVirtualBoard
             ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
         }
 
+        return true;
+    }
+
+    virtual protected bool HandleDeviceCommand(ArduinoMessage message, ArduinoMessage response)
+    {
+        try
+        {
+            var device = Board.GetDevice(message.Target);
+            var msg = ArduinoMessageMap.CreateMessageFor(device, MessageType.COMMAND_RESPONSE);
+            response.Arguments.AddRange(msg.Arguments);
+        }
+        catch (Exception e)
+        {
+            ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
+        }
         return true;
     }
 
