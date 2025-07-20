@@ -27,6 +27,7 @@ public class ArduinoVirtualBoard
     public static void BeginRegime(ArduinoBoard board, String regimeName)
     {
         var message = CreateExecuteRegimeMessage(regimeName);
+        message.Target = board.ID;
         board.SendMessage(message);
     }
     #endregion
@@ -178,7 +179,7 @@ public class ArduinoVirtualBoard
     public event EventHandler<ArduinoMessage>? MessageSent;
     public event EventHandler<bool>? Ready;
     public event ErrorEventHandler? ExceptionThrown;
-    
+
     #endregion
 
     #region Properties
@@ -261,8 +262,10 @@ public class ArduinoVirtualBoard
     CancellationTokenSource regimeTokenSource = new CancellationTokenSource();
     #endregion
 
+    #region Constructors
     public ArduinoVirtualBoard(ArduinoBoard board)
     {
+        ID = board.ID;
         Board = board;
         io.ExceptionThrown += ExceptionThrown;
         io.MessageReceived += (sender, message) =>
@@ -300,7 +303,9 @@ public class ArduinoVirtualBoard
             }
         };
     }
+    #endregion
 
+    #region Lifecycle
     public void Begin()
     {
         if (Connection == null)
@@ -355,7 +360,9 @@ public class ArduinoVirtualBoard
             }
         }
     }
+    #endregion
 
+    #region Test Regimes
     public void AddRegime(Regime regime)
     {
         regime.SendMessage = SendMessage;
@@ -363,6 +370,7 @@ public class ArduinoVirtualBoard
         regime.ExecutionChanged += (sender, regimeEvent) =>
         {
             var msg = new ArduinoMessage(MessageType.NOTIFICATION);
+            msg.Target = ID;
             switch (regimeEvent)
             {
                 case Regime.RegimeEvent.EXECUTION_BEGUN:
@@ -398,6 +406,9 @@ public class ArduinoVirtualBoard
         throw new Exception(String.Format("Cannot find regime with name {0}", regimeName));
     }
 
+    #endregion
+
+    #region Messaging
     virtual protected bool HandleMessageReceived(ArduinoMessage message, ArduinoMessage response)
     {
         bool handled = false;
@@ -482,10 +493,10 @@ public class ArduinoVirtualBoard
         {
             ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
         }
-        
+
         return true;
     }
-    
+
     public void SendMessage(ArduinoMessage message)
     {
         if (!IsConnected)
@@ -502,4 +513,5 @@ public class ArduinoVirtualBoard
         //See (io configuration in Begin method above)
         io.Add(message);
     }
+    #endregion
 }
