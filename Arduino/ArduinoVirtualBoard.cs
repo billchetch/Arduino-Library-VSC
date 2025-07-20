@@ -114,7 +114,7 @@ public class ArduinoVirtualBoard
         {
             Items.Add(new RegimeItem(delay));
         }
-        public void Execute(int delay = 0)
+        public Task Execute(int delay = 0)
         {
             xTask = Task.Run(() =>
             {
@@ -153,7 +153,7 @@ public class ArduinoVirtualBoard
                 }
                 ExecutionChanged?.Invoke(this, RegimeEvent.EXECUTION_ENDED);
             }, ctTokenSource.Token);
-
+            return xTask;
         }
 
         public Task Cancel()
