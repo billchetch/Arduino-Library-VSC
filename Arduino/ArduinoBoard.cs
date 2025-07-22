@@ -9,7 +9,6 @@ namespace Chetch.Arduino;
 
 public class ArduinoBoard : IMessageUpdatableObject
 {
-
     #region Constants
     public const byte DEFAULT_BOARD_ID = 1;
 

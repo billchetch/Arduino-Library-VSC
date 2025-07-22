@@ -124,10 +124,9 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
 
     public ArduinoDevice(String sid, String? name = null) : this(0, sid, name)
     {}
-
     #endregion
 
-    #region Methods
+    #region Lifecycle
     public virtual void OnReady(bool ready)
     {
         Ready?.Invoke(this, IsReady);
