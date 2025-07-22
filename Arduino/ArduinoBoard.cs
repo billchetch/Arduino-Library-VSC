@@ -278,7 +278,7 @@ public class ArduinoBoard : IMessageUpdatableObject
     /// </summary>
     /// <param name="connected"></param>
     /// <exception cref="Exception"></exception>
-    protected void OnConnected(bool connected)
+    virtual protected void OnConnected(bool connected)
     {
         if (Connection == null)
         {
@@ -325,7 +325,7 @@ public class ArduinoBoard : IMessageUpdatableObject
         }
     }
 
-    protected void OnReady()
+    virtual protected void OnReady()
     {
         Ready?.Invoke(this, IsReady);
         if (IsReady)
