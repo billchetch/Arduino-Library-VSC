@@ -244,7 +244,7 @@ public class ArduinoVirtualBoard
 
     public String Name { get; set; } = "Virtual";
 
-    public byte DeviceCount => 0;
+    public byte DeviceCount => (byte)Board.DeviceCount;
     #endregion
 
     #region Fields
