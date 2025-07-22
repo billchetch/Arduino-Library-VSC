@@ -198,7 +198,6 @@ public class ArduinoBoard : IMessageUpdatableObject
         //Configure request status timer, this effectively pings the board if no message has been
         //received for some period .. starts based on board being ready or not (see OnReady)
         requestStatusTimer.AutoReset = true;
-        requestStatusTimer.Interval = RequestStatusTimerInterval * 1000;
         requestStatusTimer.Elapsed += (sender, eargs) =>
         {
             if (IsReady && io.LastMessageReceived.Created != default && (DateTime.Now - io.LastMessageReceived.Created).TotalSeconds > REQUEST_STATUS_TIMER_INTERVAL)
@@ -332,6 +331,7 @@ public class ArduinoBoard : IMessageUpdatableObject
         Ready?.Invoke(this, IsReady);
         if (IsReady)
         {
+            requestStatusTimer.Interval = RequestStatusTimerInterval * 1000;
             requestStatusTimer.Start();
         }
         else
