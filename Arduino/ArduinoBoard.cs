@@ -169,8 +169,6 @@ public class ArduinoBoard : IMessageUpdatableObject
     [ArduinoMessageMap(MessageType.STATUS_RESPONSE, 3)]
     public int FreeMemory { get; internal set; } = -1;
 
-    public int RequestStatusTimerInterval { get; set; } = REQUEST_STATUS_TIMER_INTERVAL;
-
     public String StatusSummary => IsReady ? String.Format("Board: {0}, Memory: {1}, Devices: {2}", Name, FreeMemory, DeviceCount) : "Not Ready";
 
     public String MessageSummary => IsReady && io.LastMessageReceived != null ? String.Format("Received: {0} {1}s ago", io.LastMessageReceived.Type, Math.Round((DateTime.Now - io.LastMessageReceived.Created).TotalSeconds, 1)) : "No messages received";
@@ -198,9 +196,10 @@ public class ArduinoBoard : IMessageUpdatableObject
         //Configure request status timer, this effectively pings the board if no message has been
         //received for some period .. starts based on board being ready or not (see OnReady)
         requestStatusTimer.AutoReset = true;
+        requestStatusTimer.Interval = REQUEST_STATUS_TIMER_INTERVAL * 1000;
         requestStatusTimer.Elapsed += (sender, eargs) =>
         {
-            if (IsReady && io.LastMessageReceived.Created != default && (DateTime.Now - io.LastMessageReceived.Created).TotalSeconds > RequestStatusTimerInterval)
+            if (IsReady && io.LastMessageReceived.Created != default && (DateTime.Now - io.LastMessageReceived.Created).TotalSeconds > REQUEST_STATUS_TIMER_INTERVAL)
             {
                 try
                 {
@@ -331,7 +330,6 @@ public class ArduinoBoard : IMessageUpdatableObject
         Ready?.Invoke(this, IsReady);
         if (IsReady)
         {
-            requestStatusTimer.Interval = RequestStatusTimerInterval * 1000;
             requestStatusTimer.Start();
         }
         else
