@@ -200,7 +200,7 @@ public class ArduinoBoard : IMessageUpdatableObject
         requestStatusTimer.AutoReset = true;
         requestStatusTimer.Elapsed += (sender, eargs) =>
         {
-            if (IsReady && io.LastMessageReceived.Created != default && (DateTime.Now - io.LastMessageReceived.Created).TotalSeconds > REQUEST_STATUS_TIMER_INTERVAL)
+            if (IsReady && io.LastMessageReceived.Created != default && (DateTime.Now - io.LastMessageReceived.Created).TotalSeconds > RequestStatusTimerInterval)
             {
                 try
                 {
