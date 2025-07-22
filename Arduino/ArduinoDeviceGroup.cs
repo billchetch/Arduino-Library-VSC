@@ -4,6 +4,11 @@ using Microsoft.EntityFrameworkCore.Storage.Json;
 
 namespace Chetch.Arduino;
 
+/// <summary>
+/// Collection class for related arduino devices.  
+/// There is no equipvalent on the actual arduino board.
+/// This is purely a programging convenience
+/// </summary>
 public class ArduinoDeviceGroup : ICollection<ArduinoDevice>
 {
 
@@ -34,24 +39,24 @@ public class ArduinoDeviceGroup : ICollection<ArduinoDevice>
         Name = name;
     }
 
-    public ArduinoDeviceGroup(){}
+    public ArduinoDeviceGroup() { }
     #endregion
 
     #region Collection methods
     public ArduinoDevice Get(String sid)
     {
-        foreach(var dev in this)
+        foreach (var dev in this)
         {
-            if(dev.SID.Equals(sid))return dev;
+            if (dev.SID.Equals(sid)) return dev;
         }
         throw new Exception(String.Format("Cannot find device with string ID {0}", sid));
     }
 
-     public ArduinoDevice Get(byte id)
+    public ArduinoDevice Get(byte id)
     {
-        foreach(var dev in this)
+        foreach (var dev in this)
         {
-            if(dev.ID == id)return dev;
+            if (dev.ID == id) return dev;
         }
         throw new Exception(String.Format("Cannot find device with ID {0}", id));
     }
@@ -59,20 +64,21 @@ public class ArduinoDeviceGroup : ICollection<ArduinoDevice>
     virtual public void Add(ArduinoDevice device)
     {
         devices.Add(device);
-        device.Ready += (sender, ready) => {
+        device.Ready += (sender, ready) =>
+        {
             //Console.WriteLine("Device {0} fired Ready Event, ready: {1}", device.SID, ready);
-            if(!ready && deviceReadyCount <= 0)
+            if (!ready && deviceReadyCount <= 0)
             {
                 throw new Exception("Unexpected trigger of device ready");
             }
-            if(deviceReadyCount >= Count && ready)
+            if (deviceReadyCount >= Count && ready)
             {
                 throw new Exception("Unexpected trigger of device ready");
             }
 
             bool prevReady = IsReady;
             deviceReadyCount += ready ? 1 : -1;
-            if(prevReady != IsReady)
+            if (prevReady != IsReady)
             {
                 Ready?.Invoke(this, IsReady);
             }
@@ -96,7 +102,7 @@ public class ArduinoDeviceGroup : ICollection<ArduinoDevice>
 
     public IEnumerator<ArduinoDevice> GetEnumerator()
     {
-       return devices.GetEnumerator();
+        return devices.GetEnumerator();
     }
 
     public bool Remove(ArduinoDevice device)
@@ -113,7 +119,7 @@ public class ArduinoDeviceGroup : ICollection<ArduinoDevice>
     #region Messaging
     public void RequestStatus()
     {
-        foreach(var d in this)
+        foreach (var d in this)
         {
             d.RequestStatus();
         }

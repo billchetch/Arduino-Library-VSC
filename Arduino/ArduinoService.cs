@@ -8,6 +8,11 @@ using Microsoft.Extensions.Logging;
 
 namespace Chetch.Arduino;
 
+/// <summary>
+/// A Chetch XMPP service (i.e. a service with a ChetchXMPP connection) containing one
+/// or more Arduino boards.  Manages the boards configuration and the lifecycle 
+/// </summary>
+/// <typeparam name="T"></typeparam>
 public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T>
 {
     #region Constants
@@ -15,7 +20,7 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
     public const String COMMAND_LIST_BOARDS = "list-boards";
     #endregion
 
-     #region Fields
+    #region Fields
     List<ArduinoBoard> boards = new List<ArduinoBoard>();
     #endregion
 
@@ -30,9 +35,9 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
     protected void AddBoard(ArduinoBoard board)
     {
         //check no name conflicts
-        foreach(var b in boards)
+        foreach (var b in boards)
         {
-            if(b.SID == board.SID)
+            if (b.SID == board.SID)
             {
                 throw new Exception("Board string IDs must be unique");
             }
@@ -40,7 +45,7 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
 
         //Get connection info
         var boardConfig = Config.GetSection(ARDUINO_CONFIG_SECTION).GetSection(board.SID);
-        if(!boardConfig.Exists())
+        if (!boardConfig.Exists())
         {
             throw new Exception(String.Format("No config found for board {0}", board.SID));
         }
@@ -48,7 +53,7 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
         {
             //Do the conneciton shiii here
             var cnnConfig = boardConfig.GetSection("Connection");
-            if(!cnnConfig.Exists())
+            if (!cnnConfig.Exists())
             {
                 throw new Exception(String.Format("No connection config found for board {0}", board.SID));
             }
@@ -59,16 +64,16 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
             }
             var useCnnConfig = cnnConfig.GetSection(useCnnType);
             IConnection cnn;
-            switch(useCnnType.ToUpper())
+            switch (useCnnType.ToUpper())
             {
                 case "SERIAL":
 
                     var path2device = useCnnConfig["PathToDevice"];
-                    if(path2device == null)
+                    if (path2device == null)
                     {
                         throw new Exception(String.Format("Cannot find path to device in board {0} configuration", board.SID));
                     }
-                    if(String.IsNullOrEmpty(useCnnConfig["BaudRate"]))
+                    if (String.IsNullOrEmpty(useCnnConfig["BaudRate"]))
                     {
                         throw new Exception(String.Format("Cannot find baud rate in board {0} configuration", board.SID));
                     }
@@ -79,7 +84,7 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
                 case "LOCAL_SOCKET":
                 case "LOCALSOCKET":
                     var path = useCnnConfig["Path"];
-                    if(path == null)
+                    if (path == null)
                     {
                         path = ArduinoLocalSocketConnection.SocketPathForBoard(board);
                     }
@@ -93,8 +98,9 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
         }
 
         //Add EventHandler to send  out a message when the board is ready
-        board.Ready += (sender, ready) => {
-            if(ServiceConnected)
+        board.Ready += (sender, ready) =>
+        {
+            if (ServiceConnected)
             {
                 var msg = new Message(MessageType.NOTIFICATION);
                 msg.AddValue("Board", board.SID);
@@ -104,11 +110,13 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
         };
 
         //Handle errors either thrown or generated from the board by just logging them
-        board.ErrorReceived += (sender, errorArgs) => {
+        board.ErrorReceived += (sender, errorArgs) =>
+        {
             Logger.LogError("Arduino Error Message received.. Code: {0}, Source: {1}", errorArgs.Error, errorArgs.ErrorSource);
         };
 
-        board.ExceptionThrown += (sender, errorArgs) => {
+        board.ExceptionThrown += (sender, errorArgs) =>
+        {
             Logger.LogError(errorArgs.GetException(), errorArgs.GetException().Message);
         };
 
@@ -122,14 +130,14 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
     {
         try
         {
-            foreach(var board in boards)
+            foreach (var board in boards)
             {
                 board.Begin();
             }
-        } 
+        }
         catch (Exception e)
         {
-             Logger.LogError(e, e.Message);
+            Logger.LogError(e, e.Message);
         }
 
         return base.Execute(stoppingToken);
@@ -137,8 +145,8 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
 
     public override Task StopAsync(CancellationToken cancellationToken)
     {
-        
-        foreach(var board in boards)
+
+        foreach (var board in boards)
         {
             try
             {

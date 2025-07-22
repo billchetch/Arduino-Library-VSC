@@ -10,7 +10,7 @@ using Chetch.Utilities;
 namespace Chetch.Arduino;
 
 /// <summary>
-/// Messages sent to board
+/// Messages sent to and received from board
 /// </summary>
 public class ArduinoMessage : IMessageQueueItem<ArduinoMessage>
 {
@@ -19,6 +19,7 @@ public class ArduinoMessage : IMessageQueueItem<ArduinoMessage>
     public const byte NO_SENDER = 0;
     #endregion
 
+    #region Static methods
     static public ArduinoMessage Deserialize(byte[] bytes, MessageEncoding encoding)
     {
         var msg = new ArduinoMessage();
@@ -30,7 +31,9 @@ public class ArduinoMessage : IMessageQueueItem<ArduinoMessage>
     {
         return message.Serialize();
     }
+    #endregion
 
+    #region Properties
     public MessageType Type { get; set; }
     public byte Tag { get; set; } = 0; //can be used to track messages
     public byte Target { get; set; } = 0; //ID number on board to determine what is beig targeted
@@ -49,7 +52,9 @@ public class ArduinoMessage : IMessageQueueItem<ArduinoMessage>
     public bool IsInitRelated => Type == MessageType.INITIALISE || Type == MessageType.INITIALISE_RESPONSE;
 
     public DateTime Created { get; internal set; }
+    #endregion
 
+    #region Constructors
     public ArduinoMessage()
     {
         Created = DateTime.Now;
@@ -59,7 +64,9 @@ public class ArduinoMessage : IMessageQueueItem<ArduinoMessage>
         Type = type;
         Created = DateTime.Now;
     }
+    #endregion
 
+    #region Get Value Methods
     public dynamic Get(int idx, Type? type = null)
     {
         if (type == null) type = typeof(Object);
@@ -81,7 +88,9 @@ public class ArduinoMessage : IMessageQueueItem<ArduinoMessage>
     {
         return Get<T>(Arguments.Count - 1);
     }
+    #endregion
 
+    #region Set/Add value methods
     public void Add(byte[] bytes, int idx = -1)
     {
         if (idx == -1)
@@ -165,6 +174,9 @@ public class ArduinoMessage : IMessageQueueItem<ArduinoMessage>
         var bytes = Chetch.Utilities.Convert.ToBytes(arg);
         Add(bytes, idx);
     }
+    #endregion
+
+    #region Serialization methods
     public void WriteBytes(List<byte> bytes)
     {
 
@@ -236,5 +248,6 @@ public class ArduinoMessage : IMessageQueueItem<ArduinoMessage>
             bytesTotal += length;
         }
     }
+    #endregion
 }
 
