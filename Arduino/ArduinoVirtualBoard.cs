@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using System.Threading.Tasks;
 using System.Xml;
 using Chetch.Arduino;
@@ -44,19 +45,28 @@ public class ArduinoVirtualBoard
 
         public class RegimeItem
         {
-            public ArduinoMessage? Message { get; internal set; }
+            public MessageType MessageType { get; internal set; } = MessageType.NOT_SET;
 
             public int Delay { get; internal set; } = 0;
 
-            public RegimeItem(ArduinoMessage message)
+            public ArduinoDevice? Device { get; internal set;  }
+
+            public String? PropertyName { get; internal set;  }
+
+            public Object? PropertyValue { get; internal set;  }
+
+            public RegimeItem(ArduinoDevice device, MessageType messageType, String? propertyName = null, Object? propertyValue = null)
             {
-                Message = message;
+                Device = device;
+                MessageType = messageType;
                 Delay = 0;
+                PropertyName = propertyName;
+                PropertyValue = propertyValue;
             }
 
             public RegimeItem(int delay)
             {
-                Message = null;
+                Device = null;
                 Delay = delay;
             }
         }
@@ -78,7 +88,7 @@ public class ArduinoVirtualBoard
 
         public Action<ArduinoMessage>? SendMessage { get; set; }
 
-        Task xTask;
+        Task? xTask;
 
         CancellationTokenSource ctTokenSource = new CancellationTokenSource();
 
@@ -89,26 +99,10 @@ public class ArduinoVirtualBoard
             RepeatCount = repeatCount;
         }
 
-        public void AddMessage(byte target, MessageType messageType, params Object[] args)
+        public void AddMessage(ArduinoDevice device, MessageType messageType, String? propertyName = null, Object? propertyValue = null)
         {
-            var message = new ArduinoMessage(messageType);
-            message.Target = target;
-            message.Sender = target;
-
-            foreach (var arg in args)
-            {
-                message.Add(arg);
-            }
-            Items.Add(new RegimeItem(message));
-        }
-
-        public void AddMessage(ArduinoDevice device, MessageType messageType, String? propName = null, Object? propVal = null)
-        {
-            var message = ArduinoMessageMap.CreateMessageFor(device, messageType, propName, propVal);
-            message.Target = device.ID;
-            message.Sender = device.ID;
-
-            Items.Add(new RegimeItem(message));
+            
+            Items.Add(new RegimeItem(device, messageType, propertyName, propertyValue));
         }
         public void AddDelay(int delay)
         {
@@ -127,11 +121,19 @@ public class ArduinoVirtualBoard
                     {
                         foreach (var regimeItem in Items)
                         {
-                            if (regimeItem.Message != null)
+                            if (regimeItem.Device != null)
                             {
-                                if (SendMessage != null)
+                                if (SendMessage != null && regimeItem.PropertyName != null)
                                 {
-                                    SendMessage(regimeItem.Message);
+
+                                    var propInfo = regimeItem.Device.GetType().GetProperty(regimeItem.PropertyName);
+                                    propInfo.SetValue(regimeItem.Device, regimeItem.PropertyValue);
+
+                                    var message = ArduinoMessageMap.CreateMessageFor(regimeItem.Device, regimeItem.MessageType);
+                                    message.Target = regimeItem.Device.ID;
+                                    message.Sender = regimeItem.Device.ID;
+
+                                    SendMessage(message);
                                 }
                             }
                             else if (regimeItem.Delay > 0)
