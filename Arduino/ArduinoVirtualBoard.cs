@@ -100,8 +100,7 @@ public class ArduinoVirtualBoard
         }
 
         public void AddMessage(ArduinoDevice device, MessageType messageType, String? propertyName = null, Object? propertyValue = null)
-        {
-            
+        {   
             Items.Add(new RegimeItem(device, messageType, propertyName, propertyValue));
         }
         public void AddDelay(int delay)
