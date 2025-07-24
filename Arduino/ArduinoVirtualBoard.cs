@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using System.Xml;
 using Chetch.Arduino;
 using Chetch.Arduino.Connections;
+using Chetch.Arduino.Devices;
 using Chetch.Messaging;
 using Chetch.Utilities;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
@@ -49,11 +50,11 @@ public class ArduinoVirtualBoard
 
             public int Delay { get; internal set; } = 0;
 
-            public ArduinoDevice? Device { get; internal set;  }
+            public ArduinoDevice? Device { get; internal set; }
 
-            public String? PropertyName { get; internal set;  }
+            public String? PropertyName { get; internal set; }
 
-            public Object? PropertyValue { get; internal set;  }
+            public Object? PropertyValue { get; internal set; }
 
             public RegimeItem(ArduinoDevice device, MessageType messageType, String? propertyName = null, Object? propertyValue = null)
             {
@@ -100,7 +101,7 @@ public class ArduinoVirtualBoard
         }
 
         public void AddMessage(ArduinoDevice device, MessageType messageType, String? propertyName = null, Object? propertyValue = null)
-        {   
+        {
             Items.Add(new RegimeItem(device, messageType, propertyName, propertyValue));
         }
         public void AddDelay(int delay)
@@ -421,7 +422,7 @@ public class ArduinoVirtualBoard
         var regime = GetRegime(regimeName);
         if (regime != null)
         {
-            regime.Execute(delay); 
+            regime.Execute(delay);
         }
     }
     #endregion
@@ -491,7 +492,8 @@ public class ArduinoVirtualBoard
 
             case MessageType.COMMAND:
                 response.Type = MessageType.COMMAND_RESPONSE;
-                handled = HandleDeviceCommand(message, response);
+                var command = message.Get<ArduinoDevice.DeviceCommand>(0);
+                handled = HandleDeviceCommand(command, message, response);
                 break;
         }
         response.Target = message.Target;
@@ -515,13 +517,37 @@ public class ArduinoVirtualBoard
         return true;
     }
 
-    virtual protected bool HandleDeviceCommand(ArduinoMessage message, ArduinoMessage response)
+    virtual protected bool HandleDeviceCommand(ArduinoDevice.DeviceCommand command, ArduinoMessage message, ArduinoMessage response)
     {
         try
         {
             var device = Board.GetDevice(message.Target);
             var msg = ArduinoMessageMap.CreateMessageFor(device, MessageType.COMMAND_RESPONSE);
             response.Arguments.AddRange(msg.Arguments);
+
+            ArduinoMessage? delayedMessage = null;
+            if (device is ActiveSwitch)
+            {
+                switch (command)
+                {
+                    case ArduinoDevice.DeviceCommand.ON:
+                    case ArduinoDevice.DeviceCommand.OFF:
+                        bool on = command == ArduinoDevice.DeviceCommand.ON;
+                        var propInfo = device.GetType().GetProperty("PinState");
+                        if (propInfo != null)
+                        {
+                            propInfo.SetValue(device, on);
+                            delayedMessage = ArduinoMessageMap.CreateMessageFor(device, MessageType.DATA);
+                        }
+                        break;
+                }
+            }
+            if (delayedMessage != null)
+            {
+                delayedMessage.Target = device.ID;
+                delayedMessage.Sender = device.ID;
+                SendDelayedMessage(delayedMessage);    
+            }
         }
         catch (Exception e)
         {
@@ -545,6 +571,15 @@ public class ArduinoVirtualBoard
         //adds this message to the IO out queue which will then send based on the MessageDispatched event
         //See (io configuration in Begin method above)
         io.Add(message);
+    }
+
+    public void SendDelayedMessage(ArduinoMessage message, int delay = 100)
+    {
+        Task.Run(() =>
+        {
+            Thread.Sleep(delay);
+            SendMessage(message);
+        });
     }
     #endregion
 }

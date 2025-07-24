@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Chetch.Arduino.Devices;
 
-public class SwitchDevice : ArduinoDevice
+abstract public class SwitchDevice : ArduinoDevice
 {
     #region Constants
     public const byte ERROR_SWITCH_MODE = 101;

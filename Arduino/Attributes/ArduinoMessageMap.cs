@@ -105,6 +105,8 @@ public class ArduinoMessageMap : Attribute
 
         public List<PropertyInfo> Properties { get; internal set; } = new List<PropertyInfo>();
 
+        public int Count => Properties.Count;
+
         public UpdatedProperties() { }
 
         public UpdatedProperties(IMessageUpdatableObject obj, ArduinoMessage message)
