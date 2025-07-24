@@ -578,7 +578,11 @@ public class ArduinoVirtualBoard
         Task.Run(() =>
         {
             Thread.Sleep(delay);
-            SendMessage(message);
+            try
+            {
+                SendMessage(message);
+            }
+            catch (Exception) { }
         });
     }
     #endregion
