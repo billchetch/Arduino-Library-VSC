@@ -259,8 +259,8 @@ public sealed class TestBoard
     {
         var board = new ArduinoBoard("switches");
         var sg = new SwitchGroup("sg"){
-            new SwitchDevice("sw1"),
-            new SwitchDevice("sw2", SwitchDevice.SwitchMode.PASSIVE)
+            new ActiveSwitch("sw1"),
+            new PassiveSwitch("sw2")
         };
         
         try
