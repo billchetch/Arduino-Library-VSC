@@ -14,7 +14,7 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     public const String DEFAULT_SID = "Unknown";
 
-    public const byte START_DEVICE_IDS_AT = 10;
+    public const byte START_DEVICE_IDS_AT = 8;
 
     public const MessageEncoding DEFAULT_MESSAGE_ENCODING = MessageEncoding.BYTES_ARRAY;
 
