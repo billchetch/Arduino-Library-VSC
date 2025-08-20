@@ -18,8 +18,13 @@ public class CANBusMonitor : ArduinoBoard
     #region Constructors
     public CANBusMonitor(String sid = DEFAULT_BOARD_NAME) : base(sid)
     {
+        Master.Updated += (sender, props) =>
+        {
+            
+        };
+
         AddDevice(Master);
     }
-    
+
     #endregion
 }
