@@ -11,6 +11,9 @@ public class MCP2515 : ArduinoDevice
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 2)]
     public bool CanReceiveErrors { get; internal set; } = false;
+
+    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 3)]
+    public byte StatusFlags { get; internal set; } = 0;
     #endregion
 
 
@@ -18,6 +21,13 @@ public class MCP2515 : ArduinoDevice
     public MCP2515(string sid, string? name = null) : base(sid, name)
     {
 
+    }
+    #endregion
+
+    #region Messaging
+    override public ArduinoMessageMap.UpdatedProperties HandleMessage(ArduinoMessage message)
+    {
+        return base.HandleMessage(message);
     }
     #endregion
 }
