@@ -21,6 +21,7 @@ public class CANBusMonitor : ArduinoBoard
         BusMonitor.MessageForwarded += (sender, eargs) =>
         {
             //eargs.
+            Console.WriteLine("Forwarded message received!");
         };
 
         AddDevice(BusMonitor);
