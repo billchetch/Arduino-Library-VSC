@@ -23,10 +23,11 @@ public class MCP2515 : ArduinoDevice
             Message.Target = message.Target;
             Message.Tag = message.Tag;
             int argCount = message.Arguments.Count;
-            CanID = message.Get<UInt32>(argCount - 3);
-            CanDLC = message.Get<byte>(argCount - 2);
 
-            Message.Type = message.Get<MessageType>(argCount - 1);
+            //Last 3 arguments of the message forwarded are 'meta' data which we extract
+            CanID = message.Get<UInt32>(argCount - 3); //last but two
+            CanDLC = message.Get<byte>(argCount - 2); //last but one
+            Message.Type = message.Get<MessageType>(argCount - 1); //last argument
             for (int i = 0; i < argCount - 3; i++)
             {
                 byte[]? bytes = message.Arguments[i];
@@ -53,27 +54,30 @@ public class MCP2515 : ArduinoDevice
     public bool CanReceiveErrors { get; internal set; } = false;
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 3)]
+    public byte NodeID { get; internal set; } = 0;
+
+    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 4)]
     [ArduinoMessageMap(Messaging.MessageType.DATA, 0)]
     public byte StatusFlags { get; internal set; } = 0;
 
-    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 4)]
+    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 5)]
     [ArduinoMessageMap(Messaging.MessageType.DATA, 1)]
     [ArduinoMessageMap(Messaging.MessageType.ERROR, 2)]
     public byte ErrorFlags { get; internal set; } = 0;
 
-    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 5)]
+    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 6)]
     [ArduinoMessageMap(Messaging.MessageType.DATA, 2)]
     [ArduinoMessageMap(Messaging.MessageType.ERROR, 3)]
     public byte TXErrorCount { get; internal set; } = 0;
 
-    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 6)]
+    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 7)]
     [ArduinoMessageMap(Messaging.MessageType.DATA, 3)]
     [ArduinoMessageMap(Messaging.MessageType.ERROR, 4)]
     public byte RXErrorCount { get; internal set; } = 0;
     #endregion
 
     #region Events
-    EventHandler<ForwardedMessageEventArgs> MessageForwarded;
+    EventHandler<ForwardedMessageEventArgs>? MessageForwarded;
     #endregion
 
     #region Constructors
