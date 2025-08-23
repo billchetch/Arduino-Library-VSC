@@ -48,30 +48,31 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
 
     #region Properties
 
-    public ArduinoBoard? Board 
-    { 
+    public ArduinoBoard? Board
+    {
         get
         {
             return board;
-        } 
+        }
         set
         {
-            if(board != value)
+            if (board != value)
             {
                 board = value;
                 if (board == null) return;
 
-                board.Ready += (sender, ready) => {
-                    if(ready)
+                board.Ready += (sender, ready) =>
+                {
+                    if (ready)
                     {
-                        RequestStatus();   
+                        RequestStatus();
                     }
                     else
                     {
                         bool changed = statusResponseReceived;
                         statusRequested = false;
                         statusResponseReceived = false;
-                        if(changed)
+                        if (changed)
                         {
                             OnReady(IsReady);
                         }
@@ -81,7 +82,7 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
         } //end set method
     }
 
-    [ArduinoMessageMap(MessageType.ERROR, 1)]
+    [ArduinoMessageMap(MessageType.ERROR, 1)] //Note: Message Index is 1 cos we know that the first index specifies it as a device error
     public byte Error { get; internal set; } = 0;
 
     //the unique ID for the device on the remote board
@@ -112,6 +113,7 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
     #region Events
     public event EventHandler<ArduinoMessageMap.UpdatedProperties>? Updated;
     public event EventHandler<bool>? Ready;
+    public event EventHandler<ArduinoMessage>? ErrorReceived;
     #endregion
 
     #region Constructors
@@ -134,6 +136,11 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
     #endregion
 
     #region Messaging
+    protected virtual void OnError(ArduinoMessage message)
+    {
+        ErrorReceived?.Invoke(this, message);
+    }
+
     virtual public bool AssignMessageValue(PropertyInfo propertyInfo, Object propertyValue, ArduinoMessage message)
     {
         switch (message.Type)
@@ -167,6 +174,11 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
                 {
                     OnReady(IsReady);
                 }
+                break;
+
+            case MessageType.ERROR:
+                updatedProperties = ArduinoMessageMap.AssignMessageValues(this, message);
+                OnError(message);
                 break;
 
             default:
