@@ -6,7 +6,10 @@ namespace Chetch.Arduino.Devices.Comms;
 
 public class MCP2515 : ArduinoDevice
 {
+    #region Constants
+    private const byte MESSAGE_ID_FORWARD_RECEIVED = 100;
 
+    #endregion
 
     #region Classes and Enums
     public enum MCP2515ErrorCode
@@ -119,6 +122,8 @@ public class MCP2515 : ArduinoDevice
     [ArduinoMessageMap(Messaging.MessageType.DATA, 3)]
     [ArduinoMessageMap(Messaging.MessageType.ERROR, 4)]
     public byte RXErrorCount { get; internal set; } = 0;
+
+    public UInt32 ForwardedReceivedCount { get; internal set; } = 0;
     #endregion
 
     #region Events
@@ -138,8 +143,12 @@ public class MCP2515 : ArduinoDevice
         switch (message.Type)
         {
             //Message of this type are assumed to be 'forwarded' messages
-            case Messaging.MessageType.INFO:
+            case MessageType.INFO:
                 //Seperate messages
+                if (message.Tag == MESSAGE_ID_FORWARD_RECEIVED)
+                {
+                    ForwardedReceivedCount++;
+                }
                 MessageForwarded?.Invoke(this, new ForwardedMessageEventArgs(message));
                 break;
         }
