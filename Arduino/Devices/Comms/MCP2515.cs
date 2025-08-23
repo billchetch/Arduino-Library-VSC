@@ -8,7 +8,6 @@ public class MCP2515 : ArduinoDevice
 {
     #region Constants
     private const byte MESSAGE_ID_FORWARD_RECEIVED = 100;
-
     #endregion
 
     #region Classes and Enums
@@ -95,6 +94,10 @@ public class MCP2515 : ArduinoDevice
     #endregion
 
     #region Properties
+    public MCP2515ErrorCode LastError => (MCP2515ErrorCode)Error;
+
+    public Dictionary<MCP2515ErrorCode, UInt32> ErrorCounts { get; } = new Dictionary<MCP2515ErrorCode, UInt32>();
+    
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 1)]
     public bool CanReceiveMessages { get; internal set; } = false;
 
@@ -133,11 +136,21 @@ public class MCP2515 : ArduinoDevice
     #region Constructors
     public MCP2515(string sid, string? name = null) : base(sid, name)
     {
-
+        var enumValues = Enum.GetValues(typeof(MCP2515ErrorCode));
+        foreach (int val in enumValues) {
+            ErrorCounts[(MCP2515ErrorCode)val] = 0;
+        }
     }
     #endregion
 
     #region Messaging
+    protected override void OnError(ArduinoMessage message)
+    {
+        base.OnError(message);
+
+        ErrorCounts[LastError]++;
+    }
+
     override public ArduinoMessageMap.UpdatedProperties HandleMessage(ArduinoMessage message)
     {
         switch (message.Type)
