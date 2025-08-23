@@ -11,19 +11,19 @@ public class CANBusMonitor : ArduinoBoard
     #endregion
 
     #region Properties
-    public MCP2515 Master { get; } = new MCP2515("master");
+    public MCP2515 BusMonitor { get; } = new MCP2515("busmon");
 
     #endregion
 
     #region Constructors
     public CANBusMonitor(String sid = DEFAULT_BOARD_NAME) : base(sid)
     {
-        Master.Updated += (sender, props) =>
+        BusMonitor.MessageForwarded += (sender, eargs) =>
         {
-            
+            //eargs.
         };
 
-        AddDevice(Master);
+        AddDevice(BusMonitor);
     }
 
     #endregion

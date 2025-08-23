@@ -77,7 +77,7 @@ public class MCP2515 : ArduinoDevice
     #endregion
 
     #region Events
-    EventHandler<ForwardedMessageEventArgs>? MessageForwarded;
+    public EventHandler<ForwardedMessageEventArgs>? MessageForwarded;
     #endregion
 
     #region Constructors
