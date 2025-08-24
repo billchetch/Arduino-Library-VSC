@@ -9,6 +9,8 @@ public class CANBusMonitor : ArduinoBoard
 {
     #region Constants   
     public const String DEFAULT_BOARD_NAME = "canbusmon";
+
+    public const uint REQUEST_BUS_NODES_STATUS_INTERVAL = 2000; //in ms
     #endregion
 
     #region Properties
@@ -21,9 +23,24 @@ public class CANBusMonitor : ArduinoBoard
     public EventHandler<MCP2515>? RemoteNodeFound;
     #endregion
 
+    #region Fields
+    System.Timers.Timer requestBusNodesStatus = new System.Timers.Timer();
+    #endregion
+
     #region Constructors
     public CANBusMonitor(String sid = DEFAULT_BOARD_NAME) : base(sid)
     {
+        requestBusNodesStatus.AutoReset = true;
+        requestBusNodesStatus.Interval = REQUEST_BUS_NODES_STATUS_INTERVAL;
+        requestBusNodesStatus.Elapsed += (sender, eargs) =>
+        {
+            if (MasterNode.CanSend)
+            {
+                MasterNode.RequestStatus();
+                MasterNode.RequestNodesStatus();
+            }
+        };
+
         MasterNode.BusMessageReceived += (sender, eargs) =>
         {
             byte nodeID = eargs.CanID.NodeID;
@@ -40,7 +57,7 @@ public class CANBusMonitor : ArduinoBoard
 
                     remoteNode.ErrorFlagsChanged += (sender, eargs) =>
                     {
-                        
+
                     };
 
                     //Add the remote node
@@ -61,6 +78,7 @@ public class CANBusMonitor : ArduinoBoard
         {
             if (ready)
             {
+                requestBusNodesStatus.Start(); 
                 MasterNode.RequestNodesStatus();
             }
         };
