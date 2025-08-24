@@ -212,7 +212,7 @@ public class MCP2515 : ArduinoDevice
                 }
                 break;
 
-            //Message of this type are assumed to be 'forwarded' messages
+            //Message of this type are assumed to be 'forwarded' bus messages
             case MessageType.INFO:
                 if (message.Tag == MESSAGE_ID_FORWARD_SENT)
                 {
