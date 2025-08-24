@@ -24,7 +24,7 @@ public class CANBusMonitor : ArduinoBoard
     #region Constructors
     public CANBusMonitor(String sid = DEFAULT_BOARD_NAME) : base(sid)
     {
-        MasterNode.MessageForwarded += (sender, eargs) =>
+        MasterNode.BusMessageReceived += (sender, eargs) =>
         {
             byte nodeID = eargs.CanID.NodeID;
             bool isRemoteNode = nodeID != MasterNode.NodeID;

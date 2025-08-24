@@ -53,7 +53,7 @@ public class MCP2515 : ArduinoDevice
 
         public MessageType Messagetype => (MessageType)((ID >> 19) & 0x1F);
 
-        byte Tag => (byte)((ID >> 16) & 0x03);
+        public byte Tag => (byte)((ID >> 16) & 0x03);
 
         public byte NodeID => (byte)(ID >> 12 & 0x0F);
 
@@ -67,7 +67,7 @@ public class MCP2515 : ArduinoDevice
         }
     }
 
-    public class ForwardedMessageEventArgs
+    public class BusMessageEventArgs
     {
         public CANID CanID { get; internal set; }
 
@@ -77,21 +77,19 @@ public class MCP2515 : ArduinoDevice
 
         public ArduinoMessage Message { get; } = new ArduinoMessage();
 
-        public bool IsSentMessage => Message.Tag == MESSAGE_ID_FORWARD_SENT;
 
-        public bool IsReceivedMessage => Message.Tag == MESSAGE_ID_FORWARD_RECEIVED;
-
-        public ForwardedMessageEventArgs(ArduinoMessage message)
+        public BusMessageEventArgs(ArduinoMessage message)
         {
             Message.Sender = message.Sender;
             Message.Target = message.Target;
-            Message.Tag = message.Tag;
             int argCount = message.Arguments.Count;
 
             //Last 3 arguments of the message forwarded are 'meta' data which we extract
             CanID = new CANID(message.Get<UInt32>(argCount - 3)); //last but two
             CanDLC = message.Get<byte>(argCount - 2); //last but one
             Message.Type = message.Get<MessageType>(argCount - 1); //last argument
+            Message.Tag = CanID.Tag;
+            
             for (int i = 0; i < argCount - 3; i++)
             {
                 byte[]? bytes = message.Arguments[i];
@@ -175,11 +173,13 @@ public class MCP2515 : ArduinoDevice
     [ArduinoMessageMap(Messaging.MessageType.ERROR, 4)]
     public byte RXErrorCount { get; internal set; } = 0;
 
-    public UInt32 ForwardedReceivedCount { get; internal set; } = 0;
+    public UInt32 BusMessageTXCount { get; internal set; } = 0;
+    public UInt32 BusMessageRXCount { get; internal set; } = 0;
+    
     #endregion
 
     #region Events
-    public EventHandler<ForwardedMessageEventArgs>? MessageForwarded;
+    public EventHandler<BusMessageEventArgs>? BusMessageReceived;
 
     public EventHandler<FlagsChangedEventArgs>? StatusFlagsChanged;
 
@@ -214,12 +214,15 @@ public class MCP2515 : ArduinoDevice
 
             //Message of this type are assumed to be 'forwarded' messages
             case MessageType.INFO:
-                //Seperate messages
-                if (message.Tag == MESSAGE_ID_FORWARD_RECEIVED)
+                if (message.Tag == MESSAGE_ID_FORWARD_SENT)
                 {
-                    ForwardedReceivedCount++;
+                    BusMessageTXCount++;
                 }
-                MessageForwarded?.Invoke(this, new ForwardedMessageEventArgs(message));
+                else if (message.Tag == MESSAGE_ID_FORWARD_RECEIVED)
+                {
+                    BusMessageRXCount++;
+                }
+                BusMessageReceived?.Invoke(this, new BusMessageEventArgs(message));
                 break;
         }
         return base.HandleMessage(message);
