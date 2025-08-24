@@ -7,7 +7,9 @@ namespace Chetch.Arduino.Devices.Comms;
 public class MCP2515 : ArduinoDevice
 {
     #region Constants
+    public const byte DEFAULT_MASTER_NODE_ID = 1;
     private const byte MESSAGE_ID_FORWARD_RECEIVED = 100;
+    private const byte MESSAGE_ID_FORWARD_SENT = 101;
     #endregion
 
     #region Classes and Enums
@@ -22,7 +24,7 @@ public class MCP2515 : ArduinoDevice
         ALL_TX_BUSY,
         READ_FAIL
     };
-            
+
     public enum CANMessagePriority
     {
         CAN_PRIORITY_RANDOM = 0,
@@ -32,13 +34,25 @@ public class MCP2515 : ArduinoDevice
         CAN_PRIORITY_LOW
     };
 
+    public enum CANStatusFlags
+    {
+        
+    }
+
+    public enum CANErrorFlags
+    {
+        
+    }
+
     public class CANID
     {
         public UInt32 ID { get; internal set; } = 0;
 
         public CANMessagePriority Priority => (CANMessagePriority)(ID >> 24 & 0x0F);
 
-        public MessageType Messagetype => (MessageType)((ID >> 16) & 0xFF);
+        public MessageType Messagetype => (MessageType)((ID >> 19) & 0x1F);
+
+        byte Tag => (byte)((ID >> 16) & 0x03);
 
         public byte NodeID => (byte)(ID >> 12 & 0x0F);
 
@@ -54,7 +68,6 @@ public class MCP2515 : ArduinoDevice
 
     public class ForwardedMessageEventArgs
     {
-
         public CANID CanID { get; internal set; }
 
         public byte CanDLC { get; internal set; } = 0;
@@ -63,6 +76,9 @@ public class MCP2515 : ArduinoDevice
 
         public ArduinoMessage Message { get; } = new ArduinoMessage();
 
+        public bool IsSentMessage => Message.Tag == MESSAGE_ID_FORWARD_SENT;
+
+        public bool IsReceivedMessage => Message.Tag == MESSAGE_ID_FORWARD_RECEIVED;
 
         public ForwardedMessageEventArgs(ArduinoMessage message)
         {
@@ -91,13 +107,23 @@ public class MCP2515 : ArduinoDevice
             //TODO: throws some exceptions when called to facilitate logging
         }
     }
+
+    public class FlagsChangedEventArgs
+    {
+        public byte Flags { get; internal set; } = 0;
+        public byte FlagsChanged { get; internal set; } = 0;
+        
+        public FlagsChangedEventArgs(byte oldValue, byte newValue)
+        {
+            FlagsChanged = (byte)(oldValue ^ newValue);
+            Flags = newValue;
+        }
+    }
     #endregion
 
     #region Properties
     public MCP2515ErrorCode LastError => (MCP2515ErrorCode)Error;
 
-    public Dictionary<MCP2515ErrorCode, UInt32> ErrorCounts { get; } = new Dictionary<MCP2515ErrorCode, UInt32>();
-    
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 1)]
     public bool CanReceiveMessages { get; internal set; } = false;
 
@@ -105,16 +131,38 @@ public class MCP2515 : ArduinoDevice
     public bool CanReceiveErrors { get; internal set; } = false;
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 3)]
-    public byte NodeID { get; internal set; } = 0;
+    public byte NodeID { get; internal set; } = DEFAULT_MASTER_NODE_ID; //Default is 1 as this is the normal bus master node ID
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 4)]
     [ArduinoMessageMap(Messaging.MessageType.DATA, 0)]
-    public byte StatusFlags { get; internal set; } = 0;
+    public byte StatusFlags
+    {
+        get { return statusFlags; }
+        internal set
+        {
+            if (value != statusFlags)
+            {
+                StatusFlagsChanged?.Invoke(this, new FlagsChangedEventArgs(statusFlags, value));
+            }
+            statusFlags = value;
+        }
+    }
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 5)]
     [ArduinoMessageMap(Messaging.MessageType.DATA, 1)]
     [ArduinoMessageMap(Messaging.MessageType.ERROR, 2)]
-    public byte ErrorFlags { get; internal set; } = 0;
+    public byte ErrorFlags
+    {
+        get { return errorFlags; }
+        internal set
+        {
+            if (value != errorFlags)
+            {
+                ErrorFlagsChanged?.Invoke(this, new FlagsChangedEventArgs(errorFlags, value));
+            }
+            errorFlags = value;
+        }
+    }
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 6)]
     [ArduinoMessageMap(Messaging.MessageType.DATA, 2)]
@@ -131,26 +179,25 @@ public class MCP2515 : ArduinoDevice
 
     #region Events
     public EventHandler<ForwardedMessageEventArgs>? MessageForwarded;
+
+    public EventHandler<FlagsChangedEventArgs>? StatusFlagsChanged;
+
+    public EventHandler<FlagsChangedEventArgs>? ErrorFlagsChanged;
+    #endregion
+
+    #region Fields
+    private byte statusFlags = 0;
+    private byte errorFlags = 0;
     #endregion
 
     #region Constructors
     public MCP2515(string sid, string? name = null) : base(sid, name)
     {
-        var enumValues = Enum.GetValues(typeof(MCP2515ErrorCode));
-        foreach (int val in enumValues) {
-            ErrorCounts[(MCP2515ErrorCode)val] = 0;
-        }
+        //Empty
     }
     #endregion
 
     #region Messaging
-    protected override void OnError(ArduinoMessage message)
-    {
-        base.OnError(message);
-
-        ErrorCounts[LastError]++;
-    }
-
     override public ArduinoMessageMap.UpdatedProperties HandleMessage(ArduinoMessage message)
     {
         switch (message.Type)
@@ -166,6 +213,11 @@ public class MCP2515 : ArduinoDevice
                 break;
         }
         return base.HandleMessage(message);
+    }
+
+    public void RequestNodesStatus()
+    {
+        SendCommand(DeviceCommand.REQUEST);
     }
     #endregion
 }
