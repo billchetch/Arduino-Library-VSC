@@ -10,6 +10,7 @@ public class MCP2515 : ArduinoDevice
     public const byte DEFAULT_MASTER_NODE_ID = 1;
     private const byte MESSAGE_ID_FORWARD_RECEIVED = 100;
     private const byte MESSAGE_ID_FORWARD_SENT = 101;
+    private const byte MESSAGE_ID_READY_TO_SEND = 102;
     #endregion
 
     #region Classes and Enums
@@ -183,6 +184,8 @@ public class MCP2515 : ArduinoDevice
     public EventHandler<FlagsChangedEventArgs>? StatusFlagsChanged;
 
     public EventHandler<FlagsChangedEventArgs>? ErrorFlagsChanged;
+
+    public EventHandler<bool>? ReadyToSend;
     #endregion
 
     #region Fields
@@ -202,6 +205,13 @@ public class MCP2515 : ArduinoDevice
     {
         switch (message.Type)
         {
+            case MessageType.NOTIFICATION:
+                if (message.Tag == MESSAGE_ID_READY_TO_SEND)
+                {
+                    ReadyToSend?.Invoke(this, true);
+                }
+                break;
+
             //Message of this type are assumed to be 'forwarded' messages
             case MessageType.INFO:
                 //Seperate messages

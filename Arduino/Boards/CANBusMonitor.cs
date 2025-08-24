@@ -61,7 +61,7 @@ public class CANBusMonitor : ArduinoBoard
             //Console.WriteLine("Forwarded message of priority {0} and type{1} from Node {2} and device {3} with structure {4}", eargs.CanID.Priority, eargs.CanID.Messagetype, eargs.CanID.NodeID, eargs.CanID.Sender, eargs.CanID.MessageStructure);
         };
 
-        MasterNode.Ready += (sender, ready) =>
+        MasterNode.ReadyToSend += (sender, ready) =>
         {
             if (ready)
             {
