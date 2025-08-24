@@ -50,15 +50,8 @@ public class CANBusMonitor : ArduinoBoard
                 if (!RemoteNodes.ContainsKey(nodeID))
                 {
                     var remoteNode = new MCP2515("rn" + nodeID);
-                    remoteNode.StatusFlagsChanged += (sender, eargs) =>
-                    {
-
-                    };
-
-                    remoteNode.ErrorFlagsChanged += (sender, eargs) =>
-                    {
-
-                    };
+                    remoteNode.StatusFlagsChanged += handleStatusFlagsChanged;
+                    remoteNode.ErrorFlagsChanged += handleErrorFlagsChanged;
 
                     //Add the remote node
                     RemoteNodes[nodeID] = remoteNode;
@@ -74,16 +67,38 @@ public class CANBusMonitor : ArduinoBoard
             }
         };
 
+        MasterNode.StatusFlagsChanged += handleStatusFlagsChanged;
+        MasterNode.ErrorFlagsChanged += handleErrorFlagsChanged;
+
         MasterNode.ReadyToSend += (sender, ready) =>
         {
             if (ready)
             {
-                requestBusNodesStatus.Start(); 
+                requestBusNodesStatus.Start();
                 MasterNode.RequestNodesStatus();
             }
         };
 
         AddDevice(MasterNode);
+    }
+    #endregion
+
+    #region Messaging
+
+    void handleStatusFlagsChanged(Object? sender, MCP2515.FlagsChangedEventArgs eargs)
+    {
+        if (sender == null) return;
+
+        MCP2515 mcp = (MCP2515)sender;
+        Console.WriteLine(" {0} status flags changed: {1} - {2}", mcp.NodeID, Utilities.Convert.ToBitString(eargs.Flags), Utilities.Convert.ToBitString(eargs.FlagsChanged));
+    }
+    
+    void handleErrorFlagsChanged(Object? sender, MCP2515.FlagsChangedEventArgs eargs)
+    {
+        if (sender == null) return;
+        
+        MCP2515 mcp = (MCP2515)sender;
+        Console.WriteLine(" {0} error flags changed: {1} - {2}", mcp.NodeID, Utilities.Convert.ToBitString(eargs.Flags), Utilities.Convert.ToBitString(eargs.FlagsChanged));
     }
     #endregion
 }

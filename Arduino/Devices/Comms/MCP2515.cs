@@ -11,6 +11,7 @@ public class MCP2515 : ArduinoDevice
     private const byte MESSAGE_ID_FORWARD_RECEIVED = 100;
     private const byte MESSAGE_ID_FORWARD_SENT = 101;
     private const byte MESSAGE_ID_READY_TO_SEND = 102;
+    private const byte MESSAGE_ID_REPORT_ERROR = 110;
     #endregion
 
     #region Classes and Enums
@@ -35,14 +36,58 @@ public class MCP2515 : ArduinoDevice
         CAN_PRIORITY_LOW
     };
 
-    public enum CANStatusFlags
+    /*
+    STATUS FLAGS
+    D7: Transmit Buffer-2-Empty Interrupt Flag bit
+    D6: Buffer 2, Message-Transmit-Request bit
+    D5: Transmit Buffer-1-Empty Interrupt Flag bit
+    D4: Buffer 1, Message-Transmit-Request bit
+    D3: Transmit Buffer-0-Empty Interrupt Flag bit
+    D2: Buffer 0, Message-Transmit-Request bit
+    D1: Receive-Buffer-1-Full Interrupt Flag
+    D0: Receive-Buffer-0-Full Interrupt Flag
+    */
+    public enum CANStatusFlag
     {
-        
+        SFLG_TX2EMPTY= (1 << 7),
+        SFLG_TX2REQUEST = (1 << 6),
+        SFLG_TX1EMPTY = (1 << 5),
+        SFLG_TX1REQUEST = (1 << 4),
+        SFLG_TX0EMPTY = (1 << 3),
+        SFLG_TX0REQUEST = (1 << 2),
+        SFLG_RX1FULL = (1 << 1),
+        SFLG_RX0FULL = (1 << 0)
     }
 
-    public enum CANErrorFlags
+    /*
+    ERROR FLAGS
+    D7: RX1OVRF (Receive Buffer 1 Overflow Flag):
+    Set when a new valid message is received in Receive Buffer 1, but the buffer is already full.
+    D6: RX0OVRF (Receive Buffer 0 Overflow Flag):
+    Set when a new valid message is received in Receive Buffer 0, but the buffer is already full.
+    D5: TXBO (Bus-Off Flag):
+    Set when the Transmit Error Counter (TEC) exceeds 255, indicating that the device has entered a Bus-Off state.
+    D4: TXBP (Transmit Error Passive Flag):
+    Set when the TEC exceeds 127, indicating that the device has entered an Error Passive state for transmission.
+    D3: RXBP (Receive Error Passive Flag):
+    Set when the Receive Error Counter (REC) exceeds 127, indicating that the device has entered an Error Passive state for reception.
+    D2: TXWAR (Transmit Error Warning Flag):
+    Set when the TEC exceeds 96, indicating a warning level for transmit errors.
+    D1: RXWAR (Receive Error Warning Flag):
+    Set when the REC exceeds 96, indicating a warning level for receive errors.
+    D0: EWARN (Error Warning Flag):
+    Set when either TXWAR or RXWAR is set, providing a general error warning indication
+    */
+    public enum CANErrorFlag
     {
-        
+        EFLG_RX1OVR = (1 << 7),
+        EFLG_RX0OVR = (1 << 6),
+        EFLG_TXBO = (1 << 5),
+        EFLG_TXEP = (1 << 4),
+        EFLG_RXEP = (1 << 3),
+        EFLG_TXWAR = (1 << 2),
+        EFLG_RXWAR = (1 << 1),
+        EFLG_EWARN = (1 << 0)
     }
 
     public enum BusMessageDirection
@@ -165,6 +210,8 @@ public class MCP2515 : ArduinoDevice
         }
     }
 
+    public bool IsBusOff => IsErrorFlagged(CANErrorFlag.EFLG_TXBO);
+
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 6)]
     [ArduinoMessageMap(Messaging.MessageType.ERROR, 3)]
     public byte TXErrorCount { get; internal set; } = 0;
@@ -214,6 +261,18 @@ public class MCP2515 : ArduinoDevice
     }
     #endregion
 
+    #region Methods
+    public bool IsErrorFlagged(CANErrorFlag eflg)
+    {
+        return (errorFlags & (int)eflg) == 1;
+    }
+
+    public bool IsStatusFlagged(CANStatusFlag sflg)
+    {
+        return (statusFlags & (int)sflg) == 1;
+    }
+    #endregion
+
     #region Messaging
     override public ArduinoMessageMap.UpdatedProperties HandleMessage(ArduinoMessage message)
     {
@@ -237,6 +296,13 @@ public class MCP2515 : ArduinoDevice
                 {
                     BusMessageRXCount++;
                     BusMessageReceived?.Invoke(this, new BusMessageEventArgs(message, BusMessageDirection.INBOUND));
+                }
+                break;
+
+            case MessageType.ERROR:
+                if (message.Tag == MESSAGE_ID_REPORT_ERROR && !IsReady)
+                {
+                    return new ArduinoMessageMap.UpdatedProperties();
                 }
                 break;
         }
