@@ -46,6 +46,8 @@ public class ArduinoMessageMap : Attribute
         {
             var prop2set = kv.Key;
             var argIdx = kv.Value;
+            if (argIdx >= message.Arguments.Count) continue;
+            
             var val = message.Get(argIdx, prop2set.PropertyType);
             var oldVal = kv.Key.GetValue(obj);
 

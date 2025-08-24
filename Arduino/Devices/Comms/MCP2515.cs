@@ -228,7 +228,11 @@ public class MCP2515 : ArduinoDevice
         {
             if (value != canSend)
             {
-                ReadyToSend?.Invoke(this, value);
+                try
+                {
+                    ReadyToSend?.Invoke(this, value);
+                }
+                catch { }
             }
             canSend = value;
         }
@@ -281,7 +285,8 @@ public class MCP2515 : ArduinoDevice
             case MessageType.NOTIFICATION:
                 if (message.Tag == MESSAGE_ID_READY_TO_SEND)
                 {
-                    ReadyToSend?.Invoke(this, true);
+                    CanSend = true;
+                    ReadyToSend?.Invoke(this, CanSend);
                 }
                 break;
 
@@ -309,7 +314,7 @@ public class MCP2515 : ArduinoDevice
         return base.HandleMessage(message);
     }
 
-    public void RequestNodesStatus()
+    public void RequestRemoteNodesStatus()
     {
         SendCommand(DeviceCommand.REQUEST);
     }

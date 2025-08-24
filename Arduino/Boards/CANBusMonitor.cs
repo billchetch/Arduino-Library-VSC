@@ -10,7 +10,7 @@ public class CANBusMonitor : ArduinoBoard
     #region Constants   
     public const String DEFAULT_BOARD_NAME = "canbusmon";
 
-    public const uint REQUEST_BUS_NODES_STATUS_INTERVAL = 2000; //in ms
+    public const uint REQUEST_BUS_NODES_STATUS_INTERVAL = 10000; //in ms
     #endregion
 
     #region Properties
@@ -37,7 +37,7 @@ public class CANBusMonitor : ArduinoBoard
             if (MasterNode.CanSend)
             {
                 MasterNode.RequestStatus();
-                MasterNode.RequestNodesStatus();
+                MasterNode.RequestRemoteNodesStatus();
             }
         };
 
@@ -75,7 +75,7 @@ public class CANBusMonitor : ArduinoBoard
             if (ready)
             {
                 requestBusNodesStatus.Start();
-                MasterNode.RequestNodesStatus();
+                MasterNode.RequestRemoteNodesStatus();
             }
         };
 
@@ -90,7 +90,7 @@ public class CANBusMonitor : ArduinoBoard
         if (sender == null) return;
 
         MCP2515 mcp = (MCP2515)sender;
-        Console.WriteLine(" {0} status flags changed: {1} - {2}", mcp.NodeID, Utilities.Convert.ToBitString(eargs.Flags), Utilities.Convert.ToBitString(eargs.FlagsChanged));
+        Console.WriteLine("Node {0} status flags changed: {1} - {2}", mcp.NodeID, Utilities.Convert.ToBitString(eargs.Flags), Utilities.Convert.ToBitString(eargs.FlagsChanged));
     }
     
     void handleErrorFlagsChanged(Object? sender, MCP2515.FlagsChangedEventArgs eargs)
@@ -98,7 +98,7 @@ public class CANBusMonitor : ArduinoBoard
         if (sender == null) return;
         
         MCP2515 mcp = (MCP2515)sender;
-        Console.WriteLine(" {0} error flags changed: {1} - {2}", mcp.NodeID, Utilities.Convert.ToBitString(eargs.Flags), Utilities.Convert.ToBitString(eargs.FlagsChanged));
+        Console.WriteLine("Node {0} error flags changed: {1} - {2}", mcp.NodeID, Utilities.Convert.ToBitString(eargs.Flags), Utilities.Convert.ToBitString(eargs.FlagsChanged));
     }
     #endregion
 }
