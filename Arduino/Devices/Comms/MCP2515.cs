@@ -45,6 +45,12 @@ public class MCP2515 : ArduinoDevice
         
     }
 
+    public enum BusMessageDirection
+    {
+        OUTBOUND,
+        INBOUND
+    }
+
     public class CANID
     {
         public UInt32 ID { get; internal set; } = 0;
@@ -77,8 +83,9 @@ public class MCP2515 : ArduinoDevice
 
         public ArduinoMessage Message { get; } = new ArduinoMessage();
 
+        public BusMessageDirection Direction { get; internal set; }
 
-        public BusMessageEventArgs(ArduinoMessage message)
+        public BusMessageEventArgs(ArduinoMessage message, BusMessageDirection direction)
         {
             Message.Sender = message.Sender;
             Message.Target = message.Target;
@@ -89,7 +96,7 @@ public class MCP2515 : ArduinoDevice
             CanDLC = message.Get<byte>(argCount - 2); //last but one
             Message.Type = message.Get<MessageType>(argCount - 1); //last argument
             Message.Tag = CanID.Tag;
-            
+
             for (int i = 0; i < argCount - 3; i++)
             {
                 byte[]? bytes = message.Arguments[i];
@@ -99,11 +106,8 @@ public class MCP2515 : ArduinoDevice
                     CanData.AddRange(bytes);
                 }
             }
-        }
 
-        public void Validate()
-        {
-            //TODO: throws some exceptions when called to facilitate logging
+            Direction = direction;
         }
     }
 
@@ -227,12 +231,13 @@ public class MCP2515 : ArduinoDevice
                 if (message.Tag == MESSAGE_ID_FORWARD_SENT)
                 {
                     BusMessageTXCount++;
+                    BusMessageReceived?.Invoke(this, new BusMessageEventArgs(message, BusMessageDirection.OUTBOUND));
                 }
                 else if (message.Tag == MESSAGE_ID_FORWARD_RECEIVED)
                 {
                     BusMessageRXCount++;
+                    BusMessageReceived?.Invoke(this, new BusMessageEventArgs(message, BusMessageDirection.INBOUND));
                 }
-                BusMessageReceived?.Invoke(this, new BusMessageEventArgs(message));
                 break;
         }
         return base.HandleMessage(message);
