@@ -173,15 +173,9 @@ public class MCP2515 : ArduinoDevice
     public MCP2515ErrorCode LastError => (MCP2515ErrorCode)Error;
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 1)]
-    public bool CanReceiveMessages { get; internal set; } = false;
-
-    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 2)]
-    public bool CanReceiveErrors { get; internal set; } = false;
-
-    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 3)]
     public byte NodeID { get; internal set; } = DEFAULT_MASTER_NODE_ID; //Default is 1 as this is the normal bus master node ID
 
-    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 4)]
+    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 2)]
     public byte StatusFlags
     {
         get { return statusFlags; }
@@ -195,7 +189,7 @@ public class MCP2515 : ArduinoDevice
         }
     }
 
-    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 5)]
+    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 3)]
     [ArduinoMessageMap(Messaging.MessageType.ERROR, 2)]
     public byte ErrorFlags
     {
@@ -212,15 +206,15 @@ public class MCP2515 : ArduinoDevice
 
     public bool IsBusOff => IsErrorFlagged(CANErrorFlag.EFLG_TXBO);
 
-    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 6)]
+    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 4)]
     [ArduinoMessageMap(Messaging.MessageType.ERROR, 3)]
     public byte TXErrorCount { get; internal set; } = 0;
 
-    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 7)]
+    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 5)]
     [ArduinoMessageMap(Messaging.MessageType.ERROR, 4)]
     public byte RXErrorCount { get; internal set; } = 0;
 
-    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 8)]
+    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 6)]
     public bool CanSend
     {
         get { return canSend; }
