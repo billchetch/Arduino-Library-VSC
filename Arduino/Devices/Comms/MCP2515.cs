@@ -49,7 +49,7 @@ public class MCP2515 : ArduinoDevice
     */
     public enum CANStatusFlag
     {
-        SFLG_TX2EMPTY= (1 << 7),
+        SFLG_TX2EMPTY = (1 << 7),
         SFLG_TX2REQUEST = (1 << 6),
         SFLG_TX1EMPTY = (1 << 5),
         SFLG_TX1REQUEST = (1 << 4),
@@ -160,7 +160,7 @@ public class MCP2515 : ArduinoDevice
     {
         public byte Flags { get; internal set; } = 0;
         public byte FlagsChanged { get; internal set; } = 0;
-        
+
         public FlagsChangedEventArgs(byte oldValue, byte newValue)
         {
             FlagsChanged = (byte)(oldValue ^ newValue);
@@ -233,7 +233,7 @@ public class MCP2515 : ArduinoDevice
     }
     public UInt32 BusMessageTXCount { get; internal set; } = 0;
     public UInt32 BusMessageRXCount { get; internal set; } = 0;
-    
+
     #endregion
 
     #region Events
@@ -280,7 +280,6 @@ public class MCP2515 : ArduinoDevice
                 if (message.Tag == MESSAGE_ID_READY_TO_SEND)
                 {
                     CanSend = true;
-                    ReadyToSend?.Invoke(this, CanSend);
                 }
                 break;
 
@@ -311,6 +310,11 @@ public class MCP2515 : ArduinoDevice
     public void RequestRemoteNodesStatus()
     {
         SendCommand(DeviceCommand.REQUEST);
+    }
+
+    public void SynchroniseBus()
+    {
+        SendCommand(DeviceCommand.SYNCHRONISE);
     }
     #endregion
 }

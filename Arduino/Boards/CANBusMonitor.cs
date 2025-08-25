@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Immutable;
 using Chetch.Arduino.Devices.Comms;
 using Chetch.Messaging;
 
@@ -17,10 +18,13 @@ public class CANBusMonitor : ArduinoBoard
     public MCP2515 MasterNode { get; } = new MCP2515("master");
 
     public Dictionary<byte, MCP2515> RemoteNodes { get; } = new Dictionary<byte, MCP2515>();
+
+    public int BusSize { get; internal set; } = 0; //expected number of nodes
     #endregion
 
     #region Events
     public EventHandler<MCP2515>? RemoteNodeFound;
+    public EventHandler<List<MCP2515>>? AllNodesFound;
     #endregion
 
     #region Fields
@@ -28,7 +32,7 @@ public class CANBusMonitor : ArduinoBoard
     #endregion
 
     #region Constructors
-    public CANBusMonitor(String sid = DEFAULT_BOARD_NAME) : base(sid)
+    public CANBusMonitor(int busSize, String sid = DEFAULT_BOARD_NAME) : base(sid)
     {
         requestBusNodesStatus.AutoReset = true;
         requestBusNodesStatus.Interval = REQUEST_BUS_NODES_STATUS_INTERVAL;
@@ -47,22 +51,52 @@ public class CANBusMonitor : ArduinoBoard
             bool isRemoteNode = nodeID != MasterNode.NodeID;
             if (isRemoteNode)
             {
-                if (!RemoteNodes.ContainsKey(nodeID))
+                try
                 {
-                    var remoteNode = new MCP2515("rn" + nodeID);
-                    remoteNode.StatusFlagsChanged += handleStatusFlagsChanged;
-                    remoteNode.ErrorFlagsChanged += handleErrorFlagsChanged;
+                    bool newNode = !RemoteNodes.ContainsKey(nodeID);
+                    if (newNode)
+                    {
+                        if (BusSize > 0 && RemoteNodes.Count == BusSize - 1)
+                        {
+                            throw new Exception(String.Format("Cannot add remote node as bus size is set to {0}", BusSize));
+                        }
+                        var remoteNode = new MCP2515("rn" + nodeID);
+                        remoteNode.StatusFlagsChanged += handleStatusFlagsChanged;
+                        remoteNode.ErrorFlagsChanged += handleErrorFlagsChanged;
 
-                    //Add the remote node
-                    RemoteNodes[nodeID] = remoteNode;
-                    RemoteNodeFound?.Invoke(this, remoteNode);
+                        //Add the remote node
+                        RemoteNodes[nodeID] = remoteNode;
+                        RemoteNodeFound?.Invoke(this, remoteNode);
+                    }
+
+                    switch (eargs.Message.Type)
+                    {
+                        case MessageType.STATUS_RESPONSE:
+                            ArduinoMessage msg = new ArduinoMessage(eargs.Message.Type);
+                            msg.Add(0); //report interval (base class property)
+                            msg.Add(nodeID); //property with index 1
+                            foreach (var arg in eargs.Message.Arguments)
+                            {
+                                if (arg != null)
+                                {
+                                    msg.Add(arg);
+                                }
+                            }
+                            msg.Add(true); //CanSend property which is surely true if this message has been received
+                            ArduinoMessageMap.AssignMessageValues(RemoteNodes[nodeID], msg);
+                            break;
+                    }
+
+                    if (newNode && RemoteNodes.Count == busSize - 1)
+                    {
+                        AllNodesFound?.Invoke(this, RemoteNodes.Values.ToList());
+                        MasterNode.SynchroniseBus();
+                        Console.WriteLine("All nodes found");
+                    }
                 }
-
-                switch (eargs.Message.Type)
+                catch (Exception)
                 {
-                    case MessageType.STATUS_RESPONSE:
-                        ArduinoMessageMap.AssignMessageValues(RemoteNodes[nodeID], eargs.Message);
-                        break;
+                    
                 }
             }
         };
@@ -75,7 +109,8 @@ public class CANBusMonitor : ArduinoBoard
             if (ready)
             {
                 requestBusNodesStatus.Start();
-                MasterNode.RequestRemoteNodesStatus();
+                //MasterNode.RequestRemoteNodesStatus();
+                MasterNode.SynchroniseBus();
             }
         };
 
