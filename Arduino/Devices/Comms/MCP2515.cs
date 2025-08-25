@@ -7,7 +7,7 @@ namespace Chetch.Arduino.Devices.Comms;
 public class MCP2515 : ArduinoDevice
 {
     #region Constants
-    public const byte DEFAULT_MASTER_NODE_ID = 1;
+    public const byte MASTER_NODE_ID = 1;
     private const byte MESSAGE_ID_FORWARD_RECEIVED = 100;
     private const byte MESSAGE_ID_FORWARD_SENT = 101;
     private const byte MESSAGE_ID_READY_TO_SEND = 102;
@@ -173,7 +173,7 @@ public class MCP2515 : ArduinoDevice
     public MCP2515ErrorCode LastError => (MCP2515ErrorCode)Error;
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 1)]
-    public byte NodeID { get; internal set; } = DEFAULT_MASTER_NODE_ID; //Default is 1 as this is the normal bus master node ID
+    public byte NodeID { get; internal set; } = MASTER_NODE_ID; //Default is 1 as this is the normal bus master node ID
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 2)]
     public byte StatusFlags
