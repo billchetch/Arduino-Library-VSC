@@ -122,6 +122,8 @@ public class MCP2515 : ArduinoDevice
     {
         public CANID CanID { get; internal set; }
 
+        public byte NodeID => CanID.NodeID;
+
         public byte CanDLC { get; internal set; } = 0;
 
         public List<byte> CanData { get; } = new List<byte>();

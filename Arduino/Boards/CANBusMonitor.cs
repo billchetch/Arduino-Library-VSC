@@ -26,15 +26,20 @@ public class CANBusMonitor : ArduinoBoard
     #region Events
     public EventHandler<MCP2515>? RemoteNodeFound;
     public EventHandler<List<MCP2515>>? AllNodesFound;
+
+    public EventHandler<MCP2515.BusMessageEventArgs>? BusMessageReceived;
     #endregion
 
     #region Fields
     System.Timers.Timer requestBusNodesStatus = new System.Timers.Timer();
+    bool synchronised = false;
     #endregion
 
     #region Constructors
     public CANBusMonitor(int busSize, String sid = DEFAULT_BOARD_NAME) : base(sid)
     {
+        BusSize = busSize;
+        
         requestBusNodesStatus.AutoReset = true;
         requestBusNodesStatus.Interval = REQUEST_BUS_NODES_STATUS_INTERVAL;
         requestBusNodesStatus.Elapsed += (sender, eargs) =>
@@ -88,17 +93,26 @@ public class CANBusMonitor : ArduinoBoard
                             break;
                     }
 
-                    if (newNode && RemoteNodes.Count == busSize - 1)
+                    if (newNode && RemoteNodes.Count == BusSize - 1)
                     {
                         AllNodesFound?.Invoke(this, RemoteNodes.Values.ToList());
                         MasterNode.SynchroniseBus();
-                        Console.WriteLine("All nodes found");
+                        synchronised = true;
                     }
                 }
                 catch (Exception)
                 {
-                    
+
                 }
+            }
+
+            if (synchronised)
+            {
+                try
+                {
+                    BusMessageReceived?.Invoke(this, eargs);
+                }
+                catch { }
             }
         };
 
@@ -110,13 +124,21 @@ public class CANBusMonitor : ArduinoBoard
             if (ready)
             {
                 Console.WriteLine("Master Node is ready to send!");
-                //requestBusNodesStatus.Start();
-                //MasterNode.RequestRemoteNodesStatus();
-                MasterNode.SynchroniseBus();
+                requestBusNodesStatus.Start();
+                MasterNode.RequestRemoteNodesStatus();
             }
         };
 
         AddDevice(MasterNode);
+    }
+    #endregion
+
+    #region Lifecycle
+    public override void End()
+    {
+        requestBusNodesStatus.Stop();
+
+        base.End();
     }
     #endregion
 
@@ -125,9 +147,7 @@ public class CANBusMonitor : ArduinoBoard
     void handleStatusFlagsChanged(Object? sender, MCP2515.FlagsChangedEventArgs eargs)
     {
         if (sender == null) return;
-
         MCP2515 mcp = (MCP2515)sender;
-        Console.WriteLine("Node {0} status flags changed: {1} - {2}", mcp.NodeID, Utilities.Convert.ToBitString(eargs.Flags), Utilities.Convert.ToBitString(eargs.FlagsChanged));
     }
     
     void handleErrorFlagsChanged(Object? sender, MCP2515.FlagsChangedEventArgs eargs)
@@ -135,7 +155,8 @@ public class CANBusMonitor : ArduinoBoard
         if (sender == null) return;
         
         MCP2515 mcp = (MCP2515)sender;
-        Console.WriteLine("Node {0} error flags changed: {1} - {2}", mcp.NodeID, Utilities.Convert.ToBitString(eargs.Flags), Utilities.Convert.ToBitString(eargs.FlagsChanged));
+
+        Console.WriteLine("!!!Node {0} error flags changed: {1} - {2}", mcp.NodeID, Utilities.Convert.ToBitString(eargs.Flags), Utilities.Convert.ToBitString(eargs.FlagsChanged));
     }
     #endregion
 }
