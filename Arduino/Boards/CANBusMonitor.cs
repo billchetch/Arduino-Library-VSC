@@ -2,6 +2,7 @@ using System;
 using System.Collections.Immutable;
 using Chetch.Arduino.Devices.Comms;
 using Chetch.Messaging;
+using XmppDotNet.Xmpp.Delay;
 
 
 namespace Chetch.Arduino.Boards;
@@ -108,7 +109,8 @@ public class CANBusMonitor : ArduinoBoard
         {
             if (ready)
             {
-                requestBusNodesStatus.Start();
+                Console.WriteLine("Master Node is ready to send!");
+                //requestBusNodesStatus.Start();
                 //MasterNode.RequestRemoteNodesStatus();
                 MasterNode.SynchroniseBus();
             }

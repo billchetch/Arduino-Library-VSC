@@ -300,6 +300,8 @@ public class MCP2515 : ArduinoDevice
             case MessageType.ERROR:
                 if (message.Tag == MESSAGE_ID_REPORT_ERROR && !IsReady)
                 {
+                    //This is canse there are existing messages in a buffer somewhere so we just discard these
+                    //as there are relevant to a previous session not this one.
                     return new ArduinoMessageMap.UpdatedProperties();
                 }
                 break;
