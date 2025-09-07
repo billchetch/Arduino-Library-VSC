@@ -7,11 +7,6 @@ namespace Chetch.Arduino;
 
 public interface IMessageUpdatableObject
 {
-    byte ID { get; set; }
-
-    String UID { get; }
-
-    //bool CanAssignMessageValue(PropertyInfo propertyInfo, ArduinoMessage message);
     bool AssignMessageValue(PropertyInfo propertyInfo, Object propertyValue, ArduinoMessage message);
 }
 

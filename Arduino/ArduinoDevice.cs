@@ -99,7 +99,7 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
     
     virtual public bool IsReady => Board != null && Board.IsReady && statusResponseReceived;
 
-    public bool StatusRequested => statusRequested;
+    virtual public bool StatusRequested => statusRequested;
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 0)]
     [ArduinoMessageMap(Messaging.MessageType.COMMAND_RESPONSE, 0)]

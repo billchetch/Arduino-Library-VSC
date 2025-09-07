@@ -154,7 +154,7 @@ public class ArduinoBoard : IMessageUpdatableObject
     }
 
     public bool IsConnected => Connection != null && Connection.IsConnected;
-    public bool IsReady => IsConnected && statusResponseReceived;
+    virtual public bool IsReady => IsConnected && statusResponseReceived;
 
     [ArduinoMessageMap(MessageType.STATUS_RESPONSE, 0)]
     public String Name { get; internal set; } = "Unknown";
@@ -404,7 +404,7 @@ public class ArduinoBoard : IMessageUpdatableObject
     /// </summary>
     /// <param name="message">The messaget to be routed.</param>
     /// <returns>A map of properties updated by the message according to code attriutes (see ArduinoMessageMap)</returns>
-    public ArduinoMessageMap.UpdatedProperties HandleMessage(ArduinoMessage message)
+    virtual public ArduinoMessageMap.UpdatedProperties HandleMessage(ArduinoMessage message)
     {
         switch (message.Type)
         {

@@ -1,4 +1,5 @@
 using System;
+using Chetch.Arduino.Boards;
 using Chetch.Messaging;
 using XmppDotNet.Xmpp.HttpUpload;
 
@@ -7,7 +8,6 @@ namespace Chetch.Arduino.Devices.Comms;
 public class MCP2515 : ArduinoDevice
 {
     #region Constants
-    public const byte MASTER_NODE_ID = 1;
     private const byte MESSAGE_ID_FORWARD_RECEIVED = 100;
     private const byte MESSAGE_ID_FORWARD_SENT = 101;
     private const byte MESSAGE_ID_READY_TO_SEND = 102;
@@ -25,15 +25,6 @@ public class MCP2515 : ArduinoDevice
         FAIL_TX,
         ALL_TX_BUSY,
         READ_FAIL
-    };
-
-    public enum CANMessagePriority
-    {
-        CAN_PRIORITY_RANDOM = 0,
-        CAN_PRIORITY_CRITICAL,
-        CAN_PRIORITY_HIGH,
-        CAN_PRIORITY_NORMAL,
-        CAN_PRIORITY_LOW
     };
 
     /*
@@ -94,29 +85,7 @@ public class MCP2515 : ArduinoDevice
     {
         OUTBOUND,
         INBOUND
-    }
-
-    public class CANID
-    {
-        public UInt32 ID { get; internal set; } = 0;
-
-        public CANMessagePriority Priority => (CANMessagePriority)(ID >> 24 & 0x0F);
-
-        public MessageType Messagetype => (MessageType)((ID >> 19) & 0x1F);
-
-        public byte Tag => (byte)((ID >> 16) & 0x03);
-
-        public byte NodeID => (byte)(ID >> 12 & 0x0F);
-
-        public byte Sender => (byte)(ID >> 8 & 0x0F);
-
-        public byte MessageStructure => (byte)(ID & 0xFF);
-
-        public CANID(UInt32 canId)
-        {
-            ID = canId;
-        }
-    }
+    } 
 
     public class BusMessageEventArgs
     {
@@ -132,8 +101,17 @@ public class MCP2515 : ArduinoDevice
 
         public BusMessageDirection Direction { get; internal set; }
 
-        public BusMessageEventArgs(ArduinoMessage message, BusMessageDirection direction)
+        public BusMessageEventArgs(ArduinoMessage message)
         {
+            if (message.Tag == MESSAGE_ID_FORWARD_SENT)
+            {
+                Direction = BusMessageDirection.OUTBOUND;
+            }
+            else if (message.Tag == MESSAGE_ID_FORWARD_RECEIVED)
+            {
+                Direction = BusMessageDirection.INBOUND;
+            }
+            
             Message.Sender = message.Sender;
             Message.Target = message.Target;
             int argCount = message.Arguments.Count;
@@ -153,8 +131,6 @@ public class MCP2515 : ArduinoDevice
                     CanData.AddRange(bytes);
                 }
             }
-
-            Direction = direction;
         }
     }
 
@@ -174,8 +150,8 @@ public class MCP2515 : ArduinoDevice
     #region Properties
     public MCP2515ErrorCode LastError => (MCP2515ErrorCode)Error;
 
-    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 1)]
-    public byte NodeID { get; internal set; } = MASTER_NODE_ID; //Default is 1 as this is the normal bus master node ID
+    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 1)] //Start at 1 as 0 is for ReportInterval
+    public byte NodeID { get; internal set; } //Default is 1 as this is the normal bus master node ID
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 2)]
     public byte StatusFlags
@@ -233,9 +209,8 @@ public class MCP2515 : ArduinoDevice
             canSend = value;
         }
     }
-    public UInt32 BusMessageTXCount { get; internal set; } = 0;
-    public UInt32 BusMessageRXCount { get; internal set; } = 0;
 
+    override public bool StatusRequested => base.StatusRequested || NodeID != CANBusNode.MASTER_NODE_ID;
     #endregion
 
     #region Events
@@ -255,13 +230,18 @@ public class MCP2515 : ArduinoDevice
     #endregion
 
     #region Constructors
-    public MCP2515(string sid, string? name = null) : base(sid, name)
+    public MCP2515(byte nodeID, string? name = null) : base("mcp" + nodeID, name)
     {
-        //Empty
+        NodeID = nodeID;
     }
     #endregion
 
     #region Methods
+    public void SetNodeID(byte nodeID)
+    {
+        NodeID = nodeID;
+    }
+
     public bool IsErrorFlagged(CANErrorFlag eflg)
     {
         return (errorFlags & (int)eflg) == 1;
@@ -287,15 +267,10 @@ public class MCP2515 : ArduinoDevice
 
             //Message of this type are assumed to be 'forwarded' bus messages
             case MessageType.INFO:
-                if (message.Tag == MESSAGE_ID_FORWARD_SENT)
+                if (message.Tag == MESSAGE_ID_FORWARD_SENT || message.Tag == MESSAGE_ID_FORWARD_RECEIVED)
                 {
-                    BusMessageTXCount++;
-                    BusMessageReceived?.Invoke(this, new BusMessageEventArgs(message, BusMessageDirection.OUTBOUND));
-                }
-                else if (message.Tag == MESSAGE_ID_FORWARD_RECEIVED)
-                {
-                    BusMessageRXCount++;
-                    BusMessageReceived?.Invoke(this, new BusMessageEventArgs(message, BusMessageDirection.INBOUND));
+                    var eargs = new BusMessageEventArgs(message);
+                    BusMessageReceived?.Invoke(this, eargs);
                 }
                 break;
 
