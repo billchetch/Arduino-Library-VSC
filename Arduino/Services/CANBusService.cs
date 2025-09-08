@@ -14,7 +14,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
     #endregion
 
     #region Methods
-    public void AddBus(CANBusMonitor bus)
+    public void AddBusMonitor(CANBusMonitor bus)
     {
         AddBoard(bus);
     }

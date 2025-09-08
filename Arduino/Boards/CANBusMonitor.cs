@@ -93,7 +93,7 @@ public class CANBusMonitor : CANBusNode
         };
     }
 
-    public CANBusMonitor(String sid, int remoteNodes) : this(sid)
+    public CANBusMonitor(int remoteNodes, String sid = DEFAULT_BOARD_NAME) : this(sid)
     {
         for (int i = 0; i < remoteNodes; i++)
         {
