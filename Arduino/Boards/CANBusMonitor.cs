@@ -43,7 +43,7 @@ public class CANBusMonitor : CANBusNode
                 }
                 else
                 {
-                    s.AppendFormat("Bus monitor {0}, {1}} nodes out of {2} are ready!", SID, nodeReadyCount, BusSize);
+                    s.AppendFormat("Bus monitor {0}, {1} nodes out of {2} are ready!", SID, nodeReadyCount, BusSize);
                 }
             }
                 else
