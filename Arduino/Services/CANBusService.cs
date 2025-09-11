@@ -33,7 +33,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
 
     protected override bool HandleCommandReceived(ServiceCommand command, List<object> arguments, Message response)
     {
-        switch (command)
+        switch (command.Command)
         {
             case COMMAND_LIST_BUSSES:
                 var bl = new List<String>();
