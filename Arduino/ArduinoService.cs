@@ -22,6 +22,8 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
 
     #region Fields
     List<ArduinoBoard> boards = new List<ArduinoBoard>();
+
+    protected List<ArduinoBoard> Boards => boards;
     #endregion
 
     #region Constructors
@@ -183,7 +185,12 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
         switch (command.Command)
         {
             case COMMAND_LIST_BOARDS:
-
+                var bl = new List<String>();
+                foreach (var b in boards)
+                {
+                    bl.Add(b.StatusSummary);
+                }
+                response.AddValue("Boards", bl);
                 return true;
 
             default:

@@ -168,7 +168,7 @@ public class ArduinoBoard : IMessageUpdatableObject
     [ArduinoMessageMap(MessageType.STATUS_RESPONSE, 3)]
     public int FreeMemory { get; internal set; } = -1;
 
-    public String StatusSummary => IsReady ? String.Format("Board: {0}, Memory: {1}, Devices: {2}", Name, FreeMemory, DeviceCount) : "Not Ready";
+    virtual public String StatusSummary => IsReady ? String.Format("Board: {0}, Memory: {1}, Devices: {2}", Name, FreeMemory, DeviceCount) : "Not Ready";
 
     public String MessageSummary => IsReady && io.LastMessageReceived != null ? String.Format("Received: {0} {1}s ago", io.LastMessageReceived.Type, Math.Round((DateTime.Now - io.LastMessageReceived.Created).TotalSeconds, 1)) : "No messages received";
     #endregion

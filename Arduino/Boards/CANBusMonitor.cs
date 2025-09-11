@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Immutable;
 using System.Reflection;
+using System.Text;
 using Chetch.Arduino.Devices.Comms;
 using Chetch.Messaging;
 using XmppDotNet.Xmpp.Delay;
@@ -28,6 +29,31 @@ public class CANBusMonitor : CANBusNode
     public int BusSize => 1 + RemoteNodes.Count;
 
     public Dictionary<byte, CANBusNode> RemoteNodes { get; } = new Dictionary<byte, CANBusNode>();
+
+    public String BusSummary
+    {
+        get
+        {
+            var s = new StringBuilder();
+            if (IsReady)
+            {
+                if (AllNodesReady)
+                {
+                    s.AppendFormat("Bus monitor {0}, all {1} nodes are ready!", SID, BusSize);
+                }
+                else
+                {
+                    s.AppendFormat("Bus monitor {0}, {1}} nodes out of {2} are ready!", SID, nodeReadyCount, BusSize);
+                }
+            }
+                else
+                {
+                    s.AppendFormat("Bus monitor {0} is not ready", SID);
+                }
+
+            return s.ToString();
+        }
+    }
     #endregion
 
     #region Events
