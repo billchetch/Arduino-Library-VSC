@@ -91,26 +91,28 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 var nodes = new List<CANBusNode>();
                 nodes.Add(bm);
                 nodes.AddRange(bm.RemoteNodes.Values);
-                var sl = new List<String>();
                 StringBuilder sb = new StringBuilder();
                 foreach (var node in nodes)
                 {
                     var mcp = node.MCPNode;
-                    sb.AppendFormat("Node {0} ({1})", node.NodeID, node.IsReady ? "ready" : "not ready");
-                    sb.AppendLine();
-                    sb.AppendFormat(" - Status Flags = {0}", Utilities.Convert.ToBitString(mcp.StatusFlags));
-                    sb.AppendLine();
-                    sb.AppendFormat(" - Error Flags = {0}", Utilities.Convert.ToBitString(mcp.ErrorFlags));
-                    sb.AppendLine();
-                    sb.AppendFormat(" - TXErrorCount = {0}", mcp.TXErrorCount);
-                    sb.AppendLine();
-                    sb.AppendFormat(" - RXErrorCount = {0}", mcp.RXErrorCount);
-                    sb.AppendLine();
-                    sl.Add(sb.ToString());
+                    if (node.IsReady)
+                    {
+                        sb.AppendFormat(" - Status Flags = {0}", Utilities.Convert.ToBitString(mcp.StatusFlags));
+                        sb.AppendLine();
+                        sb.AppendFormat(" - Error Flags = {0}", Utilities.Convert.ToBitString(mcp.ErrorFlags));
+                        sb.AppendLine();
+                        sb.AppendFormat(" - TXErrorCount = {0}", mcp.TXErrorCount);
+                        sb.AppendLine();
+                        sb.AppendFormat(" - RXErrorCount = {0}", mcp.RXErrorCount);
+                        sb.AppendLine();
+                    }
+                    else
+                    {
+                        sb.Append("Not Ready");
+                    }
+                    response.AddValue(String.Format("Node {0} Status", node.NodeID), sb.ToString());
                     sb.Clear();
-                }
-                response.AddValue("Nodes", sl);
-                    
+                }    
                 return true;
 
             case COMMAND_SYNCHRONISE_BUS:
