@@ -20,7 +20,7 @@ public class CANID
 
     public MessageType Messagetype => (MessageType)((ID >> 19) & 0x1F);
 
-    public byte Tag => (byte)((ID >> 16) & 0x03);
+    public byte Tag => (byte)((ID >> 16) & 0x07);
 
     public byte NodeID => (byte)(ID >> 12 & 0x0F);
 
