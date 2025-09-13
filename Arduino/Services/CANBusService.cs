@@ -57,6 +57,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
     {
         AddCommand(COMMAND_LIST_BUSSES, "Lists current busses and their ready status");
         AddCommand(COMMAND_SYNCHRONISE_BUS, "Sync a specific bus");
+        AddCommand(COMMAND_NODES_STATUS, "List the status of the nodes on a particular bus");
         base.AddCommands();
     }
 
