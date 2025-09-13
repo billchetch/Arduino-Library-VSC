@@ -72,17 +72,17 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 return true;
 
             case COMMAND_SYNCHRONISE_BUS:
-                if (arguments.Count == 0)
+                int busIdx = 0;
+                if (arguments.Count > 0)
                 {
-                    throw new ArgumentException("No bus specified");
+                    busIdx = System.Convert.ToInt16(arguments[0].ToString());
                 }
-                int busIdx = System.Convert.ToInt16(arguments[0].ToString());
                 if (busIdx < 0 || busIdx >= BusCount)
                 {
                     throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
                 }
                 var bm = GetBusMonitor(busIdx);
-                bm.MasterNode.SynchroniseBus();
+                bm.Synchronise();
                 return true;
                 
             default:

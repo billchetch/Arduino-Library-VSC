@@ -189,6 +189,16 @@ public class CANBusMonitor : CANBusNode
     #endregion
 
     #region Messaging
-    
+    public void Synchronise()
+    {
+        if (AllNodesReady)
+        {
+            MCPNode.SynchroniseBus();
+        }
+        else
+        {
+            throw new Exception("Cannot synchronise bus as not all nodes are ready");
+        }
+    }
     #endregion
 }
