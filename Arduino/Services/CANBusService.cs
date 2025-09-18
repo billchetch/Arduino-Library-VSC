@@ -4,6 +4,7 @@ using System.Text;
 using Chetch.Arduino.Boards;
 using Chetch.Messaging;
 using Microsoft.Extensions.Logging;
+using XmppDotNet.Xmpp.Jingle;
 
 namespace Chetch.Arduino.Services;
 
@@ -28,6 +29,13 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
     #region Methods
     public void AddBusMonitor(CANBusMonitor bus)
     {
+        bus.NodesReady += (Senders, ready) =>
+        {
+            if (ready)
+            {
+                Logger.LogInformation(0, "All {0} nodes of bus {1} are ready", bus.BusSize, bus.SID);
+            }
+        };
         AddBoard(bus);
         BusCount++;
     }
