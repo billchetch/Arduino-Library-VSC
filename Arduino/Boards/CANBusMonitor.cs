@@ -14,7 +14,7 @@ public class CANBusMonitor : CANBusNode
     #region Constants   
     public const String DEFAULT_BOARD_NAME = "canbusmon";
 
-    public const uint REQUEST_BUS_NODES_STATUS_INTERVAL = 10000; //in ms
+    public const uint REQUEST_BUS_NODES_STATUS_INTERVAL = 2000; //in ms
     #endregion
 
     #region Classes and Enums
