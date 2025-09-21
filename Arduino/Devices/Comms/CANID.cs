@@ -19,22 +19,15 @@ Structure = Bits 8-1 (bits 8-1 of byte 1 = 8 bits = 256 possible message structu
 */
 public class CANID
 {
-    public enum CANMessagePriority
-    {
-        CAN_PRIORITY_RANDOM = 0,
-        CAN_PRIORITY_CRITICAL,
-        CAN_PRIORITY_HIGH,
-        CAN_PRIORITY_NORMAL,
-        CAN_PRIORITY_LOW
-    };
+    
 
     public UInt32 ID { get; internal set; } = 0;
 
-    public CANMessagePriority Priority => (CANMessagePriority)(ID >> 24 & 0x0F);
+    public byte Header => (byte)(ID >> 24 & 0x1F);
 
     public MessageType Messagetype => (MessageType)((ID >> 19) & 0x1F);
 
-    public byte Tag => (byte)((ID >> 16) & 0x07);
+    public byte Tag => (byte)(ID >> 16 & 0x07);
 
     public byte NodeID => (byte)(ID >> 12 & 0x0F);
 
