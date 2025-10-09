@@ -282,7 +282,7 @@ public class MCP2515 : ArduinoDevice
         return base.HandleMessage(message);
     }
 
-    override void OnError(ArduinoMessage message)
+    override protected void OnError(ArduinoMessage message)
     {
         base.OnError(message);
 
