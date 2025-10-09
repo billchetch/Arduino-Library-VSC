@@ -55,6 +55,21 @@ public class CANBusNode : ArduinoBoard
             }
             message = msg;
         }
+
+        if (message.Type == Messaging.MessageType.ERROR && message.Target == MCPNode.ID)
+        {
+            ArduinoMessage msg = new ArduinoMessage(message.Type);
+            msg.Target = message.Target;
+            msg.Sender = message.Sender;
+            msg.Tag = message.Tag;
+            msg.Add(ArduinoBoard.ErrorCode.DEVICE_ERROR);
+            foreach (var arg in message.Arguments)
+            {
+                msg.Add(arg);
+            }
+            message = msg;
+        }
+
         //This will direct the message to the appropriate place
         OnMessageReceived(message);
     }

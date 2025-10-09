@@ -11,7 +11,6 @@ public class MCP2515 : ArduinoDevice
     private const byte MESSAGE_ID_FORWARD_RECEIVED = 100;
     private const byte MESSAGE_ID_FORWARD_SENT = 101;
     private const byte MESSAGE_ID_READY_TO_SEND = 102;
-    private const byte MESSAGE_ID_REPORT_ERROR = 110;
     #endregion
 
     #region Classes and Enums
@@ -25,19 +24,21 @@ public class MCP2515 : ArduinoDevice
         FAIL_TX,
         ALL_TX_BUSY,
         READ_FAIL,
+        CRC_ERROR,
         DEBUG_ASSERT
     };
 
     /*
-    STATUS FLAGS
-    D7: Transmit Buffer-2-Empty Interrupt Flag bit
-    D6: Buffer 2, Message-Transmit-Request bit
-    D5: Transmit Buffer-1-Empty Interrupt Flag bit
-    D4: Buffer 1, Message-Transmit-Request bit
-    D3: Transmit Buffer-0-Empty Interrupt Flag bit
-    D2: Buffer 0, Message-Transmit-Request bit
-    D1: Receive-Buffer-1-Full Interrupt Flag
-    D0: Receive-Buffer-0-Full Interrupt Flag
+    STATUS FLAGS (Bits in the byte read from the ? register)
+    Source: MCP2515-Stand-Alone-CAN-Controller-with-SPI-20001801J.pdf)
+    D7: TX2IF (CANINTF[4]) Transmit Buffer-2-Empty Interrupt Flag bit
+    D6: TXREQ (TXB2CNTRL[3]) Buffer 2, Message-Transmit-Request bit
+    D5: TX1IF (CANINTF[3]) Transmit Buffer-1-Empty Interrupt Flag bit
+    D4: TXREQ (TXB1CNTRL[3]) Buffer 1, Message-Transmit-Request bit
+    D3: TX0IF (CANINTF[2]) Transmit Buffer-0-Empty Interrupt Flag bit
+    D2: TXREQ (TXB0CNTRL[3]) Buffer 0, Message-Transmit-Request bit
+    D1: RX1IF (CANINTF[1]) Receive-Buffer-1-Full Interrupt Flag
+    D0: RX0IF (CANINTF[0]) Receive-Buffer-0-Full Interrupt Flag
     */
     public enum CANStatusFlag
     {
@@ -98,6 +99,8 @@ public class MCP2515 : ArduinoDevice
 
         public List<byte> CanData { get; } = new List<byte>();
 
+        public byte BitTrace { get; } = 0;
+
         public ArduinoMessage Message { get; } = new ArduinoMessage();
 
         public BusMessageDirection Direction { get; internal set; }
@@ -118,12 +121,13 @@ public class MCP2515 : ArduinoDevice
             int argCount = message.Arguments.Count;
 
             //Last 3 arguments of the message forwarded are 'meta' data which we extract
-            CanID = new CANID(message.Get<UInt32>(argCount - 3)); //last but two
-            CanDLC = message.Get<byte>(argCount - 2); //last but one
-            Message.Type = message.Get<MessageType>(argCount - 1); //last argument
+            CanID = new CANID(message.Get<UInt32>(argCount - 4)); //last but two
+            CanDLC = message.Get<byte>(argCount - 3); //last but one
+            Message.Type = message.Get<MessageType>(argCount - 2); //last argument
+            BitTrace = message.Get<byte>(argCount - 1);
             Message.Tag = CanID.Tag;
 
-            for (int i = 0; i < argCount - 3; i++)
+            for (int i = 0; i < argCount - 4; i++)
             {
                 byte[]? bytes = message.Arguments[i];
                 if (bytes != null)
@@ -151,6 +155,8 @@ public class MCP2515 : ArduinoDevice
     #region Properties
     public MCP2515ErrorCode LastError => (MCP2515ErrorCode)Error;
 
+    public Dictionary<MCP2515ErrorCode, uint> ErrorCounts { get; } = new Dictionary<MCP2515ErrorCode, uint>();
+
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 1)] //Start at 1 as 0 is for ReportInterval
     public byte NodeID { get; internal set; } //Default is 1 as this is the normal bus master node ID
 
@@ -169,7 +175,7 @@ public class MCP2515 : ArduinoDevice
     }
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 3)]
-    [ArduinoMessageMap(Messaging.MessageType.ERROR, 2)]
+    [ArduinoMessageMap(Messaging.MessageType.ERROR, 3)]
     public byte ErrorFlags
     {
         get { return errorFlags; }
@@ -186,11 +192,9 @@ public class MCP2515 : ArduinoDevice
     public bool IsBusOff => IsErrorFlagged(CANErrorFlag.EFLG_TXBO);
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 4)]
-    [ArduinoMessageMap(Messaging.MessageType.ERROR, 3)]
     public byte TXErrorCount { get; internal set; } = 0;
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 5)]
-    [ArduinoMessageMap(Messaging.MessageType.ERROR, 4)]
     public byte RXErrorCount { get; internal set; } = 0;
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 6)]
@@ -274,17 +278,22 @@ public class MCP2515 : ArduinoDevice
                     BusMessageReceived?.Invoke(this, eargs);
                 }
                 break;
-
-            case MessageType.ERROR:
-                if (message.Tag == MESSAGE_ID_REPORT_ERROR && !IsReady)
-                {
-                    //This is canse there are existing messages in a buffer somewhere so we just discard these
-                    //as there are relevant to a previous session not this one.
-                    return new ArduinoMessageMap.UpdatedProperties();
-                }
-                break;
         }
         return base.HandleMessage(message);
+    }
+
+    override void OnError(ArduinoMessage message)
+    {
+        base.OnError(message);
+
+        if(LastError != MCP2515ErrorCode.NO_ERROR)
+        {
+            if(!ErrorCounts.ContainsKey(LastError))
+            {
+                ErrorCounts[LastError] = 0;
+            }
+            ErrorCounts[LastError]++;
+        }
     }
 
     public void RequestRemoteNodesStatus()

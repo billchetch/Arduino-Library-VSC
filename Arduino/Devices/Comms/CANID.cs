@@ -5,33 +5,52 @@ namespace Chetch.Arduino.Devices.Comms;
 
 
 /*
-CANID class parses a Can ID which is a 29bit object, provided in a 32bit (4 byte) unsigned intt.
+CANID class parses a Can ID which is  29bit, provided in a 32bit (4 byte) unsigned int.
 
-We denote a Can ID in bit for as this: xxxx0000-000000000-000000000-000000000 = bit 32-1, byte 4-1. Bits 32,31,30,29 are not used as used by system
+Message Conversion
+The key to this is using the extended ID (so 29 bit) ID value as follows (reading left to right with 4 on the left):
 
-Priority = Bits 28,27,26,25 (Bits 4-1 from byte 4 = 4 bits = 16 priorities)
-Message Type = Bits 24,23,22,21,20 (bits 8-4 from byte 3 = 5 bits = 32 types)
-Message Tag = Bits 19,18,17 (bits 3-1 from byte 3 = 3 bits = 8 tags)
-Node ID = Bits 16,15,14,13 (bits 8-5 of byte 2 = 4 bits = 16 nodes)
-Sender/Device ID = Bits 12,11,10,9 (bits 4-1 of byte 2 = 4 bits = 16 devices)
-Structure = Bits 8-1 (bits 8-1 of byte 1 = 8 bits = 256 possible message structures)
+- Byte 4 = First 5 bits are the message type (allowing the type to determin priority)
+- Byte 3 = Node and sender 4 bits + 4 bits so 16 nodes and each node can have 16 senders (allowing node and device to determin priority)
+- Byte 2 = Tag and CRC: 3 bits for tag and 5 bits for CRC which ic calculated over the data and is provided to guard against SPI issues mainly)
+- Byte 1 = Message structure:  2 bits for argument count, then 2 bits for arg 1 length, 2 bits for arg2 length and 2 bits for arg 3 length. Argument 4 length is inferred.  Note finally bit values are all 1 less than the intended value.
 
+More on the message structure... in conjuntion with the can frame DLC value, Byte 3 allows for 4 possible arguments with each argument being of max 4 bytes. 
+This corresponds to arduino basic types (float, int, long, byte etc.) It also allows for a varilable length argument if there is only 1 arg as we can use the DLC
+value to determine
+
+Free single argument example:
+DLC = 0 to 8
+Byte = 00 00 00 00 : so the first two bits are 00 => 1 argument and the length is provided by the DLC value
+
+2 arguments example (4 bytes and 2 bytes)
+DLC = 6
+Byte  = 01 (11 01 00)
+
+3 arguments example (3 bytes and 4 bytes 1 byte)
+DLC = 8
+Byte = 10 (11 01 00)
+
+4 arguments example (2 bytes and 3 bytes 1 byte 2 byte)
+DLC = 8
+Byte = 11 (01 10 00) (note 2 bytes is inferred as the last argument as 8 - (2 + 3 + 1) = 2)
 */
+
 public class CANID
 {
-    
+
 
     public UInt32 ID { get; internal set; } = 0;
 
-    public byte Header => (byte)(ID >> 24 & 0x1F);
+    public MessageType Messagetype => (MessageType)(ID >> 24 & 0x1F);
 
-    public MessageType Messagetype => (MessageType)((ID >> 19) & 0x1F);
+    public byte NodeID => (byte)(ID >> 20 & 0x0F);
 
-    public byte Tag => (byte)(ID >> 16 & 0x07);
+    public byte Sender => (byte)(ID >> 16 & 0x0F);
 
-    public byte NodeID => (byte)(ID >> 12 & 0x0F);
+    public byte Tag => (byte)(ID >> 13 & 0x07);
 
-    public byte Sender => (byte)(ID >> 8 & 0x0F);
+    public byte CRC => (byte)(ID >> 8 & 0x1F);
 
     public byte MessageStructure => (byte)(ID & 0xFF);
 

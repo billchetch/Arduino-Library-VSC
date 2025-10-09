@@ -14,6 +14,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
     public const String COMMAND_LIST_BUSSES = "list-busses";
     public const String COMMAND_SYNCHRONISE_BUS = "sync-bus";
     public const String COMMAND_NODES_STATUS = "nodes-status";
+    public const String COMMAND_ERROR_COUNTS = "error-counts";
     #endregion
 
     #region Properties
@@ -65,7 +66,8 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
     {
         AddCommand(COMMAND_LIST_BUSSES, "Lists current busses and their ready status");
         AddCommand(COMMAND_SYNCHRONISE_BUS, "Sync a specific bus");
-        AddCommand(COMMAND_NODES_STATUS, "List the status of the nodes on a particular bus");
+        AddCommand(COMMAND_NODES_STATUS, "List the status of the nodes on a particular <bus?>");
+        AddCommand(COMMAND_ERROR_COUNTS, "Number of errors per type on a particular <bus?>");
         base.AddCommands();
     }
 
@@ -73,6 +75,8 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
     {
         int busIdx = 0;
         CANBusMonitor bm;
+        StringBuilder sb;
+        List<CANBusNode> nodes;
         switch (command.Command)
         {
             case COMMAND_LIST_BUSSES:
@@ -96,10 +100,10 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 bm = GetBusMonitor(busIdx);
 
                 //Master node first
-                var nodes = new List<CANBusNode>();
+                nodes = new List<CANBusNode>();
                 nodes.Add(bm);
                 nodes.AddRange(bm.RemoteNodes.Values);
-                StringBuilder sb = new StringBuilder();
+                sb = new StringBuilder();
                 foreach (var node in nodes)
                 {
                     var mcp = node.MCPNode;
@@ -134,6 +138,34 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 }
                 bm = GetBusMonitor(busIdx);
                 bm.Synchronise();
+                return true;
+
+            case COMMAND_ERROR_COUNTS:
+                if (arguments.Count > 0)
+                {
+                    busIdx = System.Convert.ToInt16(arguments[0].ToString());
+                }
+                if (busIdx < 0 || busIdx >= BusCount)
+                {
+                    throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
+                }
+                bm = bm = GetBusMonitor(busIdx);
+                nodes = new List<CANBusNode>();
+                nodes.Add(bm);
+                nodes.AddRange(bm.RemoteNodes.Values);
+                sb = new StringBuilder();
+                foreach (var node in nodes)
+                {
+                    var mcp = node.MCPNode;
+                    foreach(var kv in mcp.ErrorCounts)
+                    {
+                        sb.AppendFormat("{0} = {1}", kv.Key.ToString(), kv.Value);
+                        sb.AppendLine();
+                    }
+                    response.AddValue(String.Format("Node {0} Error Counts", node.NodeID), sb.ToString());
+                    sb.Clear();
+                }
+
                 return true;
 
             default:
