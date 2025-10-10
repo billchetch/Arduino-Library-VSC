@@ -299,14 +299,14 @@ public class MCP2515 : ArduinoDevice
         SendCommand(DeviceCommand.REQUEST, (byte)MessageType.STATUS_REQUEST);
     }
 
-    public void PingRemoteNodesStatus()
-    {
-        SendCommand(DeviceCommand.REQUEST, (byte)MessageType.PING);
-    }
-
     public void SynchroniseBus()
     {
         SendCommand(DeviceCommand.SYNCHRONISE);
+    }
+
+    public void TestBus(byte test)
+    {
+        SendCommand(DeviceCommand.TEST, test);
     }
     #endregion
 }
