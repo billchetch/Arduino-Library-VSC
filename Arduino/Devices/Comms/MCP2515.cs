@@ -99,8 +99,6 @@ public class MCP2515 : ArduinoDevice
 
         public List<byte> CanData { get; } = new List<byte>();
 
-        public byte BitTrace { get; } = 0;
-
         public ArduinoMessage Message { get; } = new ArduinoMessage();
 
         public BusMessageDirection Direction { get; internal set; }
@@ -124,7 +122,6 @@ public class MCP2515 : ArduinoDevice
             CanID = new CANID(message.Get<UInt32>(argCount - 4)); //last but two
             CanDLC = message.Get<byte>(argCount - 3); //last but one
             Message.Type = message.Get<MessageType>(argCount - 2); //last argument
-            BitTrace = message.Get<byte>(argCount - 1);
             Message.Tag = CanID.Tag;
 
             for (int i = 0; i < argCount - 4; i++)
