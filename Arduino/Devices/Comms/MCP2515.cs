@@ -119,12 +119,12 @@ public class MCP2515 : ArduinoDevice
             int argCount = message.Arguments.Count;
 
             //Last 3 arguments of the message forwarded are 'meta' data which we extract
-            CanID = new CANID(message.Get<UInt32>(argCount - 4)); //last but two
-            CanDLC = message.Get<byte>(argCount - 3); //last but one
-            Message.Type = message.Get<MessageType>(argCount - 2); //last argument
+            CanID = new CANID(message.Get<UInt32>(argCount - 3)); //last but two
+            CanDLC = message.Get<byte>(argCount - 2); //last but one
+            Message.Type = message.Get<MessageType>(argCount - 1); //last argument
             Message.Tag = CanID.Tag;
 
-            for (int i = 0; i < argCount - 4; i++)
+            for (int i = 0; i < argCount - 3; i++)
             {
                 byte[]? bytes = message.Arguments[i];
                 if (bytes != null)
