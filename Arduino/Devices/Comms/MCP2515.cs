@@ -25,6 +25,7 @@ public class MCP2515 : ArduinoDevice
         ALL_TX_BUSY,
         READ_FAIL,
         CRC_ERROR,
+        CUSTOM_ERROR,
         DEBUG_ASSERT
     };
 
