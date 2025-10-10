@@ -54,8 +54,14 @@ public class CANID
 
     public byte MessageStructure => (byte)(ID & 0xFF);
 
+
     public CANID(UInt32 canId)
     {
         ID = canId;
+    }
+
+    public override string ToString()
+    {
+        return Chetch.Utilities.Convert.ToBitString(ID);
     }
 }
