@@ -193,7 +193,7 @@ public class CANBusMonitor : CANBusNode
     {
         if (AllNodesReady)
         {
-            MCPNode.SynchroniseBus();
+            MasterNode.SynchroniseBus();
         }
         else
         {

@@ -153,6 +153,9 @@ public class MCP2515 : ArduinoDevice
     #region Properties
     public MCP2515ErrorCode LastError => (MCP2515ErrorCode)Error;
 
+    [ArduinoMessageMap(Messaging.MessageType.ERROR, 2)]
+    public UInt32 LastErrorData { get; set; } = 0;
+
     public Dictionary<MCP2515ErrorCode, uint> ErrorCounts { get; } = new Dictionary<MCP2515ErrorCode, uint>();
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 1)] //Start at 1 as 0 is for ReportInterval
