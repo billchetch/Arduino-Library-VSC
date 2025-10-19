@@ -13,7 +13,7 @@ The key to this is using the extended ID (so 29 bit) ID value as follows (readin
 - Byte 4 = First 5 bits are the message type (allowing the type to determin priority)
 - Byte 3 = Node and sender 4 bits + 4 bits so 16 nodes and each node can have 16 senders (allowing node and device to determin priority)
 - Byte 2 = Tag and CRC: 3 bits for tag and 5 bits for CRC which ic calculated over the data and is provided to guard against SPI issues mainly)
-- Byte 1 = Message structure:  2 bits for argument count, then 2 bits for arg 1 length, 2 bits for arg2 length and 2 bits for arg 3 length. Argument 4 length is inferred.  Note finally bit values are all 1 less than the intended value.
+- Byte 1 = Message Timestamp
 
 More on the message structure... in conjuntion with the can frame DLC value, Byte 3 allows for 4 possible arguments with each argument being of max 4 bytes. 
 This corresponds to arduino basic types (float, int, long, byte etc.) It also allows for a varilable length argument if there is only 1 arg as we can use the DLC
@@ -52,7 +52,7 @@ public class CANID
 
     public byte CRC => (byte)(ID >> 8 & 0x1F);
 
-    public byte MessageStructure => (byte)(ID & 0xFF);
+    public byte Timestamp => (byte)(ID & 0xFF);
 
 
     public CANID(UInt32 canId)

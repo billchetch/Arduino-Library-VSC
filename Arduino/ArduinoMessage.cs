@@ -2,6 +2,7 @@ using System;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
 using Chetch.Messaging;
@@ -31,6 +32,11 @@ public class ArduinoMessage : IMessageQueueItem<ArduinoMessage>
     {
         return message.Serialize();
     }
+
+    private static int GetSizeOf<T>()
+    {
+        return Marshal.SizeOf(typeof(T));
+    }   
     #endregion
 
     #region Properties
@@ -173,6 +179,27 @@ public class ArduinoMessage : IMessageQueueItem<ArduinoMessage>
     {
         var bytes = Chetch.Utilities.Convert.ToBytes(arg);
         Add(bytes, idx);
+    }
+
+    public int Populate<T>(byte[] data, int n = 0)
+    {
+        int k = n + GetSizeOf<T>();
+        Arguments.Add(data[n..k]);
+        return k;
+    }
+
+    public int Populate<T1, T>(byte[] data)
+    {
+        return Populate<T>(data, Populate<T1>(data));
+    }
+    public int Populate<T1, T2, T>(byte[] data)
+    {
+        return Populate<T>(data, Populate<T1, T2>(data));
+    }
+
+    public int Populate<T1, T2, T3, T>(byte[] data)
+    {
+        return Populate<T>(data, Populate<T1, T2, T3>(data));
     }
     #endregion
 
