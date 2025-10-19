@@ -43,31 +43,22 @@ public class CANBusNode : ArduinoBoard
     {
         if (NodeID != MASTER_NODE_ID && message.Target == MCPNode.ID && message.Type == Messaging.MessageType.STATUS_RESPONSE)
         {
-            ArduinoMessage msg = new ArduinoMessage(message.Type);
-            msg.Target = message.Target;
-            msg.Sender = message.Sender;
-            msg.Tag = message.Tag;
-            msg.Add(MCPNode.ReportInterval);
-            msg.Add(MCPNode.NodeID);
-            foreach (var arg in message.Arguments)
-            {
-                msg.Add(arg);
-            }
-            message = msg;
+            //Status Flags, Error Flags, errorCountTX, errorCountRX
+            message.Populate<byte, byte, byte, byte>(canData);
+            message.Add(MCPNode.ReportInterval, 0);
+            message.Add(MCPNode.NodeID, 1);
         }
 
         if (message.Type == Messaging.MessageType.ERROR && message.Target == MCPNode.ID)
         {
-            ArduinoMessage msg = new ArduinoMessage(message.Type);
-            msg.Target = message.Target;
-            msg.Sender = message.Sender;
-            msg.Tag = message.Tag;
-            msg.Add(ArduinoBoard.ErrorCode.DEVICE_ERROR);
-            foreach (var arg in message.Arguments)
-            {
-                msg.Add(arg);
-            }
-            message = msg;
+            //Error code, Error data, Error Flags, Status Flags
+            message.Populate<byte, UInt32, byte, byte>(canData);
+            message.Add(ArduinoBoard.ErrorCode.DEVICE_ERROR, 0);
+        }
+
+        if (message.Type == Messaging.MessageType.PRESENCE && message.Target == MCPNode.ID)
+        {
+            
         }
 
         //This will direct the message to the appropriate place
