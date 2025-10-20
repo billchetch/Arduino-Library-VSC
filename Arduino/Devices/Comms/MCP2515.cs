@@ -98,7 +98,7 @@ public class MCP2515 : ArduinoDevice
 
         public byte CanDLC { get; internal set; } = 0;
 
-        public List<byte> CanData { get; } = new List<byte>();
+        public byte[] CanData { get; }
 
         public ArduinoMessage Message { get; } = new ArduinoMessage();
 
@@ -124,16 +124,8 @@ public class MCP2515 : ArduinoDevice
             CanDLC = message.Get<byte>(argCount - 2); //last but one
             Message.Type = message.Get<MessageType>(argCount - 1); //last argument
             Message.Tag = CanID.Tag;
-
-            for (int i = 0; i < argCount - 3; i++)
-            {
-                byte[]? bytes = message.Arguments[i];
-                if (bytes != null)
-                {
-                    Message.Add(bytes);
-                    CanData.AddRange(bytes);
-                }
-            }
+            CanData = message.Get<byte[]>(0);
+            
         }
     }
 
