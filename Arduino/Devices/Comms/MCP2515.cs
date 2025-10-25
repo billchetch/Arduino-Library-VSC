@@ -2,6 +2,7 @@ using System;
 using Chetch.Arduino.Boards;
 using Chetch.Messaging;
 using XmppDotNet.Xmpp.HttpUpload;
+using XmppDotNet.Xmpp.Jingle.Candidates;
 
 namespace Chetch.Arduino.Devices.Comms;
 
@@ -96,7 +97,7 @@ public class MCP2515 : ArduinoDevice
 
         public byte NodeID => CanID.NodeID;
 
-        public byte CanDLC { get; internal set; } = 0;
+        public byte CanDLC => (byte)CanData.Length;
 
         public byte[] CanData { get; }
 
@@ -117,15 +118,11 @@ public class MCP2515 : ArduinoDevice
             
             Message.Sender = message.Sender;
             Message.Target = message.Target;
-            int argCount = message.Arguments.Count;
-
-            //Last 3 arguments of the message forwarded are 'meta' data which we extract
-            CanID = new CANID(message.Get<UInt32>(argCount - 3)); //last but two
-            CanDLC = message.Get<byte>(argCount - 2); //last but one
-            Message.Type = message.Get<MessageType>(argCount - 1); //last argument
-            Message.Tag = CanID.Tag;
-            CanData = message.Get<byte[]>(0);
             
+            CanData = message.Get<byte[]>(0);
+            CanID = new CANID(message.Get<UInt32>(1));
+            Message.Type = message.Get<MessageType>(2);
+            Message.Tag = CanID.Tag;
         }
     }
 
@@ -271,6 +268,10 @@ public class MCP2515 : ArduinoDevice
                     BusMessageReceived?.Invoke(this, eargs);
                 }
                 break;
+
+            case MessageType.PRESENCE:
+
+                break;
         }
         return base.HandleMessage(message);
     }
@@ -299,9 +300,9 @@ public class MCP2515 : ArduinoDevice
         SendCommand(DeviceCommand.SYNCHRONISE);
     }
 
-    public void TestBus(byte test)
+    public void TestBus(byte testNumber)
     {
-        SendCommand(DeviceCommand.TEST, test);
+        SendCommand(DeviceCommand.TEST, testNumber);
     }
     #endregion
 }
