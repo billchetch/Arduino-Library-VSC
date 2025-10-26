@@ -26,6 +26,8 @@ public class MCP2515 : ArduinoDevice
         ALL_TX_BUSY,
         READ_FAIL,
         CRC_ERROR,
+        STALE_MESSAGE, //an old message
+        SYNC_ERROR, //if presence is out of sync
         CUSTOM_ERROR,
         DEBUG_ASSERT
     };

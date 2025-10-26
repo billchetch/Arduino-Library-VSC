@@ -35,7 +35,14 @@ public class ArduinoMessage : IMessageQueueItem<ArduinoMessage>
 
     private static int GetSizeOf<T>()
     {
-        return Marshal.SizeOf(typeof(T));
+        if (typeof(T) == typeof(bool))
+        {
+            return 1;
+        }
+        else
+        {
+            return Marshal.SizeOf(typeof(T));
+        }
     }   
     #endregion
 
