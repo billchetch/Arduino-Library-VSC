@@ -145,7 +145,7 @@ public class CANBusMonitor : CANBusNode
             if (AllNodesReady) //was not ready, now it is
             {
                 //all nodes ready so send a synchrnoise command in case it's used by the nodes (do not expect a response)
-                MasterNode.SynchroniseBus();
+                SynchroniseBus();
 
                 //Fire the event
                 NodesReady?.Invoke(this, true);
@@ -189,16 +189,37 @@ public class CANBusMonitor : CANBusNode
     #endregion
 
     #region Messaging
-    public void Synchronise()
+
+    public void SendCommand(ArduinoDevice.DeviceCommand command, params Object[] arguments)
     {
         if (AllNodesReady)
         {
-            MasterNode.SynchroniseBus();
+            MasterNode.SendCommand(command, arguments);
         }
         else
         {
-            throw new Exception("Cannot synchronise bus as not all nodes are ready");
+            throw new Exception(String.Format("Cannot execute command {0} bus as not all nodes are ready", command));
         }
+    }
+    
+    public void SynchroniseBus()
+    {
+        SendCommand(ArduinoDevice.DeviceCommand.SYNCHRONISE);
+    }
+
+    public void TestBus(byte testNumber)
+    {
+        SendCommand(ArduinoDevice.DeviceCommand.TEST, testNumber);
+    }
+
+    public void PauseBus()
+    {
+        SendCommand(ArduinoDevice.DeviceCommand.PAUSE);
+    }
+    
+    public void ResumeBus()
+    {
+        SendCommand(ArduinoDevice.DeviceCommand.RESUME);
     }
     #endregion
 }

@@ -153,6 +153,7 @@ public class MCP2515 : ArduinoDevice
     public byte NodeID { get; internal set; } //Default is 1 as this is the normal bus master node ID
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 2)]
+    [ArduinoMessageMap(Messaging.MessageType.PRESENCE, 2)]
     public byte StatusFlags
     {
         get { return statusFlags; }
@@ -208,6 +209,9 @@ public class MCP2515 : ArduinoDevice
     }
 
     override public bool StatusRequested => base.StatusRequested || NodeID != CANBusNode.MASTER_NODE_ID;
+
+    [ArduinoMessageMap(Messaging.MessageType.PRESENCE, 0)]
+    public UInt32 NodeMillis { get; internal set; } = 0;
     #endregion
 
     #region Events
@@ -295,16 +299,6 @@ public class MCP2515 : ArduinoDevice
     public void RequestRemoteNodesStatus()
     {
         SendCommand(DeviceCommand.REQUEST, (byte)MessageType.STATUS_REQUEST);
-    }
-
-    public void SynchroniseBus()
-    {
-        SendCommand(DeviceCommand.SYNCHRONISE);
-    }
-
-    public void TestBus(byte testNumber)
-    {
-        SendCommand(DeviceCommand.TEST, testNumber);
     }
     #endregion
 }
