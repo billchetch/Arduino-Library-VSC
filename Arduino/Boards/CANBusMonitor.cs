@@ -207,9 +207,9 @@ public class CANBusMonitor : CANBusNode
         SendCommand(ArduinoDevice.DeviceCommand.SYNCHRONISE);
     }
 
-    public void TestBus(byte testNumber)
+    public void TestBus(byte testNumber, Int16 testParam = 0)
     {
-        SendCommand(ArduinoDevice.DeviceCommand.TEST, testNumber);
+        SendCommand(ArduinoDevice.DeviceCommand.TEST, testNumber, testParam);
     }
 
     public void PauseBus()
