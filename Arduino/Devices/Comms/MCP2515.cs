@@ -153,7 +153,7 @@ public class MCP2515 : ArduinoDevice
     public byte NodeID { get; internal set; } //Default is 1 as this is the normal bus master node ID
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 2)]
-    [ArduinoMessageMap(Messaging.MessageType.PRESENCE, 2)]
+    [ArduinoMessageMap(Messaging.MessageType.PRESENCE, 3)]
     public byte StatusFlags
     {
         get { return statusFlags; }

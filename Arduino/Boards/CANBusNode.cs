@@ -58,7 +58,7 @@ public class CANBusNode : ArduinoBoard
 
         if (message.Type == Messaging.MessageType.PRESENCE && message.Target == MCPNode.ID)
         {
-            message.Populate<UInt32, bool, byte>(canData);
+            message.Populate<UInt32, UInt16, bool, byte>(canData);
         }
 
         //This will direct the message to the appropriate place
