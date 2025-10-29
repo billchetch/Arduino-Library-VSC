@@ -46,10 +46,10 @@ public class CANBusMonitor : CANBusNode
                     s.AppendFormat("Bus monitor {0}, {1} nodes out of {2} are ready!", SID, nodeReadyCount, BusSize);
                 }
             }
-                else
-                {
-                    s.AppendFormat("Bus monitor {0} is not ready", SID);
-                }
+            else
+            {
+                s.AppendFormat("Bus monitor {0} is not ready", SID);
+            }
 
             return s.ToString();
         }
@@ -177,6 +177,12 @@ public class CANBusMonitor : CANBusNode
         AddRemoteNode(new CANBusNode());
     }
 
+    public List<CANBusNode> GetAllNodes()
+    {
+        var l = new List<CANBusNode>{ this };
+        l.AddRange(RemoteNodes.Values);
+        return l;
+    }
     #endregion
 
     #region Lifecycle

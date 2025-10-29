@@ -276,7 +276,7 @@ public class MCP2515 : ArduinoDevice
                 break;
 
             case MessageType.PRESENCE:
-
+                
                 break;
         }
         return base.HandleMessage(message);
