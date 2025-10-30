@@ -7,7 +7,7 @@ public class CANBusNode : ArduinoBoard
 {
     #region Constants and Statics
     public const byte MASTER_NODE_ID = 1;
-
+    
     #endregion
 
     #region Properties
@@ -21,8 +21,19 @@ public class CANBusNode : ArduinoBoard
     #region Constructors
     public CANBusNode(byte nodeID, String sid) : base(sid)
     {
-        MCPNode = new MCP2515(nodeID);
+        if(nodeID == MASTER_NODE_ID)
+        {
+            throw new ArgumentException(String.Format("Node ID {0} is not valid", nodeID)); 
+        }
+        MCPNode = new MCP2515Node(nodeID);
 
+        AddDevice(MCPNode);
+    }
+    
+    public CANBusNode(MCP2515 mcpNode, String sid) : base(sid)
+    {
+        MCPNode = mcpNode;
+        
         AddDevice(MCPNode);
     }
 
@@ -41,28 +52,31 @@ public class CANBusNode : ArduinoBoard
     #region Messaging
     public virtual void HandleBusMessage(CANID canID, byte[] canData, ArduinoMessage message)
     {
-        if (NodeID != MASTER_NODE_ID && message.Target == MCPNode.ID && message.Type == Messaging.MessageType.STATUS_RESPONSE)
+        bool onTarget = message.Target == MCPNode.ID;
+        if (onTarget)
         {
-            //Status Flags, Error Flags, errorCountTX, errorCountRX
-            message.Populate<byte, byte, byte, byte>(canData);
-            message.Add(MCPNode.ReportInterval, 0);
-            message.Add(MCPNode.NodeID, 1);
-        }
+            switch (message.Type)
+            {
+                case Messaging.MessageType.STATUS_RESPONSE:
+                    //Status Flags, Error Flags, errorCountTX, errorCountRX
+                    message.Populate<byte, byte, byte, byte>(canData);
+                    message.Add(MCPNode.ReportInterval, 0);
+                    message.Add(MCPNode.NodeID, 1);
+                    break;
 
-        if (message.Type == Messaging.MessageType.ERROR && message.Target == MCPNode.ID)
-        {
-            //Error code, Error data, Error Flags, Status Flags
-            message.Populate<byte, UInt32, byte, byte>(canData);
-            message.Add(ArduinoBoard.ErrorCode.DEVICE_ERROR, 0);
-        }
+                case Messaging.MessageType.ERROR:
+                    message.Populate<byte, UInt32, byte, byte>(canData);
+                    message.Add(ArduinoBoard.ErrorCode.DEVICE_ERROR, 0);
+                    break;
 
-        if (message.Type == Messaging.MessageType.PRESENCE && message.Target == MCPNode.ID)
-        {
-            message.Populate<UInt32, UInt16, bool, byte>(canData);
+                case Messaging.MessageType.PRESENCE:
+                    message.Populate<UInt32, UInt16, bool, byte>(canData);
+                    break;
+            }
+            
+            //This will direct the message to the appropriate place
+            OnMessageReceived(message);
         }
-
-        //This will direct the message to the appropriate place
-        OnMessageReceived(message);
     }
     #endregion
 }

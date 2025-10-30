@@ -22,7 +22,7 @@ public class CANBusMonitor : CANBusNode
     #endregion
 
     #region Properties
-    public MCP2515 MasterNode => MCPNode;
+    public MCP2515Master MasterNode => (MCP2515Master)MCPNode;
 
     public bool AllNodesReady => nodeReadyCount == BusSize;
 
@@ -61,7 +61,7 @@ public class CANBusMonitor : CANBusNode
 
     public EventHandler<bool>? NodesReady;
 
-    public EventHandler<MCP2515.BusMessageEventArgs>? BusMessageReceived;
+    public EventHandler<MCP2515Master.BusMessageEventArgs>? BusMessageReceived;
 
     public EventHandler? RequestedBusStatus;
     #endregion
@@ -73,7 +73,7 @@ public class CANBusMonitor : CANBusNode
     #endregion
 
     #region Constructors
-    public CANBusMonitor(String sid = DEFAULT_BOARD_NAME) : base(MASTER_NODE_ID, sid)
+    public CANBusMonitor(String sid = DEFAULT_BOARD_NAME) : base(new MCP2515Master(CANBusNode.MASTER_NODE_ID), sid)
     {
         requestBusNodesStatus.AutoReset = true;
         requestBusNodesStatus.Interval = REQUEST_BUS_NODES_STATUS_INTERVAL;

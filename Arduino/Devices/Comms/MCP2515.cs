@@ -6,11 +6,9 @@ using XmppDotNet.Xmpp.Jingle.Candidates;
 
 namespace Chetch.Arduino.Devices.Comms;
 
-public class MCP2515 : ArduinoDevice
+abstract public class MCP2515 : ArduinoDevice
 {
     #region Constants
-    private const byte MESSAGE_ID_FORWARD_RECEIVED = 100;
-    private const byte MESSAGE_ID_FORWARD_SENT = 101;
     private const byte MESSAGE_ID_READY_TO_SEND = 102;
     #endregion
 
@@ -85,47 +83,6 @@ public class MCP2515 : ArduinoDevice
         EFLG_TXWAR = (1 << 2),
         EFLG_RXWAR = (1 << 1),
         EFLG_EWARN = (1 << 0)
-    }
-
-    public enum BusMessageDirection
-    {
-        OUTBOUND,
-        INBOUND
-    } 
-
-    public class BusMessageEventArgs
-    {
-        public CANID CanID { get; internal set; }
-
-        public byte NodeID => CanID.NodeID;
-
-        public byte CanDLC => (byte)CanData.Length;
-
-        public byte[] CanData { get; }
-
-        public ArduinoMessage Message { get; } = new ArduinoMessage();
-
-        public BusMessageDirection Direction { get; internal set; }
-
-        public BusMessageEventArgs(ArduinoMessage message)
-        {
-            if (message.Tag == MESSAGE_ID_FORWARD_SENT)
-            {
-                Direction = BusMessageDirection.OUTBOUND;
-            }
-            else if (message.Tag == MESSAGE_ID_FORWARD_RECEIVED)
-            {
-                Direction = BusMessageDirection.INBOUND;
-            }
-            
-            Message.Sender = message.Sender;
-            Message.Target = message.Target;
-            
-            CanData = message.Get<byte[]>(0);
-            CanID = new CANID(message.Get<UInt32>(1));
-            Message.Type = message.Get<MessageType>(2);
-            Message.Tag = CanID.Tag;
-        }
     }
 
     public class FlagsChangedEventArgs
@@ -208,15 +165,11 @@ public class MCP2515 : ArduinoDevice
         }
     }
 
-    override public bool StatusRequested => base.StatusRequested || NodeID != CANBusNode.MASTER_NODE_ID;
-
     [ArduinoMessageMap(Messaging.MessageType.PRESENCE, 0)]
     public UInt32 NodeMillis { get; internal set; } = 0;
     #endregion
 
     #region Events
-    public EventHandler<BusMessageEventArgs>? BusMessageReceived;
-
     public EventHandler<FlagsChangedEventArgs>? StatusFlagsChanged;
 
     public EventHandler<FlagsChangedEventArgs>? ErrorFlagsChanged;
@@ -266,17 +219,8 @@ public class MCP2515 : ArduinoDevice
                 }
                 break;
 
-            //Message of this type are assumed to be 'forwarded' bus messages
-            case MessageType.INFO:
-                if (message.Tag == MESSAGE_ID_FORWARD_SENT || message.Tag == MESSAGE_ID_FORWARD_RECEIVED)
-                {
-                    var eargs = new BusMessageEventArgs(message);
-                    BusMessageReceived?.Invoke(this, eargs);
-                }
-                break;
-
             case MessageType.PRESENCE:
-                
+                //TODO: Something?    
                 break;
         }
         return base.HandleMessage(message);
