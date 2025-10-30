@@ -16,6 +16,8 @@ public class CANBusNode : ArduinoBoard
     public byte NodeID => MCPNode.NodeID;
 
     override public bool IsReady => NodeID != MASTER_NODE_ID ? true : base.IsReady;
+    public uint BusMessageCount { get; internal set; } = 0;
+
     #endregion
 
     #region Constructors
@@ -55,6 +57,8 @@ public class CANBusNode : ArduinoBoard
         bool onTarget = message.Target == MCPNode.ID;
         if (onTarget)
         {
+            BusMessageCount++;
+            
             switch (message.Type)
             {
                 case Messaging.MessageType.STATUS_RESPONSE:

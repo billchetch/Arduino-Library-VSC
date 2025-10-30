@@ -1,6 +1,7 @@
 using System;
 using Chetch.Arduino.Boards;
 using Chetch.Messaging;
+using Microsoft.EntityFrameworkCore.Storage.Json;
 using XmppDotNet.Xmpp.HttpUpload;
 using XmppDotNet.Xmpp.Jingle.Candidates;
 
@@ -103,7 +104,7 @@ abstract public class MCP2515 : ArduinoDevice
 
     [ArduinoMessageMap(Messaging.MessageType.ERROR, 2)]
     public UInt32 LastErrorData { get; set; } = 0;
-
+    
     public Dictionary<MCP2515ErrorCode, uint> ErrorCounts { get; } = new Dictionary<MCP2515ErrorCode, uint>();
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 1)] //Start at 1 as 0 is for ReportInterval
