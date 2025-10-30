@@ -210,6 +210,16 @@ public class ArduinoMessage : IMessageQueueItem<ArduinoMessage>
     {
         return Populate<T>(data, Populate<T1, T2, T3>(data));
     }
+
+    public int Populate<T1, T2, T3, T4, T>(byte[] data)
+    {
+        return Populate<T>(data, Populate<T1, T2, T3, T4>(data));
+    }
+
+    public int Populate<T1, T2, T3, T4, T5, T>(byte[] data)
+    {
+        return Populate<T>(data, Populate<T1, T2, T3, T4, T5>(data));
+    }
     #endregion
 
     #region Serialization methods
