@@ -1,4 +1,5 @@
 using System;
+using System.Net.NetworkInformation;
 using System.Reflection.Metadata;
 using System.Text;
 using Chetch.Arduino.Boards;
@@ -100,15 +101,15 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 bm = GetBusMonitor(busIdx);
 
                 //Master node first
-                nodes = new List<CANBusNode>();
-                nodes.Add(bm);
-                nodes.AddRange(bm.RemoteNodes.Values);
+                nodes = bm.GetAllNodes();
                 sb = new StringBuilder();
                 foreach (var node in nodes)
                 {
                     var mcp = node.MCPNode;
                     if (node.IsReady)
                     {
+                        sb.AppendFormat(" - Bus Message Count = {0}", node.BusMessageCount);
+                        sb.AppendLine();
                         sb.AppendFormat(" - Status Flags = {0}", Utilities.Convert.ToBitString(mcp.StatusFlags));
                         sb.AppendLine();
                         sb.AppendFormat(" - Error Flags = {0}", Utilities.Convert.ToBitString(mcp.ErrorFlags));
@@ -116,6 +117,8 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                         sb.AppendFormat(" - TXErrorCount = {0}", mcp.TXErrorCount);
                         sb.AppendLine();
                         sb.AppendFormat(" - RXErrorCount = {0}", mcp.RXErrorCount);
+                        sb.AppendLine();
+                        sb.AppendFormat(" - Error Code Flags = {0}", Utilities.Convert.ToBitString(mcp.ErrorCodeFlags));
                         sb.AppendLine();
                     }
                     else
