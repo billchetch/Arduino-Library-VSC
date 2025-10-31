@@ -62,8 +62,8 @@ public class CANBusNode : ArduinoBoard
             switch (message.Type)
             {
                 case Messaging.MessageType.STATUS_RESPONSE:
-                    //Status Flags, Error Flags, errorCountTX, errorCountRX
-                    message.Populate<byte, byte, byte, byte>(canData);
+                    //Status Flags, Error Flags, errorCountTX, errorCountRX, errorCountFlags
+                    message.Populate<byte, byte, byte, byte, UInt16>(canData);
                     message.Add(MCPNode.ReportInterval, 0);
                     message.Add(MCPNode.NodeID, 1);
                     break;

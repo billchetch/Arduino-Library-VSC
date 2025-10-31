@@ -1,4 +1,5 @@
 using System;
+using System.Numerics;
 using Chetch.Arduino.Boards;
 using Chetch.Messaging;
 using Microsoft.EntityFrameworkCore.Storage.Json;
@@ -88,14 +89,17 @@ abstract public class MCP2515 : ArduinoDevice
 
     public class FlagsChangedEventArgs
     {
-        public byte Flags { get; internal set; } = 0;
-        public byte FlagsChanged { get; internal set; } = 0;
+        public UInt16 Flags { get; internal set; }
+        public UInt16 FlagsChanged { get; internal set; }
 
-        public FlagsChangedEventArgs(byte oldValue, byte newValue)
+        public FlagsChangedEventArgs(UInt16 oldValue, UInt16 newValue)
         {
-            FlagsChanged = (byte)(oldValue ^ newValue);
+            FlagsChanged =  (UInt16)(oldValue ^ newValue);
             Flags = newValue;
         }
+
+        public FlagsChangedEventArgs(byte oldValue, byte newValue) : this((UInt16)oldValue, (UInt16)newValue)
+        { }
     }
     #endregion
 
@@ -149,6 +153,20 @@ abstract public class MCP2515 : ArduinoDevice
     public byte RXErrorCount { get; internal set; } = 0;
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 6)]
+    public UInt16 ErrorCountFlags
+    {
+        get { return errorCountFlags; }
+        internal set
+        {
+            if (value != errorCountFlags)
+            {
+                ErrorCountFlagsChanged?.Invoke(this, new FlagsChangedEventArgs(errorCountFlags,  value));
+            }
+            errorCountFlags = value;
+        }
+    }
+
+    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 7)]
     public bool CanSend
     {
         get { return canSend; }
@@ -175,12 +193,15 @@ abstract public class MCP2515 : ArduinoDevice
 
     public EventHandler<FlagsChangedEventArgs>? ErrorFlagsChanged;
 
+    public EventHandler<FlagsChangedEventArgs>? ErrorCountFlagsChanged;
+
     public EventHandler<bool>? ReadyToSend;
     #endregion
 
     #region Fields
     private byte statusFlags = 0;
     private byte errorFlags = 0;
+    private UInt16 errorCountFlags = 0;
     private bool canSend = false;
     #endregion
 
@@ -205,6 +226,11 @@ abstract public class MCP2515 : ArduinoDevice
     public bool IsStatusFlagged(CANStatusFlag sflg)
     {
         return (statusFlags & (int)sflg) == 1;
+    }
+
+    public bool IsErrorCountFlagged(MCP2515ErrorCode ecflg)
+    {
+        return (errorCountFlags & (int)ecflg) == 1;
     }
     #endregion
 
