@@ -118,7 +118,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                         sb.AppendLine();
                         sb.AppendFormat(" - RXErrorCount = {0}", mcp.RXErrorCount);
                         sb.AppendLine();
-                        sb.AppendFormat(" - Error Code Flags = {0}", Utilities.Convert.ToBitString(mcp.ErrorCodeFlags));
+                        sb.AppendFormat(" - Error Code Flags = {0}", Utilities.Convert.ToBitString(mcp.ErrorCodeFlags, "-"));
                         sb.AppendLine();
                     }
                     else
