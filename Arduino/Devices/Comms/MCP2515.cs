@@ -153,16 +153,16 @@ abstract public class MCP2515 : ArduinoDevice
     public byte RXErrorCount { get; internal set; } = 0;
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 6)]
-    public UInt16 ErrorCountFlags
+    public UInt16 ErrorCodeFlags
     {
-        get { return errorCountFlags; }
+        get { return errorCodeFlags; }
         internal set
         {
-            if (value != errorCountFlags)
+            if (value != errorCodeFlags)
             {
-                ErrorCountFlagsChanged?.Invoke(this, new FlagsChangedEventArgs(errorCountFlags,  value));
+                ErrorCodeFlagsChanged?.Invoke(this, new FlagsChangedEventArgs(errorCodeFlags,  value));
             }
-            errorCountFlags = value;
+            errorCodeFlags = value;
         }
     }
 
@@ -193,7 +193,7 @@ abstract public class MCP2515 : ArduinoDevice
 
     public EventHandler<FlagsChangedEventArgs>? ErrorFlagsChanged;
 
-    public EventHandler<FlagsChangedEventArgs>? ErrorCountFlagsChanged;
+    public EventHandler<FlagsChangedEventArgs>? ErrorCodeFlagsChanged;
 
     public EventHandler<bool>? ReadyToSend;
     #endregion
@@ -201,7 +201,7 @@ abstract public class MCP2515 : ArduinoDevice
     #region Fields
     private byte statusFlags = 0;
     private byte errorFlags = 0;
-    private UInt16 errorCountFlags = 0;
+    private UInt16 errorCodeFlags = 0;
     private bool canSend = false;
     #endregion
 
@@ -228,9 +228,9 @@ abstract public class MCP2515 : ArduinoDevice
         return (statusFlags & (int)sflg) == 1;
     }
 
-    public bool IsErrorCountFlagged(MCP2515ErrorCode ecflg)
+    public bool IsErrorCodeFlagged(MCP2515ErrorCode ecflg)
     {
-        return (errorCountFlags & (int)ecflg) == 1;
+        return (errorCodeFlags & (int)ecflg) == 1;
     }
     #endregion
 
