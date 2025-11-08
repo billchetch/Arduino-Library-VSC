@@ -145,7 +145,7 @@ public class CANBusMonitor : CANBusNode
             if (AllNodesReady) //was not ready, now it is
             {
                 //all nodes ready so send a synchrnoise command in case it's used by the nodes (do not expect a response)
-                SynchroniseBus();
+                //SynchroniseBus();
 
                 //Fire the event
                 NodesReady?.Invoke(this, true);
