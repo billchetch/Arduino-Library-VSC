@@ -16,6 +16,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
     public const String COMMAND_SYNCHRONISE_BUS = "sync-bus";
     public const String COMMAND_NODES_STATUS = "nodes-status";
     public const String COMMAND_ERROR_COUNTS = "error-counts";
+    public const String COMMAND_PING_NODE = "ping-node";
     #endregion
 
     #region Properties
@@ -119,6 +120,8 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                         sb.AppendFormat(" - RXErrorCount = {0}", mcp.RXErrorCount);
                         sb.AppendLine();
                         sb.AppendFormat(" - Error Code Flags = {0}", Utilities.Convert.ToBitString(mcp.ErrorCodeFlags, "-"));
+                        sb.AppendLine();
+                        sb.AppendFormat(" - Last Presence On = {0}", mcp.LastPresenceOn.ToString("s"));
                         sb.AppendLine();
                     }
                     else

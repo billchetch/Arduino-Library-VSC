@@ -227,5 +227,17 @@ public class CANBusMonitor : CANBusNode
     {
         SendCommand(ArduinoDevice.DeviceCommand.RESUME);
     }
+
+    public void PingNode(byte nodeID)
+    {
+        if(nodeID == NodeID)
+        {
+            Ping();
+        }
+        else
+        {
+            MasterNode.PingRemoteNode(nodeID);
+        }
+    }
     #endregion
 }

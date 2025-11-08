@@ -186,6 +186,8 @@ abstract public class MCP2515 : ArduinoDevice
 
     [ArduinoMessageMap(Messaging.MessageType.PRESENCE, 0)]
     public UInt32 NodeMillis { get; internal set; } = 0;
+
+    public DateTime LastPresenceOn { get; internal set; }
     #endregion
 
     #region Events
@@ -247,7 +249,7 @@ abstract public class MCP2515 : ArduinoDevice
                 break;
 
             case MessageType.PRESENCE:
-                //TODO: Something?    
+                LastPresenceOn = DateTime.Now;    
                 break;
         }
         return base.HandleMessage(message);
@@ -267,9 +269,6 @@ abstract public class MCP2515 : ArduinoDevice
         }
     }
 
-    public void RequestRemoteNodesStatus()
-    {
-        SendCommand(DeviceCommand.REQUEST, (byte)MessageType.STATUS_REQUEST);
-    }
+    
     #endregion
 }

@@ -234,5 +234,11 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
         SendMessage(msg);
         statusRequested = true; //flag that this has been requested
     }
+
+    public void Ping()
+    {
+        var msg = new ArduinoMessage(MessageType.PING);
+        SendMessage(msg);
+    }
     #endregion
 }
