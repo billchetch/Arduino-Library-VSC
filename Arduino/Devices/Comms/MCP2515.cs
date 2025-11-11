@@ -130,7 +130,7 @@ abstract public class MCP2515 : ArduinoDevice
     }
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 3)]
-    [ArduinoMessageMap(Messaging.MessageType.ERROR, 3)]
+    [ArduinoMessageMap(Messaging.MessageType.ERROR, 4)]
     public byte ErrorFlags
     {
         get { return errorFlags; }
@@ -152,6 +152,7 @@ abstract public class MCP2515 : ArduinoDevice
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 5)]
     public byte RXErrorCount { get; internal set; } = 0;
 
+    [ArduinoMessageMap(Messaging.MessageType.ERROR, 3)]
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 6)]
     public UInt16 ErrorCodeFlags
     {

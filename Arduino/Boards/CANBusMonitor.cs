@@ -14,7 +14,7 @@ public class CANBusMonitor : CANBusNode
     #region Constants   
     public const String DEFAULT_BOARD_NAME = "canbusmon";
 
-    public const uint REQUEST_BUS_NODES_STATUS_INTERVAL = 2000; //in ms
+    public const uint REQUEST_BUS_NODES_STATUS_INTERVAL = 5000; //in ms
     #endregion
 
     #region Classes and Enums
@@ -179,9 +179,24 @@ public class CANBusMonitor : CANBusNode
 
     public List<CANBusNode> GetAllNodes()
     {
-        var l = new List<CANBusNode>{ this };
+        var l = new List<CANBusNode> { this };
         l.AddRange(RemoteNodes.Values);
         return l;
+    }
+    
+    public CANBusNode GetNode(byte nodeID)
+    {
+        if (nodeID == NodeID)
+        {
+            return this;
+        }
+        else if(RemoteNodes.ContainsKey(nodeID))
+        {
+            return RemoteNodes[nodeID];
+        } else
+        {
+            throw new ArgumentException(String.Format("There is no node with ID {0}", nodeID));
+        }
     }
     #endregion
 

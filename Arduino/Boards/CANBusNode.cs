@@ -69,7 +69,7 @@ public class CANBusNode : ArduinoBoard
                     break;
 
                 case Messaging.MessageType.ERROR:
-                    message.Populate<byte, UInt32, byte, byte>(canData);
+                    message.Populate<byte, UInt32, UInt16, byte>(canData);
                     message.Add(ArduinoBoard.ErrorCode.DEVICE_ERROR, 0);
                     break;
 
