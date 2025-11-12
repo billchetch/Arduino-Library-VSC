@@ -247,7 +247,7 @@ public class CANBusMonitor : CANBusNode
     {
         if(nodeID == NodeID)
         {
-            Ping();
+            MasterNode.Ping();
         }
         else
         {
