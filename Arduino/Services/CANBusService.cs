@@ -13,7 +13,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
 {
     #region Constants
     public const String COMMAND_LIST_BUSSES = "list-busses";
-    public const String COMMAND_SYNCHRONISE_BUS = "sync-bus";
+    public const String COMMAND_INITIALISE_BUS = "init-bus";
     public const String COMMAND_NODES_STATUS = "nodes-status";
     public const String COMMAND_ERROR_COUNTS = "error-counts";
     public const String COMMAND_PING_NODE = "ping-node";
@@ -67,7 +67,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
     protected override void AddCommands()
     {
         AddCommand(COMMAND_LIST_BUSSES, "Lists current busses and their ready status");
-        AddCommand(COMMAND_SYNCHRONISE_BUS, "Sync a specific bus");
+        AddCommand(COMMAND_INITIALISE_BUS, "Init a specific bus");
         AddCommand(COMMAND_NODES_STATUS, "List the status of the nodes on a particular <bus?>");
         AddCommand(COMMAND_ERROR_COUNTS, "Number of errors per type on a particular <bus?>");
         base.AddCommands();
@@ -133,7 +133,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 }    
                 return true;
 
-            case COMMAND_SYNCHRONISE_BUS:
+            case COMMAND_INITIALISE_BUS:
                 if (arguments.Count > 0)
                 {
                     busIdx = System.Convert.ToInt16(arguments[0].ToString());
@@ -143,7 +143,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
                 }
                 bm = GetBusMonitor(busIdx);
-                bm.SynchroniseBus();
+                bm.InitialiseNodes();
                 return true;
 
             case COMMAND_ERROR_COUNTS:
