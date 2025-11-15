@@ -240,5 +240,11 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
         var msg = new ArduinoMessage(MessageType.PING);
         SendMessage(msg);
     }
+
+    public void Initialise()
+    {
+        var msg = new ArduinoMessage(MessageType.INITIALISE);
+        SendMessage(msg);
+    }
     #endregion
 }

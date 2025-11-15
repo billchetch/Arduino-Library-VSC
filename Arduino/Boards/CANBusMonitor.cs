@@ -81,8 +81,7 @@ public class CANBusMonitor : CANBusNode
         {
             if (MasterNode.CanSend)
             {
-                MasterNode.RequestStatus();
-                MasterNode.RequestRemoteNodesStatus();
+                RequestNodesStatus();
                 RequestedBusStatus?.Invoke(this, EventArgs.Empty);
             }
         };
@@ -144,8 +143,8 @@ public class CANBusMonitor : CANBusNode
             NodeReady?.Invoke(this, node);
             if (AllNodesReady) //was not ready, now it is
             {
-                //all nodes ready so send a synchrnoise command in case it's used by the nodes (do not expect a response)
-                SynchroniseBus();
+                //all nodes ready so send an INITIALISE message
+                InitialiseNodes();
 
                 //Fire the event
                 NodesReady?.Invoke(this, true);
@@ -223,11 +222,6 @@ public class CANBusMonitor : CANBusNode
         }
     }
     
-    public void SynchroniseBus()
-    {
-        SendCommand(ArduinoDevice.DeviceCommand.SYNCHRONISE);
-    }
-
     public void TestBus(byte testNumber, Int16 testParam = 0)
     {
         SendCommand(ArduinoDevice.DeviceCommand.TEST, testNumber, testParam);
@@ -237,10 +231,34 @@ public class CANBusMonitor : CANBusNode
     {
         SendCommand(ArduinoDevice.DeviceCommand.PAUSE);
     }
-    
+
     public void ResumeBus()
     {
         SendCommand(ArduinoDevice.DeviceCommand.RESUME);
+    }
+
+    public void RequestNodesStatus()
+    {
+        MasterNode.RequestStatus();
+        MasterNode.RequestRemoteNodesStatus();
+    }
+
+    public void InitialiseNodes()
+    {
+        MasterNode.Initialise();
+        MasterNode.InitialiseRemoteNode(0);
+    }
+    
+    public void InitialiseNode(byte nodeID)
+    {
+        if(nodeID == NodeID)
+        {
+            MasterNode.Initialise();
+        }
+        else
+        {
+            MasterNode.InitialiseRemoteNode(nodeID);
+        }
     }
 
     public void PingNode(byte nodeID)

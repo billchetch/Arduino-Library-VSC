@@ -84,12 +84,17 @@ public class MCP2515Master : MCP2515
         return base.HandleMessage(message);
     }
 
+    public void InitialiseRemoteNode(byte nodeID) //set nodeID = 0 to initialise all
+    {
+        SendCommand(DeviceCommand.REQUEST, (byte)MessageType.INITIALISE, nodeID);
+    }
+    
     public void RequestRemoteNodesStatus()
     {
         SendCommand(DeviceCommand.REQUEST, (byte)MessageType.STATUS_REQUEST);
     }
 
-    public void PingRemoteNode(byte nodeID)
+    public void PingRemoteNode(byte nodeID) //set nodeID = 0 to ping all
     {
         SendCommand(DeviceCommand.REQUEST, (byte)MessageType.PING, nodeID);
     }

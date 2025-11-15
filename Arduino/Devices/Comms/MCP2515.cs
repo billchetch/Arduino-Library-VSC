@@ -185,7 +185,10 @@ abstract public class MCP2515 : ArduinoDevice
         }
     }
 
+    public bool Initialised { get; internal set; } = false; //Set on receiving an INITIALISE_RESPONSE message
+    
     [ArduinoMessageMap(Messaging.MessageType.PRESENCE, 0)]
+    [ArduinoMessageMap(Messaging.MessageType.PING_RESPONSE, 0)]
     public UInt32 NodeMillis { get; internal set; } = 0;
 
     public DateTime LastPresenceOn { get; internal set; }
@@ -247,6 +250,10 @@ abstract public class MCP2515 : ArduinoDevice
                 {
                     CanSend = true;
                 }
+                break;
+
+            case MessageType.INITIALISE_RESPONSE:
+                Initialised = true;
                 break;
 
             case MessageType.PRESENCE:
