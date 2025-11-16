@@ -74,11 +74,13 @@ public class CANBusNode : ArduinoBoard
                     break;
 
                 case Messaging.MessageType.ERROR:
+                    //Error Code, Error Data, Error Code Flags, MCP Error Flags
                     message.Populate<byte, UInt32, UInt16, byte>(canData);
                     message.Add(ArduinoBoard.ErrorCode.DEVICE_ERROR, 0);
                     break;
 
                 case Messaging.MessageType.PRESENCE:
+                    //Nodemillis, Interval, Initial presence, Status Flags
                     message.Populate<UInt32, UInt16, bool, byte>(canData);
                     break;
             }
