@@ -187,9 +187,31 @@ abstract public class MCP2515 : ArduinoDevice
 
     public bool Initialised { get; internal set; } = false; //Set on receiving an INITIALISE_RESPONSE message
     
+
     [ArduinoMessageMap(Messaging.MessageType.PRESENCE, 0)]
     [ArduinoMessageMap(Messaging.MessageType.PING_RESPONSE, 0)]
-    public UInt32 NodeMillis { get; internal set; } = 0;
+    [ArduinoMessageMap(Messaging.MessageType.INITIALISE_RESPONSE, 0)]
+    public UInt32 NodeMillis 
+    { 
+        get
+        {
+            return nodeMillis;
+        } 
+        internal set
+        {
+            if(nodeMillisSetOn != default(DateTime))
+            {
+                UInt32 localInterval = (UInt32)(DateTime.Now - nodeMillisSetOn).TotalMilliseconds;
+                UInt32 expectedValue = nodeMillis + localInterval;
+                SyncOffset = (int)(value - expectedValue);
+                Console.WriteLine("N{0}: Local interval: {1}, Expected Value: {2}, Actual Value: {3}, Sync Offset: {4}", NodeID, localInterval, expectedValue, value, SyncOffset);
+            }
+            nodeMillis = value;
+            nodeMillisSetOn = DateTime.Now;
+        }
+    }
+
+    public int SyncOffset {get; internal set;}  = 0;
 
     public DateTime LastPresenceOn { get; internal set; }
     #endregion
@@ -209,6 +231,10 @@ abstract public class MCP2515 : ArduinoDevice
     private byte errorFlags = 0;
     private UInt16 errorCodeFlags = 0;
     private bool canSend = false;
+    private UInt32 nodeMillis = 0;
+
+    private DateTime nodeMillisSetOn = default(DateTime);
+
     #endregion
 
     #region Constructors
@@ -253,7 +279,11 @@ abstract public class MCP2515 : ArduinoDevice
                 break;
 
             case MessageType.INITIALISE_RESPONSE:
+                Console.WriteLine("N{0}: Init Reponse, Node Millis: {1}", NodeID, message.Get<UInt32>(0)); 
                 Initialised = true;
+                Error = 0;
+                LastErrorData = 0;
+                ErrorCounts.Clear();
                 break;
 
             case MessageType.PRESENCE:

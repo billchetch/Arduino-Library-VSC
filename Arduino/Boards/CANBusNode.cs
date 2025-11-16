@@ -68,6 +68,11 @@ public class CANBusNode : ArduinoBoard
                     message.Add(MCPNode.NodeID, 1);
                     break;
 
+                case Messaging.MessageType.INITIALISE_RESPONSE:
+                    //Millis
+                    message.Populate<UInt32>(canData);
+                    break;
+
                 case Messaging.MessageType.ERROR:
                     message.Populate<byte, UInt32, UInt16, byte>(canData);
                     message.Add(ArduinoBoard.ErrorCode.DEVICE_ERROR, 0);
