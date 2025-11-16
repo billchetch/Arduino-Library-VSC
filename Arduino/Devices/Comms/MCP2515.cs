@@ -204,7 +204,7 @@ abstract public class MCP2515 : ArduinoDevice
                 UInt32 localInterval = (UInt32)(DateTime.Now - nodeMillisSetOn).TotalMilliseconds;
                 UInt32 expectedValue = nodeMillis + localInterval;
                 SyncOffset = (int)(value - expectedValue);
-                Console.WriteLine("N{0}: Local interval: {1}, Expected Value: {2}, Actual Value: {3}, Sync Offset: {4}", NodeID, localInterval, expectedValue, value, SyncOffset);
+                //Console.WriteLine("N{0}: Local interval: {1}, Expected Value: {2}, Actual Value: {3}, Sync Offset: {4}", NodeID, localInterval, expectedValue, value, SyncOffset);
             }
             nodeMillis = value;
             nodeMillisSetOn = DateTime.Now;
@@ -279,7 +279,6 @@ abstract public class MCP2515 : ArduinoDevice
                 break;
 
             case MessageType.INITIALISE_RESPONSE:
-                Console.WriteLine("N{0}: Init Reponse, Node Millis: {1}", NodeID, message.Get<UInt32>(0)); 
                 Initialised = true;
                 Error = 0;
                 LastErrorData = 0;
