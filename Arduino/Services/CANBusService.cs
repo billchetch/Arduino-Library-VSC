@@ -67,7 +67,8 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
     protected override void AddCommands()
     {
         AddCommand(COMMAND_LIST_BUSSES, "Lists current busses and their ready status");
-        AddCommand(COMMAND_INITIALISE_BUS, "Init a specific bus");
+        AddCommand(COMMAND_INITIALISE_BUS, "Init a specific <?bus>");
+        AddCommand(COMMAND_PING_NODE, "Ping a <?node> on a <?bus>");
         AddCommand(COMMAND_NODES_STATUS, "List the status of the nodes on a particular <bus?>");
         AddCommand(COMMAND_ERROR_COUNTS, "Number of errors per type on a particular <bus?>");
         base.AddCommands();
@@ -79,6 +80,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
         CANBusMonitor bm;
         StringBuilder sb;
         List<CANBusNode> nodes;
+        byte nodeID = 0;
         switch (command.Command)
         {
             case COMMAND_LIST_BUSSES:
@@ -119,6 +121,8 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                         sb.AppendLine();
                         sb.AppendFormat(" - RXErrorCount = {0}", mcp.RXErrorCount);
                         sb.AppendLine();
+                        sb.AppendFormat(" - Last Error = {0}", mcp.LastError);
+                        sb.AppendLine();
                         sb.AppendFormat(" - Error Code Flags = {0}", Utilities.Convert.ToBitString(mcp.ErrorCodeFlags, "-"));
                         sb.AppendLine();
                         sb.AppendFormat(" - Last Presence On = {0}", mcp.LastPresenceOn.ToString("s"));
@@ -144,6 +148,23 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 }
                 bm = GetBusMonitor(busIdx);
                 bm.InitialiseNodes();
+                return true;
+
+            case COMMAND_PING_NODE:
+                if (arguments.Count > 0)
+                {
+                    nodeID = System.Convert.ToByte(arguments[0].ToString());
+                }
+                if (arguments.Count > 1)
+                {
+                    busIdx = System.Convert.ToInt16(arguments[1].ToString());
+                }
+                if (busIdx < 0 || busIdx >= BusCount)
+                {
+                    throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
+                }
+                bm = GetBusMonitor(busIdx);
+                bm.PingNode(nodeID);
                 return true;
 
             case COMMAND_ERROR_COUNTS:
