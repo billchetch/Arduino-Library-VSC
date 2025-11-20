@@ -261,6 +261,12 @@ public class CANBusMonitor : CANBusNode
         }
     }
 
+    public void PingNodes()
+    {
+        MasterNode.Ping();
+        MasterNode.PingRemoteNode(0);
+    }
+
     public void PingNode(byte nodeID)
     {
         if(nodeID == NodeID)

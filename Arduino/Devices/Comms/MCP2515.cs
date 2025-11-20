@@ -107,7 +107,7 @@ abstract public class MCP2515 : ArduinoDevice
     public MCP2515ErrorCode LastError => (MCP2515ErrorCode)Error;
 
     [ArduinoMessageMap(Messaging.MessageType.ERROR, 2)]
-    public UInt32 LastErrorData { get; set; } = 0;
+    public UInt32 LastErrorData { get; internal set; } = 0;
     
     public Dictionary<MCP2515ErrorCode, uint> ErrorCounts { get; } = new Dictionary<MCP2515ErrorCode, uint>();
 

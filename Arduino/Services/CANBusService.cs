@@ -123,6 +123,8 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                         sb.AppendLine();
                         sb.AppendFormat(" - Last Error = {0}", mcp.LastError);
                         sb.AppendLine();
+                        sb.AppendFormat(" - Last Error Data = {0}", Utilities.Convert.ToBitString(mcp.LastErrorData, "-"));
+                        sb.AppendLine();
                         sb.AppendFormat(" - Error Code Flags = {0}", Utilities.Convert.ToBitString(mcp.ErrorCodeFlags, "-"));
                         sb.AppendLine();
                         sb.AppendFormat(" - Last Presence On = {0}", mcp.LastPresenceOn.ToString("s"));
@@ -164,7 +166,13 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
                 }
                 bm = GetBusMonitor(busIdx);
-                bm.PingNode(nodeID);
+                if(nodeID == 0){
+                    bm.PingNodes();
+                } 
+                else 
+                {
+                    bm.PingNode(nodeID);
+                }
                 return true;
 
             case COMMAND_ERROR_COUNTS:
