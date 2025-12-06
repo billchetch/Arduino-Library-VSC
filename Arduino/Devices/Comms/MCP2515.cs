@@ -108,6 +108,8 @@ abstract public class MCP2515 : ArduinoDevice
 
     [ArduinoMessageMap(Messaging.MessageType.ERROR, 2)]
     public UInt32 LastErrorData { get; internal set; } = 0;
+
+    public DateTime LastErrorOn { get; internal set; }
     
     public Dictionary<MCP2515ErrorCode, uint> ErrorCounts { get; } = new Dictionary<MCP2515ErrorCode, uint>();
 
@@ -303,6 +305,8 @@ abstract public class MCP2515 : ArduinoDevice
                 ErrorCounts[LastError] = 0;
             }
             ErrorCounts[LastError]++;
+
+            LastErrorOn = DateTime.Now;
         }
     }
 
