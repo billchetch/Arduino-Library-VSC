@@ -125,6 +125,8 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                         sb.AppendLine();
                         sb.AppendFormat(" - Last Error Data = {0}", Utilities.Convert.ToBitString(mcp.LastErrorData, "-"));
                         sb.AppendLine();
+                        sb.AppendFormat(" - Last Error On = {0}", mcp.LastErrorOn.ToString("s"));
+                        sb.AppendLine();
                         sb.AppendFormat(" - Error Code Flags = {0}", Utilities.Convert.ToBitString(mcp.ErrorCodeFlags, "-"));
                         sb.AppendLine();
                         sb.AppendFormat(" - Last Presence On = {0}", mcp.LastPresenceOn.ToString("s"));
