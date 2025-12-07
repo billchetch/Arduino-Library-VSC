@@ -15,6 +15,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
     public const String COMMAND_LIST_BUSSES = "list-busses";
     public const String COMMAND_INITIALISE_BUS = "init-bus";
     public const String COMMAND_NODES_STATUS = "nodes-status";
+    public const String COMMAND_NODE_ERRORS = "node-errors";
     public const String COMMAND_ERROR_COUNTS = "error-counts";
     public const String COMMAND_PING_NODE = "ping-node";
     #endregion
@@ -70,6 +71,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
         AddCommand(COMMAND_INITIALISE_BUS, "Init a specific <?bus>");
         AddCommand(COMMAND_PING_NODE, "Ping a <?node> on a <?bus>");
         AddCommand(COMMAND_NODES_STATUS, "List the status of the nodes on a particular <bus?>");
+        AddCommand(COMMAND_NODE_ERRORS, "List the errors of a particular <node> on a <bus?>");
         AddCommand(COMMAND_ERROR_COUNTS, "Number of errors per type on a particular <bus?>");
         base.AddCommands();
     }
@@ -81,6 +83,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
         StringBuilder sb;
         List<CANBusNode> nodes;
         byte nodeID = 0;
+        int n = 0;
         switch (command.Command)
         {
             case COMMAND_LIST_BUSSES:
@@ -139,6 +142,27 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     response.AddValue(String.Format("Node {0} Status", node.NodeID), sb.ToString());
                     sb.Clear();
                 }    
+                return true;
+
+            case COMMAND_NODE_ERRORS:
+                if (arguments.Count > 0)
+                {
+                    nodeID = System.Convert.ToByte(arguments[0].ToString());
+                }
+                if (arguments.Count > 0)
+                {
+                    busIdx = System.Convert.ToInt16(arguments[0].ToString());
+                }
+                if (busIdx < 0 || busIdx >= BusCount)
+                {
+                    throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
+                }
+                bm = GetBusMonitor(busIdx);
+                var nd = bm.GetNode(nodeID);
+                foreach(var s in nd.ErrorLog)
+                {
+                    response.AddValue(String.Format("Log Entry {0}", n++), s);
+                }
                 return true;
 
             case COMMAND_INITIALISE_BUS:

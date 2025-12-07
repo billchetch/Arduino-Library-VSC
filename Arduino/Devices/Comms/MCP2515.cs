@@ -2,6 +2,7 @@ using System;
 using System.Numerics;
 using Chetch.Arduino.Boards;
 using Chetch.Messaging;
+using Chetch.Utilities;
 using Microsoft.EntityFrameworkCore.Storage.Json;
 using XmppDotNet.Xmpp.HttpUpload;
 using XmppDotNet.Xmpp.Jingle.Candidates;
@@ -11,6 +12,7 @@ namespace Chetch.Arduino.Devices.Comms;
 abstract public class MCP2515 : ArduinoDevice
 {
     #region Constants
+    public const int ERROR_LOG_SIZE = 64;
     private const byte MESSAGE_ID_READY_TO_SEND = 102;
     #endregion
 
@@ -110,8 +112,12 @@ abstract public class MCP2515 : ArduinoDevice
     public UInt32 LastErrorData { get; internal set; } = 0;
 
     public DateTime LastErrorOn { get; internal set; }
+
+    public String ErrorSummary => String.Format("{0}: {1} ({2})", LastErrorOn.ToString("s"), LastError, Chetch.Utilities.Convert.ToBitString(LastErrorData, "-"));
     
     public Dictionary<MCP2515ErrorCode, uint> ErrorCounts { get; } = new Dictionary<MCP2515ErrorCode, uint>();
+
+    public RingBuffer<String> ErrorLog { get; } = new RingBuffer<String>(ERROR_LOG_SIZE, true);
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 1)] //Start at 1 as 0 is for ReportInterval
     public byte NodeID { get; internal set; } //Default is 1 as this is the normal bus master node ID
@@ -308,6 +314,8 @@ abstract public class MCP2515 : ArduinoDevice
             ErrorCounts[LastError]++;
 
             LastErrorOn = DateTime.Now;
+
+            ErrorLog.Add(ErrorSummary);
         }
     }
 
