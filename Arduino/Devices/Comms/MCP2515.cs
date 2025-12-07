@@ -284,6 +284,7 @@ abstract public class MCP2515 : ArduinoDevice
                 Initialised = true;
                 Error = 0;
                 LastErrorData = 0;
+                LastErrorOn = default(DateTime);
                 ErrorCounts.Clear();
                 break;
 
