@@ -152,7 +152,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 {
                     nodeID = System.Convert.ToByte(arguments[0].ToString());
                 }
-                if (arguments.Count > 0)
+                if (arguments.Count > 1)
                 {
                     busIdx = System.Convert.ToInt16(arguments[0].ToString());
                 }
