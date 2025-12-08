@@ -1,9 +1,11 @@
 using System;
 using System.Numerics;
+using System.Security.Cryptography.X509Certificates;
 using Chetch.Arduino.Boards;
 using Chetch.Messaging;
 using Chetch.Utilities;
 using Microsoft.EntityFrameworkCore.Storage.Json;
+using XmppDotNet.Xmpp.AdHocCommands;
 using XmppDotNet.Xmpp.HttpUpload;
 using XmppDotNet.Xmpp.Jingle.Candidates;
 
@@ -103,6 +105,30 @@ abstract public class MCP2515 : ArduinoDevice
         public FlagsChangedEventArgs(byte oldValue, byte newValue) : this((UInt16)oldValue, (UInt16)newValue)
         { }
     }
+    
+    public class ErrorLogEntry
+    {
+        public DateTime EntryDate { get; internal set; } 
+
+        public MCP2515ErrorCode ErrorCode { get; internal set; } = MCP2515ErrorCode.NO_ERROR;
+
+        public UInt32 ErrorData { get; internal set; } = 0;
+
+        public byte ErrorFlags { get; internal set; } = 0;
+
+        public byte StatusFlags { get; internal set; } = 0;
+
+        public String Summary => String.Format("{0}: {1} ({2})", EntryDate.ToString("s"), ErrorCode, Chetch.Utilities.Convert.ToBitString(ErrorData, "-"));
+
+        public ErrorLogEntry(MCP2515ErrorCode errorCode, UInt32 errorData, byte errorFlags, byte statusFlags)
+        {
+            EntryDate = DateTime.Now;
+            ErrorCode = errorCode;
+            ErrorData = errorData;
+            ErrorFlags = errorFlags;
+            StatusFlags = statusFlags; 
+        }
+    }
     #endregion
 
     #region Properties
@@ -117,7 +143,7 @@ abstract public class MCP2515 : ArduinoDevice
     
     public Dictionary<MCP2515ErrorCode, uint> ErrorCounts { get; } = new Dictionary<MCP2515ErrorCode, uint>();
 
-    public RingBuffer<String> ErrorLog { get; } = new RingBuffer<String>(ERROR_LOG_SIZE, true);
+    public RingBuffer<ErrorLogEntry> ErrorLog { get; } = new RingBuffer<ErrorLogEntry>(ERROR_LOG_SIZE, true);
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 1)] //Start at 1 as 0 is for ReportInterval
     public byte NodeID { get; internal set; } //Default is 1 as this is the normal bus master node ID
@@ -315,7 +341,7 @@ abstract public class MCP2515 : ArduinoDevice
 
             LastErrorOn = DateTime.Now;
 
-            ErrorLog.Add(ErrorSummary);
+            ErrorLog.Add(new ErrorLogEntry(LastError, LastErrorData, ErrorFlags, StatusFlags));
         }
     }
 

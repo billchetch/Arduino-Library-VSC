@@ -161,7 +161,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 var nd = bm.GetNode(nodeID);
                 foreach(var s in nd.ErrorLog)
                 {
-                    response.AddValue(String.Format("Log Entry {0}", n++), s);
+                    response.AddValue(String.Format("Log Entry {0}", n++), s.Summary);
                 }
                 return true;
 

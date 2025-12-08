@@ -15,7 +15,7 @@ public class CANBusNode : ArduinoBoard
 
     public byte NodeID => MCPNode.NodeID;
 
-    public IEnumerable<String> ErrorLog => MCPNode.ErrorLog;
+    public IEnumerable<MCP2515.ErrorLogEntry> ErrorLog => MCPNode.ErrorLog;
 
     override public bool IsReady => NodeID != MASTER_NODE_ID ? true : base.IsReady;
     public uint BusMessageCount { get; internal set; } = 0;
