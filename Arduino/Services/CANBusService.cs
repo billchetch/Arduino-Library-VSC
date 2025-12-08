@@ -18,6 +18,8 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
     public const String COMMAND_NODE_ERRORS = "node-errors";
     public const String COMMAND_ERROR_COUNTS = "error-counts";
     public const String COMMAND_PING_NODE = "ping-node";
+
+    public const String COMMAND_RESET_NODE = "reset-node";
     #endregion
 
     #region Properties
@@ -70,6 +72,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
         AddCommand(COMMAND_LIST_BUSSES, "Lists current busses and their ready status");
         AddCommand(COMMAND_INITIALISE_BUS, "Init a specific <?bus>");
         AddCommand(COMMAND_PING_NODE, "Ping a <?node> on a <?bus>");
+        AddCommand(COMMAND_RESET_NODE, "Reset a <?node> on a <?bus>");
         AddCommand(COMMAND_NODES_STATUS, "List the status of the nodes on a particular <bus?>");
         AddCommand(COMMAND_NODE_ERRORS, "List the errors of a particular <node> on a <bus?>");
         AddCommand(COMMAND_ERROR_COUNTS, "Number of errors per type on a particular <bus?>");
@@ -198,6 +201,29 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 else 
                 {
                     bm.PingNode(nodeID);
+                }
+                return true;
+
+            case COMMAND_RESET_NODE:
+                if (arguments.Count > 0)
+                {
+                    nodeID = System.Convert.ToByte(arguments[0].ToString());
+                }
+                if (arguments.Count > 1)
+                {
+                    busIdx = System.Convert.ToInt16(arguments[1].ToString());
+                }
+                if (busIdx < 0 || busIdx >= BusCount)
+                {
+                    throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
+                }
+                bm = GetBusMonitor(busIdx);
+                if(nodeID == 0){
+                    bm.ResetNodes();
+                } 
+                else 
+                {
+                    bm.ResetNode(nodeID);
                 }
                 return true;
 
