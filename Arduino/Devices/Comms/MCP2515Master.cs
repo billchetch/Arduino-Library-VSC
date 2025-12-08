@@ -98,5 +98,10 @@ public class MCP2515Master : MCP2515
     {
         SendCommand(DeviceCommand.REQUEST, (byte)MessageType.PING, nodeID);
     }
+
+    public void ResetRemoteNode(byte nodeID) //set nodeID = 0 to ping all
+    {
+        SendCommand(DeviceCommand.REQUEST, (byte)MessageType.RESET, nodeID);
+    }
     #endregion
 }

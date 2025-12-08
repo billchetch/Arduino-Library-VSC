@@ -278,5 +278,23 @@ public class CANBusMonitor : CANBusNode
             MasterNode.PingRemoteNode(nodeID);
         }
     }
+
+    public void ResetNodes()
+    {
+        MasterNode.Reset();
+        MasterNode.ResetRemoteNode(0);
+    }
+
+    public void ResetNode(byte nodeID)
+    {
+        if(nodeID == NodeID)
+        {
+            MasterNode.Reset();
+        }
+        else
+        {
+            MasterNode.ResetRemoteNode(nodeID);
+        }
+    }
     #endregion
 }

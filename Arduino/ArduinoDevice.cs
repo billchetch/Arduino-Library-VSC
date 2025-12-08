@@ -246,5 +246,11 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
         var msg = new ArduinoMessage(MessageType.INITIALISE);
         SendMessage(msg);
     }
+
+    public void Reset()
+    {
+        var msg = new ArduinoMessage(MessageType.RESET);
+        SendMessage(msg);
+    }
     #endregion
 }
