@@ -248,6 +248,8 @@ abstract public class MCP2515 : ArduinoDevice
     public int SyncOffset {get; internal set;}  = 0;
 
     public DateTime LastPresenceOn { get; internal set; }
+
+    public DateTime LastStatusResponse { get; internal set; }
     #endregion
 
     #region Events
@@ -310,6 +312,10 @@ abstract public class MCP2515 : ArduinoDevice
                 {
                     CanSend = true;
                 }
+                break;
+
+            case MessageType.STATUS_RESPONSE:
+                LastStatusResponse = DateTime.Now;
                 break;
 
             case MessageType.INITIALISE_RESPONSE:

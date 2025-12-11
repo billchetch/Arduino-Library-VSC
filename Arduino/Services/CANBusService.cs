@@ -139,6 +139,8 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                         sb.AppendLine();
                         sb.AppendFormat(" - Last Presence On = {0}", mcp.LastPresenceOn.ToString("s"));
                         sb.AppendLine();
+                        sb.AppendFormat(" - Last Status Response = {0}", mcp.LastStatusResponse.ToString("s"));
+                        sb.AppendLine();
                     }
                     else
                     {
