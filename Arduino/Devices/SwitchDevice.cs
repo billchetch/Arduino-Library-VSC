@@ -103,7 +103,7 @@ abstract public class SwitchDevice : ArduinoDevice
     #endregion
 
     #region Methods
-    public override void OnReady(bool ready)
+    protected override void OnReady(bool ready)
     {
         base.OnReady(ready);
         if (!ready)

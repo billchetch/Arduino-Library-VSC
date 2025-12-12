@@ -131,7 +131,7 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
     #endregion
 
     #region Lifecycle
-    public virtual void OnReady(bool ready)
+    protected virtual void OnReady(bool ready)
     {
         Ready?.Invoke(this, IsReady);
     }

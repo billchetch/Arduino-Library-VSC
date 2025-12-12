@@ -250,6 +250,8 @@ abstract public class MCP2515 : ArduinoDevice
     public DateTime LastPresenceOn { get; internal set; }
 
     public DateTime LastStatusResponse { get; internal set; }
+
+    public DateTime LastReadyOn { get; internal set; }
     #endregion
 
     #region Events
@@ -351,6 +353,13 @@ abstract public class MCP2515 : ArduinoDevice
         }
     }
 
-    
+    protected override void OnReady(bool ready)
+    {
+        base.OnReady(ready);
+        if(ready)
+        {
+            LastReadyOn = DateTime.Now;
+        }
+    }
     #endregion
 }
