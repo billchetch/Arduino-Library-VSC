@@ -117,15 +117,13 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     var ba = bm.BusActivity[mcp.NodeID];
                     if (node.IsReady)
                     {
-                        sb.AppendFormat(" - Bus Message Count = {0}", ba.MessageCount);
+                        sb.AppendFormat(" - Bus Message Count and Rate = {0} {1:2} mps", ba.MessageCount, ba.MessageRate);
                         sb.AppendLine();
                         sb.AppendFormat(" - Status Flags = {0}", Utilities.Convert.ToBitString(mcp.StatusFlags));
                         sb.AppendLine();
                         sb.AppendFormat(" - Error Flags = {0}", Utilities.Convert.ToBitString(mcp.ErrorFlags));
                         sb.AppendLine();
-                        sb.AppendFormat(" - TXErrorCount = {0}", mcp.TXErrorCount);
-                        sb.AppendLine();
-                        sb.AppendFormat(" - RXErrorCount = {0}", mcp.RXErrorCount);
+                        sb.AppendFormat(" - TXErrorCount / RXErrorCount = {0} / {1}", mcp.TXErrorCount, mcp.RXErrorCount);
                         sb.AppendLine();
                         sb.AppendFormat(" - Last Error = {0}", mcp.LastError);
                         sb.AppendLine();
@@ -135,7 +133,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                         sb.AppendLine();
                         sb.AppendFormat(" - Error Code Flags = {0}", Utilities.Convert.ToBitString(mcp.ErrorCodeFlags, "-"));
                         sb.AppendLine();
-                        sb.AppendFormat(" - Error Log Count = {0}", mcp.ErrorLog.Count);
+                        sb.AppendFormat(" - Error Log Count = {0}", mcp.ErrorLog.Count + (mcp.ErrorLog.IsFull ? " (full)" : ""));
                         sb.AppendLine();
                         sb.AppendFormat(" - Last Ready On = {0}", mcp.LastReadyOn.ToString("s"));
                         sb.AppendLine();
