@@ -18,7 +18,26 @@ public class CANBusMonitor : CANBusNode
     #endregion
 
     #region Classes and Enums
+    public class BusNodeActivity
+    {
+        #region Properties
+        public uint MessageCount { get; set; } = 0;
+        public double MessageRate { get; internal set; } = 0.0;
+        #endregion
 
+        #region Fields
+        private uint lastMessageCount = 0;
+        #endregion
+
+        #region Methods
+        public void UpdateMessageRate(TimeSpan timeSpan)
+        {
+            var msgs = (double)(MessageCount - lastMessageCount) / timeSpan.TotalSeconds;
+            lastMessageCount = MessageCount;
+        }
+        #endregion
+
+    }
     #endregion
 
     #region Properties
@@ -29,6 +48,7 @@ public class CANBusMonitor : CANBusNode
     public int BusSize => 1 + RemoteNodes.Count;
 
     public Dictionary<byte, CANBusNode> RemoteNodes { get; } = new Dictionary<byte, CANBusNode>();
+    public Dictionary<byte, BusNodeActivity> BusActivity { get; } = new Dictionary<byte, BusNodeActivity>();
 
     public String BusSummary
     {
@@ -84,6 +104,11 @@ public class CANBusMonitor : CANBusNode
                 RequestNodesStatus();
                 RequestedBusStatus?.Invoke(this, EventArgs.Empty);
             }
+
+            foreach(var ba in BusActivity.Values)
+            {
+                ba.UpdateMessageRate(TimeSpan.FromMilliseconds(requestBusNodesStatus.Interval));
+            }
         };
 
         //The master node on the Arduino Board has parceled up a bus message and sent it as a normal arduino message
@@ -91,9 +116,10 @@ public class CANBusMonitor : CANBusNode
         //is to take tthe unwrapped message and pass it to the appropriate remote node.
         MasterNode.BusMessageReceived += (sender, eargs) =>
         {
+            CANBusNode busNode;
             if (eargs.NodeID == NodeID)
             {
-                HandleBusMessage(eargs.CanID, eargs.CanData.ToArray(), eargs.Message);
+                busNode = this;
             }
             else
             {
@@ -101,9 +127,16 @@ public class CANBusMonitor : CANBusNode
                 {
                     throw new Exception(String.Format("Unrecognised node: {0}", eargs.NodeID));
                 }
-                RemoteNodes[eargs.NodeID].HandleBusMessage(eargs.CanID, eargs.CanData.ToArray(), eargs.Message);
+                busNode = RemoteNodes[eargs.NodeID];
             }
+            if (!BusActivity.ContainsKey(busNode.NodeID))
+            {
+                BusActivity.Add(busNode.NodeID, new BusNodeActivity());
+            }
+            
+            BusActivity[busNode.NodeID].MessageCount++;
 
+            busNode.HandleBusMessage(eargs.CanID, eargs.CanData.ToArray(), eargs.Message);
             BusMessageReceived?.Invoke(this, eargs);
         };
         MasterNode.Ready += handleNodeReady;
