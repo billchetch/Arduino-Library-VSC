@@ -32,7 +32,7 @@ public class CANBusMonitor : CANBusNode
         #region Methods
         public void UpdateMessageRate(TimeSpan timeSpan)
         {
-            var msgs = (double)(MessageCount - lastMessageCount) / timeSpan.TotalSeconds;
+            MessageRate = (double)(MessageCount - lastMessageCount) / timeSpan.TotalSeconds;
             lastMessageCount = MessageCount;
         }
         #endregion
