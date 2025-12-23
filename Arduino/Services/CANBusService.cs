@@ -117,7 +117,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     var ba = bm.BusActivity[mcp.NodeID];
                     if (node.IsReady)
                     {
-                        sb.AppendFormat(" - Bus Message Count and Rate = {0} {1:2} mps", ba.MessageCount, ba.MessageRate);
+                        sb.AppendFormat(" - Bus Message Count and Rate = {0} {1}mps", ba.MessageCount, ba.MessageRate);
                         sb.AppendLine();
                         sb.AppendFormat(" - Status Flags = {0}", Utilities.Convert.ToBitString(mcp.StatusFlags));
                         sb.AppendLine();
