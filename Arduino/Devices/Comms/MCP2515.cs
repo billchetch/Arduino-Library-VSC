@@ -233,13 +233,6 @@ abstract public class MCP2515 : ArduinoDevice
         } 
         internal set
         {
-            if(nodeMillisSetOn != default(DateTime))
-            {
-                UInt32 localInterval = (UInt32)(DateTime.Now - nodeMillisSetOn).TotalMilliseconds;
-                UInt32 expectedValue = nodeMillis + localInterval;
-                SyncOffset = (int)(value - expectedValue);
-                //Console.WriteLine("N{0}: Local interval: {1}, Expected Value: {2}, Actual Value: {3}, Sync Offset: {4}", NodeID, localInterval, expectedValue, value, SyncOffset);
-            }
             nodeMillis = value;
             nodeMillisSetOn = DateTime.Now;
         }
@@ -252,7 +245,7 @@ abstract public class MCP2515 : ArduinoDevice
             if(nodeMillisSetOn != default(DateTime))
             {
                 UInt32 localInterval = (UInt32)(DateTime.Now - nodeMillisSetOn).TotalMilliseconds;
-                return (UInt32)((long)(NodeMillis + localInterval) - SyncOffset);
+                return NodeMillis + localInterval;
             }
             else 
             {
@@ -260,8 +253,6 @@ abstract public class MCP2515 : ArduinoDevice
             }
         }
     } 
-
-    public int SyncOffset {get; internal set;} = 0;
 
     [ArduinoMessageMap(Messaging.MessageType.INITIALISE_RESPONSE, 1)]
     public int TimestampResolution { get; internal set; } = -1;
