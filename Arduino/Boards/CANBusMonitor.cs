@@ -24,7 +24,7 @@ public class CANBusMonitor : CANBusNode
         public uint MessageCount { get; internal set; } = 0;
         public double MessageRate { get; internal set; } = 0.0;
 
-        public double AvgLatency { get; internal set; } = 0.0;
+        public UInt32 Latency { get; internal set; } = 0;
         public UInt32 MaxLatency {get; internal set; } = 0;
         #endregion
 
@@ -40,7 +40,7 @@ public class CANBusMonitor : CANBusNode
                 int estimatedTimestamp = (int)((estimatedNodeMillis >> timestampResolution) & 0xFF);
                 int diff = Math.Abs((int)messageTimestamp - estimatedTimestamp);
                 uint diffInMillis = (uint)Math.Min(256 - diff, diff) << timestampResolution;
-                AvgLatency = 0.5*(AvgLatency + (double)diffInMillis);
+                Latency = diffInMillis;
                 if(diffInMillis > MaxLatency)
                 {
                     MaxLatency = diffInMillis;
