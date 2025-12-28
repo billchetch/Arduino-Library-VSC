@@ -21,8 +21,11 @@ public class CANBusMonitor : CANBusNode
     public class BusNodeActivity
     {
         #region Properties
-        public uint MessageCount { get; set; } = 0;
+        public uint MessageCount { get; internal set; } = 0;
         public double MessageRate { get; internal set; } = 0.0;
+
+        public double AvgLatency { get; internal set; } = 0.0;
+        public UInt32 MaxLatency {get; internal set; } = 0;
         #endregion
 
         #region Fields
@@ -30,6 +33,22 @@ public class CANBusMonitor : CANBusNode
         #endregion
 
         #region Methods
+        public void UpdateMessageCount(UInt32 estimatedNodeMillis, byte messageTimestamp, int timestampResolution)
+        {
+            if(timestampResolution >= 0)
+            {
+                int estimatedTimestamp = (int)((estimatedNodeMillis >> timestampResolution) & 0xFF);
+                int diff = Math.Abs((int)messageTimestamp - estimatedTimestamp);
+                uint diffInMillis = (uint)Math.Min(256 - diff, diff) << timestampResolution;
+                AvgLatency = 0.5*(AvgLatency + (double)diffInMillis);
+                if(diffInMillis > MaxLatency)
+                {
+                    MaxLatency = diffInMillis;
+                }
+            }
+            MessageCount++;
+        }
+
         public void UpdateMessageRate(TimeSpan timeSpan)
         {
             MessageRate = (double)(MessageCount - lastMessageCount) / timeSpan.TotalSeconds;
@@ -134,7 +153,9 @@ public class CANBusMonitor : CANBusNode
                 BusActivity.Add(busNode.NodeID, new BusNodeActivity());
             }
             
-            BusActivity[busNode.NodeID].MessageCount++;
+            BusActivity[busNode.NodeID].UpdateMessageCount(busNode.MCPNode.EstimatedNodeMillis,
+                                                            eargs.CanID.Timestamp,
+                                                            busNode.MCPNode.TimestampResolution);
 
             busNode.HandleBusMessage(eargs.CanID, eargs.CanData.ToArray(), eargs.Message);
             BusMessageReceived?.Invoke(this, eargs);

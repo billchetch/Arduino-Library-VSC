@@ -68,8 +68,8 @@ public class CANBusNode : ArduinoBoard
                     break;
 
                 case Messaging.MessageType.INITIALISE_RESPONSE:
-                    //Millis
-                    message.Populate<UInt32>(canData);
+                    //Millis and timestamp resolution
+                    message.Populate<UInt32, byte>(canData);
                     break;
 
                 case Messaging.MessageType.ERROR:

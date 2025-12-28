@@ -245,7 +245,26 @@ abstract public class MCP2515 : ArduinoDevice
         }
     }
 
-    public int SyncOffset {get; internal set;}  = 0;
+    public UInt32 EstimatedNodeMillis
+    {
+        get
+        {
+            if(nodeMillisSetOn != default(DateTime))
+            {
+                UInt32 localInterval = (UInt32)(DateTime.Now - nodeMillisSetOn).TotalMilliseconds;
+                return (UInt32)((long)(NodeMillis + localInterval) - SyncOffset);
+            }
+            else 
+            {
+                return 0;
+            }
+        }
+    } 
+
+    public int SyncOffset {get; internal set;} = 0;
+
+    [ArduinoMessageMap(Messaging.MessageType.INITIALISE_RESPONSE, 1)]
+    public int TimestampResolution { get; internal set; } = -1;
 
     public DateTime LastPresenceOn { get; internal set; }
 
