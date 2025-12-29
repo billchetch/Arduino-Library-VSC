@@ -351,15 +351,15 @@ public class CANBusMonitor : CANBusNode
         }
     }
 
-    public void RaiseError(byte nodeID, MCP2515.MCP2515ErrorCode ecode)
+    public void RaiseError(byte nodeID, MCP2515.MCP2515ErrorCode ecode, UInt32 edata = 0)
     {
         if(nodeID == NodeID)
         {
-            MasterNode.RaiseError(ecode);
+            MasterNode.RaiseError(ecode, edata);
         }
         else
         {
-            MasterNode.RaiseRemoteNodeError(nodeID, ecode);
+            MasterNode.RaiseRemoteNodeError(nodeID, ecode, edata);
         }
     }
     #endregion

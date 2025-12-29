@@ -104,16 +104,17 @@ public class MCP2515Master : MCP2515
         SendCommand(DeviceCommand.REQUEST, (byte)MessageType.RESET, nodeID);
     }
 
-    public void RaiseError(MCP2515ErrorCode ecode)
+    public void RaiseError(MCP2515ErrorCode ecode, UInt32 edata = 0)
     {
         var msg = new ArduinoMessage(MessageType.ERROR_TEST);
         msg.Add(ecode);
+        msg.Add(edata);
         SendMessage(msg);
     }
 
-    public void RaiseRemoteNodeError(byte nodeID, MCP2515ErrorCode ecode) //set nodeID = 0 to ping all
+    public void RaiseRemoteNodeError(byte nodeID, MCP2515ErrorCode ecode, UInt32 edata = 0) //set nodeID = 0 to ping all
     {
-        SendCommand(DeviceCommand.REQUEST, (byte)MessageType.ERROR_TEST, nodeID);
+        SendCommand(DeviceCommand.REQUEST, (byte)MessageType.ERROR_TEST, nodeID, (byte)ecode, edata);
     }
     #endregion
 }
