@@ -118,7 +118,7 @@ abstract public class MCP2515 : ArduinoDevice
 
         public byte StatusFlags { get; internal set; } = 0;
 
-        public String Summary => String.Format("{0}: {1} ({2})", EntryDate.ToString("s"), ErrorCode, Chetch.Utilities.Convert.ToBitString(ErrorData, "-"));
+        public String Summary => String.Format("{0}: {1} {2} ({3})", EntryDate.ToString("s"), ErrorCode, Chetch.Utilities.Convert.ToBitString(ErrorFlags), Chetch.Utilities.Convert.ToBitString(ErrorData, "-"));
 
         public ErrorLogEntry(MCP2515ErrorCode errorCode, UInt32 errorData, byte errorFlags, byte statusFlags)
         {
