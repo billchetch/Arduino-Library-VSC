@@ -3,6 +3,7 @@ using System.Net.NetworkInformation;
 using System.Reflection.Metadata;
 using System.Text;
 using Chetch.Arduino.Boards;
+using Chetch.Arduino.Devices.Comms;
 using Chetch.Messaging;
 using Microsoft.Extensions.Logging;
 using XmppDotNet.Xmpp.Jingle;
@@ -19,6 +20,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
     public const String COMMAND_PING_NODE = "ping-node";
     public const String COMMAND_INITIALISE_NODE = "init-node";
     public const String COMMAND_RESET_NODE = "reset-node";
+    public const String COMMAND_RAISE_ERROR = "raise-error";
     #endregion
 
     #region Properties
@@ -75,6 +77,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
         AddCommand(COMMAND_NODES_STATUS, "List the status of the nodes on a particular <bus?>");
         AddCommand(COMMAND_NODE_ERRORS, "List the errors of a particular <node> on a <bus?>");
         AddCommand(COMMAND_ERROR_COUNTS, "Number of errors per type on a particular <bus?>");
+        AddCommand(COMMAND_RAISE_ERROR, "Target <node> on a <?bus> to raise <?error>");
         base.AddCommands();
     }
 
@@ -241,6 +244,30 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 {
                     bm.ResetNode(nodeID);
                 }
+                return true;
+
+            case COMMAND_RAISE_ERROR:
+                if (arguments.Count == 0)
+                {
+                    throw new ArgumentException("A node must be specified on which to raise an error");
+                }
+                nodeID = System.Convert.ToByte(arguments[0].ToString());
+                if (arguments.Count > 1)
+                {
+                    busIdx = System.Convert.ToInt16(arguments[1].ToString());
+                }
+                if (busIdx < 0 || busIdx >= BusCount)
+                {
+                    throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
+                }
+                bm = GetBusMonitor(busIdx);
+                
+                MCP2515.MCP2515ErrorCode ecode = MCP2515.MCP2515ErrorCode.DEBUG_ASSERT;
+                if (arguments.Count > 2)
+                {
+                    ecode = (MCP2515.MCP2515ErrorCode)System.Convert.ToByte(arguments[2].ToString());
+                }
+                bm.RaiseError(nodeID, ecode);
                 return true;
 
             case COMMAND_ERROR_COUNTS:
