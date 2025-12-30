@@ -143,7 +143,7 @@ abstract public class MCP2515 : ArduinoDevice
     
     public Dictionary<MCP2515ErrorCode, uint> ErrorCounts { get; } = new Dictionary<MCP2515ErrorCode, uint>();
 
-    public RingBuffer<ErrorLogEntry> ErrorLog { get; } = new RingBuffer<ErrorLogEntry>(ERROR_LOG_SIZE, true);
+    public CircularLog<ErrorLogEntry> ErrorLog { get; } = new CircularLog<ErrorLogEntry>(ERROR_LOG_SIZE);
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 1)] //Start at 1 as 0 is for ReportInterval
     public byte NodeID { get; internal set; } //Default is 1 as this is the normal bus master node ID

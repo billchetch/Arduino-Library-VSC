@@ -138,7 +138,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                         sb.AppendLine();
                         sb.AppendFormat(" - Error Code Flags = {0}", Utilities.Convert.ToBitString(mcp.ErrorCodeFlags, "-"));
                         sb.AppendLine();
-                        sb.AppendFormat(" - Error Log Count = {0}", mcp.ErrorLog.Count + (mcp.ErrorLog.IsFull ? " (full)" : ""));
+                        sb.AppendFormat(" - Error Log Writes = {0}", mcp.ErrorLog.WritesCount + (mcp.ErrorLog.IsFull ? " (full)" : ""));
                         sb.AppendLine();
                         sb.AppendFormat(" - Last Ready On = {0}", mcp.LastReadyOn.ToString("s"));
                         sb.AppendLine();
@@ -249,12 +249,17 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
             case COMMAND_RAISE_ERROR:
                 if (arguments.Count == 0)
                 {
-                    throw new ArgumentException("A node must be specified on which to raise an error");
+                    throw new ArgumentException("A node and must be specified on which to raise an error");
                 }
                 nodeID = System.Convert.ToByte(arguments[0].ToString());
+                MCP2515.MCP2515ErrorCode ecode = MCP2515.MCP2515ErrorCode.DEBUG_ASSERT;
                 if (arguments.Count > 1)
                 {
-                    busIdx = System.Convert.ToInt16(arguments[1].ToString());
+                    ecode = (MCP2515.MCP2515ErrorCode)System.Convert.ToByte(arguments[1].ToString());
+                }        
+                if (arguments.Count > 2)
+                {
+                    busIdx = System.Convert.ToInt16(arguments[2].ToString());
                 }
                 if (busIdx < 0 || busIdx >= BusCount)
                 {
@@ -262,11 +267,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 }
                 bm = GetBusMonitor(busIdx);
                 
-                MCP2515.MCP2515ErrorCode ecode = MCP2515.MCP2515ErrorCode.DEBUG_ASSERT;
-                if (arguments.Count > 2)
-                {
-                    ecode = (MCP2515.MCP2515ErrorCode)System.Convert.ToByte(arguments[2].ToString());
-                }
+                
                 bm.RaiseError(nodeID, ecode);
                 return true;
 
