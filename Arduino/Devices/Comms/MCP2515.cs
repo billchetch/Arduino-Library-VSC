@@ -1,13 +1,7 @@
 using System;
-using System.Numerics;
-using System.Security.Cryptography.X509Certificates;
-using Chetch.Arduino.Boards;
 using Chetch.Messaging;
+using Chetch.Messaging.Attributes;
 using Chetch.Utilities;
-using Microsoft.EntityFrameworkCore.Storage.Json;
-using XmppDotNet.Xmpp.AdHocCommands;
-using XmppDotNet.Xmpp.HttpUpload;
-using XmppDotNet.Xmpp.Jingle.Candidates;
 
 namespace Chetch.Arduino.Devices.Comms;
 
@@ -139,10 +133,12 @@ abstract public class MCP2515 : ArduinoDevice
 
     public DateTime LastErrorOn { get; internal set; }
 
+    [MessageParser(MessageParser.ParsingPolicy.EXCLUDE)]
     public String ErrorSummary => String.Format("{0}: {1} ({2})", LastErrorOn.ToString("s"), LastError, Chetch.Utilities.Convert.ToBitString(LastErrorData, "-"));
     
     public Dictionary<MCP2515ErrorCode, uint> ErrorCounts { get; } = new Dictionary<MCP2515ErrorCode, uint>();
 
+    [MessageParser(MessageParser.ParsingPolicy.EXCLUDE)]
     public CircularLog<ErrorLogEntry> ErrorLog { get; } = new CircularLog<ErrorLogEntry>(ERROR_LOG_SIZE);
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 1)] //Start at 1 as 0 is for ReportInterval
@@ -238,6 +234,7 @@ abstract public class MCP2515 : ArduinoDevice
         }
     }
 
+    [MessageParser(MessageParser.ParsingPolicy.EXCLUDE)]
     public UInt32 EstimatedNodeMillis
     {
         get

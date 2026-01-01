@@ -63,7 +63,8 @@ public class ArduinoMessageMap : Attribute
             prop => Attribute.IsDefined(prop, typeof(ArduinoMessageMap)));
 
         foreach (var prop in props) {
-            var amms = prop.GetCustomAttributes(true);
+            //var amms = prop.GetCustomAttributes(true); //TODO: remove this entirely
+            var amms = prop.GetCustomAttributes(true).Where(atr => atr is ArduinoMessageMap);
             foreach (ArduinoMessageMap amm in amms)
             {
                 if (amm.MessageType == messageType)

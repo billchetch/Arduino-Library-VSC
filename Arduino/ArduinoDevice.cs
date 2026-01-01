@@ -1,6 +1,8 @@
 using System;
 using System.Reflection;
 using Chetch.Messaging;
+using Chetch.Messaging.Attributes;
+
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace Chetch.Arduino;
@@ -50,6 +52,7 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
 
     #region Properties
 
+    [MessageParser(MessageParser.ParsingPolicy.EXCLUDE)]
     public ArduinoBoard? Board
     {
         get
