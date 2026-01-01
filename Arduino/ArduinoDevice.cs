@@ -14,7 +14,7 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
     #endregion
 
     #region Classes and Enums
-    public enum DeviceCommand
+    public enum DeviceCommand : byte
     {
         NONE = 0,
         COMPOUND,
