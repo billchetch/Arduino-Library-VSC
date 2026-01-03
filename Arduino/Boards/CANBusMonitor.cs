@@ -22,10 +22,16 @@ public class CANBusMonitor : CANBusNode
     {
         #region Properties
         public uint MessageCount { get; internal set; } = 0;
-        public double MessageRate { get; internal set; } = 0.0;
+        public double MessageRate { get; internal set; } = -1.0;
 
         public UInt32 Latency { get; internal set; } = 0;
         public UInt32 MaxLatency {get; internal set; } = 0;
+
+        public DateTime LastIdleOn { get; internal set; }
+
+        public bool IsIdle => MessageRate == 0;
+
+        public TimeSpan IdleFor => IsIdle ? DateTime.Now - LastIdleOn : default(TimeSpan);
         #endregion
 
         #region Fields
@@ -51,8 +57,15 @@ public class CANBusMonitor : CANBusNode
 
         public void UpdateMessageRate(TimeSpan timeSpan)
         {
+            bool oldIdle = IsIdle;
             MessageRate = (double)(MessageCount - lastMessageCount) / timeSpan.TotalSeconds;
             lastMessageCount = MessageCount;
+            
+            bool changed = oldIdle != IsIdle;
+            if(changed && IsIdle)
+            {
+                LastIdleOn = DateTime.Now;
+            }
         }
         #endregion
 
@@ -69,6 +82,10 @@ public class CANBusMonitor : CANBusNode
     public Dictionary<byte, CANBusNode> RemoteNodes { get; } = new Dictionary<byte, CANBusNode>();
     public Dictionary<byte, BusNodeActivity> BusActivity { get; } = new Dictionary<byte, BusNodeActivity>();
 
+    public UInt32 BusMessageCount {get; internal set; } = 0;
+
+    public double BusMessageRate {get; internal set; } = 0.0;
+
     public String BusSummary
     {
         get
@@ -84,6 +101,7 @@ public class CANBusMonitor : CANBusNode
                 {
                     s.AppendFormat("Bus monitor {0}, {1} nodes out of {2} are ready!", SID, nodeReadyCount, BusSize);
                 }
+                s.AppendFormat(" Messages={0}, Rate={1} mps", BusMessageCount, BusMessageRate);
             }
             else
             {
@@ -124,9 +142,11 @@ public class CANBusMonitor : CANBusNode
                 RequestedBusStatus?.Invoke(this, EventArgs.Empty);
             }
 
+            BusMessageRate = 0.0;
             foreach(var ba in BusActivity.Values)
             {
                 ba.UpdateMessageRate(TimeSpan.FromMilliseconds(requestBusNodesStatus.Interval));
+                BusMessageRate += ba.MessageRate;
             }
         };
 
@@ -157,6 +177,7 @@ public class CANBusMonitor : CANBusNode
                                                             eargs.CanID.Timestamp,
                                                             busNode.MCPNode.TimestampResolution);
 
+            BusMessageCount++;
             busNode.HandleBusMessage(eargs.CanID, eargs.CanData.ToArray(), eargs.Message);
             BusMessageReceived?.Invoke(this, eargs);
         };
