@@ -249,7 +249,6 @@ abstract public class MCP2515 : ArduinoDevice
 
     public EventHandler<FlagsChangedEventArgs>? ErrorCodeFlagsChanged;
 
-    public EventHandler<bool>? ReadyToSend;
     #endregion
 
     #region Fields

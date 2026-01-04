@@ -268,7 +268,7 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     virtual public async Task End()
     {
-        await io.Stop();
+        await io.Stop(true);
 
         Connection?.Disconnect();
     }

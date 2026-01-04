@@ -165,10 +165,6 @@ public class CANBusMonitor : CANBusNode
                 }
                 busNode = RemoteNodes[eargs.NodeID];
             }
-            if (!BusActivity.ContainsKey(busNode.NodeID))
-            {
-                BusActivity.Add(busNode.NodeID, new BusNodeActivity());
-            }
             
             BusActivity[busNode.NodeID].UpdateMessageCount(busNode.MCPNode.EstimatedNodeMillis,
                                                             eargs.CanID.Timestamp,
@@ -178,16 +174,19 @@ public class CANBusMonitor : CANBusNode
             busNode.HandleBusMessage(eargs.CanID, eargs.CanData.ToArray(), eargs.Message);
             BusMessageReceived?.Invoke(this, eargs);
         };
-        MasterNode.Ready += handleNodeReady;
 
-        MasterNode.ReadyToSend += (sender, ready) =>
+        MasterNode.Ready += (sender, ready) =>
         {
+            handleNodeReady(sender, ready);
+
             if (ready)
             {
                 requestBusNodesStatus.Start();
                 MasterNode.RequestRemoteNodesStatus();
             }
         };
+    
+        BusActivity[NodeID] = new BusNodeActivity();
     }
 
     public CANBusMonitor(int remoteNodes, String sid = DEFAULT_BOARD_NAME) : this(sid)
@@ -207,7 +206,7 @@ public class CANBusMonitor : CANBusNode
         if (mcp.Board == null) return;
         CANBusNode node = (CANBusNode)mcp.Board;
         
-        if (mcp == MCPNode || RemoteNodes.Values.Contains(node))
+        if (mcp == MasterNode || RemoteNodes.Values.Contains(node))
         {
             bool previouslyReady = AllNodesReady;
             nodeReadyCount += ready ? 1 : -1;
@@ -241,6 +240,8 @@ public class CANBusMonitor : CANBusNode
         }
         RemoteNodes[remoteNode.NodeID] = remoteNode;
         remoteNode.MCPNode.Ready += handleNodeReady;
+
+        BusActivity.Add(remoteNode.NodeID, new BusNodeActivity());
     }
 
     public void AddRemoteNode()
