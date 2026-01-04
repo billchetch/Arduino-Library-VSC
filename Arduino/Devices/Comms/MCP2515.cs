@@ -9,7 +9,6 @@ abstract public class MCP2515 : ArduinoDevice
 {
     #region Constants
     public const int ERROR_LOG_SIZE = 64;
-    private const byte MESSAGE_ID_READY_TO_SEND = 102;
     #endregion
 
     #region Classes and Enums
@@ -197,24 +196,6 @@ abstract public class MCP2515 : ArduinoDevice
         }
     }
 
-    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 7)]
-    public bool CanSend
-    {
-        get { return canSend; }
-        internal set
-        {
-            if (value != canSend)
-            {
-                try
-                {
-                    ReadyToSend?.Invoke(this, value);
-                }
-                catch { }
-            }
-            canSend = value;
-        }
-    }
-
     public bool Initialised { get; internal set; } = false; //Set on receiving an INITIALISE_RESPONSE message
     
 
@@ -317,10 +298,6 @@ abstract public class MCP2515 : ArduinoDevice
         switch (message.Type)
         {
             case MessageType.NOTIFICATION:
-                if (message.Tag == MESSAGE_ID_READY_TO_SEND)
-                {
-                    CanSend = true;
-                }
                 break;
 
             case MessageType.STATUS_RESPONSE:

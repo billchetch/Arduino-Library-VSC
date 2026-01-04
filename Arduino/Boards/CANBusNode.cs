@@ -40,9 +40,9 @@ public class CANBusNode : ArduinoBoard
         AddDevice(MCPNode);
     }
 
-    public CANBusNode(byte nodeID) : this(nodeID, "mcp" + nodeID) { }
+    public CANBusNode(byte nodeID) : this(nodeID, "canbusnode" + nodeID) { }
 
-    public CANBusNode() : this(0, "mcp") { }
+    public CANBusNode() : this(0, "canbusnode") { }
     #endregion
 
     #region Methods

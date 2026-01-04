@@ -136,12 +136,9 @@ public class CANBusMonitor : CANBusNode
         requestBusNodesStatus.Interval = REQUEST_BUS_NODES_STATUS_INTERVAL;
         requestBusNodesStatus.Elapsed += (sender, eargs) =>
         {
-            if (MasterNode.CanSend)
-            {
-                RequestNodesStatus();
-                RequestedBusStatus?.Invoke(this, EventArgs.Empty);
-            }
-
+            RequestNodesStatus();
+            RequestedBusStatus?.Invoke(this, EventArgs.Empty);
+            
             BusMessageRate = 0.0;
             foreach(var ba in BusActivity.Values)
             {
@@ -248,7 +245,8 @@ public class CANBusMonitor : CANBusNode
 
     public void AddRemoteNode()
     {
-        AddRemoteNode(new CANBusNode());
+        byte nid = (byte)(MASTER_NODE_ID + RemoteNodes.Count + 1);
+        AddRemoteNode(new CANBusNode(nid));
     }
 
     public List<CANBusNode> GetAllNodes()
