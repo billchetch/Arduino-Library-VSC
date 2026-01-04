@@ -256,7 +256,6 @@ abstract public class MCP2515 : ArduinoDevice
     private byte statusFlags = 0;
     private byte errorFlags = 0;
     private UInt16 errorCodeFlags = 0;
-    private bool canSend = false;
     private UInt32 nodeMillis = 0;
 
     private DateTime nodeMillisSetOn = default(DateTime);
