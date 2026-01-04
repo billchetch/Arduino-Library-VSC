@@ -228,7 +228,7 @@ public class CANBusMonitor : CANBusNode
         }
     }
 
-    public void AddRemoteNode(CANBusNode remoteNode)
+    private void addRemoteNode(CANBusNode remoteNode)
     {
         if (remoteNode.NodeID == 0)
         {
@@ -246,7 +246,7 @@ public class CANBusMonitor : CANBusNode
     public void AddRemoteNode()
     {
         byte nid = (byte)(MASTER_NODE_ID + RemoteNodes.Count + 1);
-        AddRemoteNode(new CANBusNode(nid));
+        addRemoteNode(new CANBusNode(nid));
     }
 
     public List<CANBusNode> GetAllNodes()
