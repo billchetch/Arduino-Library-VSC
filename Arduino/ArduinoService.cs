@@ -145,21 +145,22 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
         return base.Execute(stoppingToken);
     }
 
-    public override Task StopAsync(CancellationToken cancellationToken)
+    public override async Task StopAsync(CancellationToken cancellationToken)
     {
 
         foreach (var board in boards)
         {
             try
             {
-                board.End();
+                await board.End();
             }
             catch (Exception e)
             {
                 Logger.LogError(e, e.Message);
             }
         }
-        return base.StopAsync(cancellationToken);
+        
+        await base.StopAsync(cancellationToken);
     }
     #endregion
 
