@@ -116,5 +116,10 @@ public class MCP2515Master : MCP2515
     {
         SendCommand(DeviceCommand.REQUEST, (byte)MessageType.ERROR_TEST, nodeID, (byte)ecode, edata);
     }
+
+    public void FinaliseRemoteNode(byte nodeID)
+    {
+        SendCommand(DeviceCommand.REQUEST, (byte)MessageType.FINALISE, nodeID);    
+    }
     #endregion
 }

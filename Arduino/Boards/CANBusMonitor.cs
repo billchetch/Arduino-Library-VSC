@@ -273,11 +273,13 @@ public class CANBusMonitor : CANBusNode
     #endregion
 
     #region Lifecycle
-    public override void End()
+    public override async Task End()
     {
         requestBusNodesStatus.Stop();
+        
+        FinaliseNodes();
 
-        base.End();
+        await base.End();
     }
     #endregion
 
@@ -381,5 +383,24 @@ public class CANBusMonitor : CANBusNode
             MasterNode.RaiseRemoteNodeError(nodeID, ecode, edata);
         }
     }
+    
+    public void FinaliseNodes()
+    {
+        MasterNode.Finalise();
+        MasterNode.FinaliseRemoteNode(0);
+    }
+
+    public void FinaliseNode(byte nodeID)
+    {
+        if(nodeID == NodeID)
+        {
+            MasterNode.Finalise();
+        }
+        else
+        {
+            MasterNode.FinaliseRemoteNode(nodeID);
+        }
+    }
+    
     #endregion
 }

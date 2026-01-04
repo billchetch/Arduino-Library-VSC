@@ -4,6 +4,7 @@ using Chetch.Arduino.Connections;
 using Microsoft.Extensions.Logging;
 using Pomelo.EntityFrameworkCore.MySql.Storage.Internal;
 using XmppDotNet;
+using System.Threading.Tasks;
 
 namespace Chetch.Arduino;
 
@@ -265,9 +266,10 @@ public class ArduinoBoard : IMessageUpdatableObject
         Connection.Connect();
     }
 
-    virtual public void End()
+    virtual public async Task End()
     {
-        io.Stop();
+        await io.Stop();
+
         Connection?.Disconnect();
     }
 
