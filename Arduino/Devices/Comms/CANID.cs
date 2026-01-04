@@ -38,7 +38,7 @@ Byte = 11 (01 10 00) (note 2 bytes is inferred as the last argument as 8 - (2 + 
 
 public class CANID
 {
-
+    const byte CRC_GENERATOR = (0b00110101 & 0x1F) << 3;
 
     public UInt32 ID { get; internal set; } = 0;
 
@@ -58,6 +58,30 @@ public class CANID
     public CANID(UInt32 canId)
     {
         ID = canId;
+    }
+
+    byte crc5(byte[] data){
+        if(data.Length == 0)return 0;
+
+        //x^5 + x^4 + x^2 + 1 ...
+        byte crc = 0;
+        for (byte i = 0; i < data.Length; i++) {
+            crc ^= data[i];
+            for (byte k = 0; k < 8; k++) {
+                crc = (byte)((crc & 0x80) != 0 ? (crc << 1) ^ CRC_GENERATOR : crc << 1);
+            }
+        }
+        crc >>= 3;
+        return  (byte)(crc & 0x1F);
+    }
+
+    bool vcrc5(byte crc, byte[] data){
+        return crc == crc5(data);
+    }
+
+    public bool ValidateCRC(byte[] data)
+    {
+        return vcrc5(CRC, data);
     }
 
     public override string ToString()
