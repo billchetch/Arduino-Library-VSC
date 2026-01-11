@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Pomelo.EntityFrameworkCore.MySql.Storage.Internal;
 using XmppDotNet;
 using System.Threading.Tasks;
+using System.Collections.Specialized;
 
 namespace Chetch.Arduino;
 
@@ -104,6 +105,22 @@ public class ArduinoBoard : IMessageUpdatableObject
     public String SID { get; internal set; } = DEFAULT_SID;
 
     public String UID => SID; //for IMessageUpdatable interface compliance
+
+    public MessageIO<ArduinoMessage> IO 
+    { 
+        get
+        { 
+            return io; 
+        }
+        set
+        {
+            if(IsConnected)
+            {
+                throw new Exception("Cannot set IO if board already conneted");
+            }
+            io = value;
+        }
+    }
 
     public IConnection? Connection
     {

@@ -294,7 +294,7 @@ public class ArduinoVirtualBoard
         {
             try
             {
-                Connection.SendData(bytes);
+                Connection?.SendData(bytes);
                 MessageSent?.Invoke(this, io.LastMessageDispatched);
             }
             catch (Exception e)
@@ -323,7 +323,7 @@ public class ArduinoVirtualBoard
             await regime.Cancel();
         }
         Connection?.StopListening();
-        io.Stop();
+        await io.Stop();
     }
 
     protected void OnConnected(bool connected)

@@ -38,13 +38,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
     #region Methods
     public void AddBusMonitor(CANBusMonitor bus)
     {
-        bus.NodesReady += (Senders, ready) =>
-        {
-            if (ready)
-            {
-                Logger.LogInformation(0, "All {0} nodes of bus {1} are ready", bus.BusSize, bus.SID);
-            }
-        };
+        
         AddBoard(bus);
         BusCount++;
     }
@@ -89,7 +83,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
         int busIdx = 0;
         CANBusMonitor bm;
         StringBuilder sb;
-        List<CANBusNode> nodes;
+        List<ICANBusNode> nodes;
         byte nodeID = 0;
         int n = 0;
         switch (command.Command)
@@ -120,12 +114,11 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 foreach (var node in nodes)
                 {
                     var mcp = node.MCPNode;
-                    var ba = bm.BusActivity[mcp.NodeID];
-                    if (node.IsReady)
+                    if (mcp.IsReady)
                     {
-                        sb.AppendFormat(" - Bus Message Count and Rate = {0} ... {1}mps", ba.MessageCount, ba.MessageRate);
+                        sb.AppendFormat(" - Bus Message Count and Rate = {0} ... {1}mps", mcp.MessageCount, mcp.MessageRate);
                         sb.AppendLine();
-                        sb.AppendFormat(" - Bus Message Latency Max and Latest = {0}ms ... {1}ms", ba.MaxLatency, ba.Latency);
+                        sb.AppendFormat(" - Bus Message Latency  = {0}ms", mcp.MessageLatency);
                         sb.AppendLine();
                         sb.AppendFormat(" - Status Flags = {0}", Utilities.Convert.ToBitString(mcp.StatusFlags));
                         sb.AppendLine();
@@ -154,7 +147,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     {
                         sb.Append("Not Ready");
                     }
-                    response.AddValue(String.Format("Node {0} Status", node.NodeID), sb.ToString());
+                    response.AddValue(String.Format("Node {0} Status", node.MCPNode.NodeID), sb.ToString());
                     sb.Clear();
                 }    
                 return true;
@@ -194,13 +187,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
                 }
                 bm = GetBusMonitor(busIdx);
-                if(nodeID == 0){
-                    bm.InitialiseNodes();
-                } 
-                else 
-                {
-                    bm.InitialiseNode(nodeID);
-                }
+                bm.InitialiseNode(nodeID);
                 return true;
 
             case COMMAND_STAT_NODE:
@@ -217,10 +204,9 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
                 }
                 bm = GetBusMonitor(busIdx);
-                bm.RequestNodesStatus(); //get them all
+                bm.RequestNodeStatus(nodeID); //get them all
                 if(nodeID != 0){
                     MessageParser.Parse(response, bm.GetNode(nodeID).MCPNode);
-                    MessageParser.Parse(response, bm.BusActivity[nodeID]);
                 }
                 return true;
 
@@ -238,13 +224,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
                 }
                 bm = GetBusMonitor(busIdx);
-                if(nodeID == 0){
-                    bm.PingNodes();
-                } 
-                else 
-                {
-                    bm.PingNode(nodeID);
-                }
+                bm.PingNode(nodeID);
                 return true;
 
             case COMMAND_RESET_NODE:
@@ -261,13 +241,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
                 }
                 bm = GetBusMonitor(busIdx);
-                if(nodeID == 0){
-                    bm.ResetNodes();
-                } 
-                else 
-                {
-                    bm.ResetNode(nodeID);
-                }
+                bm.ResetNode(nodeID);
                 return true;
 
             case COMMAND_RAISE_ERROR:
@@ -290,7 +264,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
                 }
                 bm = GetBusMonitor(busIdx);
-                bm.RaiseError(nodeID, ecode);
+                bm.RaiseNodeError(nodeID, ecode);
                 return true;
 
             case COMMAND_ERROR_COUNTS:
@@ -303,7 +277,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
                 }
                 bm = bm = GetBusMonitor(busIdx);
-                nodes = new List<CANBusNode>();
+                nodes = new List<ICANBusNode>();
                 nodes.Add(bm);
                 nodes.AddRange(bm.RemoteNodes.Values);
                 sb = new StringBuilder();
@@ -315,7 +289,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                         sb.AppendFormat("{0} = {1}", kv.Key.ToString(), kv.Value);
                         sb.AppendLine();
                     }
-                    response.AddValue(String.Format("Node {0} Error Counts", node.NodeID), sb.ToString());
+                    response.AddValue(String.Format("Node {0} Error Counts", node.MCPNode.NodeID), sb.ToString());
                     sb.Clear();
                 }
 

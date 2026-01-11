@@ -2,14 +2,17 @@ using System;
 using System.Collections.Immutable;
 using System.Reflection;
 using System.Text;
+using Chetch.Arduino.Connections;
 using Chetch.Arduino.Devices.Comms;
 using Chetch.Messaging;
+using Microsoft.Extensions.Logging;
+using XmppDotNet;
 using XmppDotNet.Xmpp.Delay;
 
 
 namespace Chetch.Arduino.Boards;
 
-public class CANBusMonitor : CANBusNode
+public class CANBusMonitor : ArduinoBoard, ICANBusNode
 {
     #region Constants   
     public const String DEFAULT_BOARD_NAME = "canbusmon";
@@ -18,73 +21,47 @@ public class CANBusMonitor : CANBusNode
     #endregion
 
     #region Classes and Enums
-    public class BusNodeActivity
-    {
-        #region Properties
-        public uint MessageCount { get; internal set; } = 0;
-        public double MessageRate { get; internal set; } = -1.0;
-
-        public UInt32 Latency { get; internal set; } = 0;
-        public UInt32 MaxLatency {get; internal set; } = 0;
-
-        public DateTime LastIdleOn { get; internal set; }
-
-        public bool IsIdle => MessageRate == 0;
-
-        public TimeSpan IdleFor => IsIdle ? DateTime.Now - LastIdleOn : default(TimeSpan);
-        #endregion
-
-        #region Fields
-        private uint lastMessageCount = 0;
-        #endregion
-
-        #region Methods
-        public void UpdateMessageCount(UInt32 estimatedNodeMillis, byte messageTimestamp, int timestampResolution)
-        {
-            if(timestampResolution >= 0)
-            {
-                int estimatedTimestamp = (int)((estimatedNodeMillis >> timestampResolution) & 0xFF);
-                int diff = Math.Abs((int)messageTimestamp - estimatedTimestamp);
-                uint diffInMillis = (uint)Math.Min(256 - diff, diff) << timestampResolution;
-                Latency = diffInMillis;
-                if(diffInMillis > MaxLatency)
-                {
-                    MaxLatency = diffInMillis;
-                }
-            }
-            MessageCount++;
-        }
-
-        public void UpdateMessageRate(TimeSpan timeSpan)
-        {
-            bool oldIdle = IsIdle;
-            MessageRate = (double)(MessageCount - lastMessageCount) / timeSpan.TotalSeconds;
-            lastMessageCount = MessageCount;
-            
-            bool changed = oldIdle != IsIdle;
-            if(changed && IsIdle)
-            {
-                LastIdleOn = DateTime.Now;
-            }
-        }
-        #endregion
-
-    }
+    
     #endregion
 
     #region Properties
-    public MCP2515Master MasterNode => (MCP2515Master)MCPNode;
+    public MCP2515Master MasterNode { get; } = new MCP2515Master(1);
 
-    public bool AllNodesReady => nodeReadyCount == BusSize;
+    public MCP2515 MCPNode => MasterNode; // for interface compliance
+
+    public IEnumerable<MCP2515.ErrorLogEntry> ErrorLog => MCPNode.ErrorLog;
 
     public int BusSize => 1 + RemoteNodes.Count;
 
-    public Dictionary<byte, CANBusNode> RemoteNodes { get; } = new Dictionary<byte, CANBusNode>();
-    public Dictionary<byte, BusNodeActivity> BusActivity { get; } = new Dictionary<byte, BusNodeActivity>();
+    public Dictionary<byte, ICANBusNode> RemoteNodes { get; } = new Dictionary<byte, ICANBusNode>();
+    
+    public uint BusMessageCount
+    {
+        get
+        {
+            uint mc = 0;
+            var allNodes = GetAllNodes();
+            foreach(var nd in allNodes)
+            {
+                mc += nd.MCPNode.MessageCount;
+            }
+            return mc;
+        }
+    }
 
-    public UInt32 BusMessageCount {get; internal set; } = 0;
-
-    public double BusMessageRate {get; internal set; } = 0.0;
+    public double BusMessageRate
+    {
+        get
+        {
+            double mr = 0.0;
+            var allNodes = GetAllNodes();
+            foreach(var nd in allNodes)
+            {
+                mr += nd.MCPNode.MessageRate;
+            }
+            return allNodes.Count > 0 ? mr / (double)allNodes.Count : 0.0;
+        }
+    }
 
     public String BusSummary
     {
@@ -93,14 +70,7 @@ public class CANBusMonitor : CANBusNode
             var s = new StringBuilder();
             if (IsReady)
             {
-                if (AllNodesReady)
-                {
-                    s.AppendFormat("Bus monitor {0}, all {1} nodes are ready!", SID, BusSize);
-                }
-                else
-                {
-                    s.AppendFormat("Bus monitor {0}, {1} nodes out of {2} are ready!", SID, nodeReadyCount, BusSize);
-                }
+                //s.AppendFormat("Bus monitor {0}, {1} nodes out of {2} are ready!", SID, nodeReadyCount, BusSize);
                 s.AppendFormat(" Messages={0}, Rate={1} mps", BusMessageCount, BusMessageRate);
             }
             else
@@ -115,78 +85,71 @@ public class CANBusMonitor : CANBusNode
 
     #region Events
     public EventHandler<CANBusNode>? NodeReady;
-
-    public EventHandler<bool>? NodesReady;
-
+    
     public EventHandler<MCP2515Master.BusMessageEventArgs>? BusMessageReceived;
 
-    public EventHandler? RequestedBusStatus;
     #endregion
 
     #region Fields
-    System.Timers.Timer requestBusNodesStatus = new System.Timers.Timer();
     
-    int nodeReadyCount = 0;
     #endregion
 
     #region Constructors
-    public CANBusMonitor(String sid = DEFAULT_BOARD_NAME) : base(new MCP2515Master(CANBusNode.MASTER_NODE_ID), sid)
+    public CANBusMonitor(String sid = DEFAULT_BOARD_NAME) : base(sid)
     {
-        requestBusNodesStatus.AutoReset = true;
-        requestBusNodesStatus.Interval = REQUEST_BUS_NODES_STATUS_INTERVAL;
-        requestBusNodesStatus.Elapsed += (sender, eargs) =>
-        {
-            RequestNodesStatus();
-            RequestedBusStatus?.Invoke(this, EventArgs.Empty);
-            
-            BusMessageRate = 0.0;
-            foreach(var ba in BusActivity.Values)
-            {
-                ba.UpdateMessageRate(TimeSpan.FromMilliseconds(requestBusNodesStatus.Interval));
-                BusMessageRate += ba.MessageRate;
-            }
-        };
-
         //The master node on the Arduino Board has parceled up a bus message and sent it as a normal arduino message
         //to this board which in turn directs it to the MCP node that then unwraps the message and fires this event.  The main purpose here
         //is to take tthe unwrapped message and pass it to the appropriate remote node.
         MasterNode.BusMessageReceived += (sender, eargs) =>
         {
-            CANBusNode busNode;
-            if (eargs.NodeID == NodeID)
-            {
-                busNode = this;
-            }
-            else
-            {
-                if (!RemoteNodes.ContainsKey(eargs.NodeID))
-                {
-                    throw new Exception(String.Format("Unrecognised node: {0}", eargs.NodeID));
-                }
-                busNode = RemoteNodes[eargs.NodeID];
-            }
+            //Determine which node this message relates to
+            ICANBusNode busNode = GetNode(eargs.NodeID);
             
-            BusActivity[busNode.NodeID].UpdateMessageCount(busNode.MCPNode.EstimatedNodeMillis,
-                                                            eargs.CanID.Timestamp,
-                                                            busNode.MCPNode.TimestampResolution);
+            //Parse the message
+            var message = eargs.Message;
+            var canData = eargs.CanData;
+            switch (message.Type)
+            {
+                case MessageType.STATUS_RESPONSE:
+                    //Status Flags, Error Flags, errorCountTX, errorCountRX, errorCountFlags
+                    message.Populate<byte, byte, byte, byte, UInt16>(canData);
+                    message.Add(busNode.MCPNode.ReportInterval, 0);
+                    message.Add(busNode.MCPNode.NodeID, 1);
+                    break;
 
-            BusMessageCount++;
-            busNode.HandleBusMessage(eargs.CanID, eargs.CanData.ToArray(), eargs.Message);
+                case MessageType.INITIALISE_RESPONSE:
+                    //Millis and timestamp resolution
+                    message.Populate<UInt32, byte>(canData);
+                    break;
+
+                case MessageType.COMMAND_RESPONSE:
+                    break;
+
+                case MessageType.ERROR:
+                    //Error Code, Error Data, Error Code Flags, MCP Error Flags
+                    message.Populate<byte, UInt32, UInt16, byte>(canData);
+                    message.Add(ArduinoBoard.ErrorCode.DEVICE_ERROR, 0);
+                    break;
+
+                case MessageType.PRESENCE:
+                    //Nodemillis, Interval, Initial presence, Status Flags
+                    message.Populate<UInt32, UInt16, bool, byte>(canData);
+                    break;
+            }
+
+            busNode.MCPNode.UpdateMessageCount(eargs.CanID.Timestamp);
+            busNode.IO.Inject(message);
+            
+            //Fire received event
             BusMessageReceived?.Invoke(this, eargs);
         };
 
         MasterNode.Ready += (sender, ready) =>
         {
-            handleNodeReady(sender, ready);
-
-            if (ready)
-            {
-                requestBusNodesStatus.Start();
-                MasterNode.RequestRemoteNodesStatus();
-            }
+            MasterNode.Initialise();
         };
-    
-        BusActivity[NodeID] = new BusNodeActivity();
+
+        AddDevice(MasterNode);
     }
 
     public CANBusMonitor(int remoteNodes, String sid = DEFAULT_BOARD_NAME) : this(sid)
@@ -199,67 +162,53 @@ public class CANBusMonitor : CANBusNode
     #endregion
 
     #region Methods
-    void handleNodeReady(Object? sender, bool ready)
+    public void AddRemoteNode(ICANBusNode remoteNode)
     {
-        if (sender == null) return;
-        MCP2515 mcp = (MCP2515)sender;
-        if (mcp.Board == null) return;
-        CANBusNode node = (CANBusNode)mcp.Board;
-        
-        if (mcp == MasterNode || RemoteNodes.Values.Contains(node))
+        byte rnid = remoteNode.MCPNode.NodeID;
+        if (rnid == 0 || rnid == MasterNode.NodeID)
         {
-            bool previouslyReady = AllNodesReady;
-            nodeReadyCount += ready ? 1 : -1;
+            throw new Exception(String.Format("Node ID {0} is not a valid ID for a remote node", rnid));
+        }
 
-            NodeReady?.Invoke(this, node);
-            if (AllNodesReady) //was not ready, now it is
+        if (RemoteNodes.ContainsKey(rnid))
+        {
+            throw new ArgumentException(String.Format("Node {0} already added!", rnid));
+        }
+        remoteNode.IO = new MessageIO<ArduinoMessage>(); 
+        remoteNode.IO.MessageDispatched += (sender, eargs) =>
+        {
+            var msg = remoteNode.IO.LastMessageDispatched;
+            if(msg != null)
             {
-                //all nodes ready so send an INITIALISE message
-                InitialiseNodes();
-
-                //Fire the event
-                NodesReady?.Invoke(this, true);
+                try{
+                    var message = MasterNode.FormulateMessageForNode(remoteNode.NodeID, msg);
+                    this.IO.Inject(message);
+                } 
+                catch
+                {
+                    //Hmmm
+                }
             }
-            else if (previouslyReady) //was ready now is not
-            {
-                NodesReady?.Invoke(this, false);
-            }
-        }
+        };
+        RemoteNodes[rnid] = remoteNode;
     }
-
-    private void addRemoteNode(CANBusNode remoteNode)
-    {
-        if (remoteNode.NodeID == 0)
-        {
-            remoteNode.SetNodeID((byte)(MASTER_NODE_ID + RemoteNodes.Count + 1));
-        }
-
-        if (RemoteNodes.ContainsKey(remoteNode.NodeID))
-        {
-            throw new ArgumentException(String.Format("Node {0} already added!", remoteNode.ID));
-        }
-        RemoteNodes[remoteNode.NodeID] = remoteNode;
-        remoteNode.MCPNode.Ready += handleNodeReady;
-
-        BusActivity.Add(remoteNode.NodeID, new BusNodeActivity());
-    }
-
+    
     public void AddRemoteNode()
     {
-        byte nid = (byte)(MASTER_NODE_ID + RemoteNodes.Count + 1);
-        addRemoteNode(new CANBusNode(nid));
+        byte nid = (byte)(MasterNode.ID + RemoteNodes.Count + 1);
+        AddRemoteNode(new CANBusNode(nid));
     }
 
-    public List<CANBusNode> GetAllNodes()
+    public List<ICANBusNode> GetAllNodes()
     {
-        var l = new List<CANBusNode> { this };
+        var l = new List<ICANBusNode> { this };
         l.AddRange(RemoteNodes.Values);
         return l;
     }
     
-    public CANBusNode GetNode(byte nodeID)
+    public ICANBusNode GetNode(byte nodeID)
     {
-        if (nodeID == NodeID)
+        if (nodeID == MasterNode.NodeID)
         {
             return this;
         }
@@ -274,134 +223,104 @@ public class CANBusMonitor : CANBusNode
     #endregion
 
     #region Lifecycle
+    public override void Begin()
+    {
+        foreach(var remoteNode in RemoteNodes.Values)
+        {
+            if(remoteNode.Connection == null && Connection != null)
+            {
+                remoteNode.Connection = new ProxyConnection(Connection);
+            }
+            remoteNode.Begin();
+        }
+        base.Begin();
+
+    }
     public override async Task End()
     {
-        requestBusNodesStatus.Stop();
+        foreach(var remoteNode in RemoteNodes.Values)
+        {
+            await remoteNode.End();
+        }
         
-        FinaliseNodes();
-
         await base.End();
     }
     #endregion
 
     #region Messaging
-
-    public void SendCommand(ArduinoDevice.DeviceCommand command, params Object[] arguments)
+    public void InitialiseNode(byte nodeID) //set nodeID = 0 to initialise all
     {
-        if (AllNodesReady)
-        {
-            MasterNode.SendCommand(command, arguments);
-        }
-        else
-        {
-            throw new Exception(String.Format("Cannot execute command {0} bus as not all nodes are ready", command));
-        }
-    }
-    
-    public void TestBus(byte testNumber, Int16 testParam = 0)
-    {
-        SendCommand(ArduinoDevice.DeviceCommand.TEST, testNumber, testParam);
-    }
-
-    public void PauseBus()
-    {
-        SendCommand(ArduinoDevice.DeviceCommand.PAUSE);
-    }
-
-    public void ResumeBus()
-    {
-        SendCommand(ArduinoDevice.DeviceCommand.RESUME);
-    }
-
-    public void RequestNodesStatus()
-    {
-        MasterNode.RequestStatus();
-        MasterNode.RequestRemoteNodesStatus();
-    }
-
-    public void InitialiseNodes()
-    {
-        MasterNode.Initialise();
-        MasterNode.InitialiseRemoteNode(0);
-    }
-    
-    public void InitialiseNode(byte nodeID)
-    {
-        if(nodeID == NodeID)
+        if(nodeID == 0 || nodeID == MasterNode.NodeID)
         {
             MasterNode.Initialise();
-        }
-        else
+        } 
+        if(nodeID != MasterNode.NodeID)
         {
-            MasterNode.InitialiseRemoteNode(nodeID);
+            MasterNode.SendRequest(MessageType.INITIALISE, nodeID);
+        }
+    }
+    
+    public void RequestNodeStatus(byte nodeID)
+    {
+        if(nodeID == 0 || nodeID == MasterNode.NodeID)
+        {
+            RequestStatus();
+        }
+        if(nodeID != MasterNode.NodeID)
+        {
+            MasterNode.SendRequest(MessageType.STATUS_REQUEST, nodeID);
         }
     }
 
-    public void PingNodes()
+    public void PingNode(byte nodeID) //set nodeID = 0 to ping all
     {
-        MasterNode.Ping();
-        MasterNode.PingRemoteNode(0);
-    }
-
-    public void PingNode(byte nodeID)
-    {
-        if(nodeID == NodeID)
+        if(nodeID == 0 || nodeID == MasterNode.NodeID)
         {
             MasterNode.Ping();
         }
-        else
+        if(nodeID != MasterNode.NodeID)
         {
-            MasterNode.PingRemoteNode(nodeID);
+            MasterNode.SendRequest(MessageType.PING, nodeID);
         }
     }
 
-    public void ResetNodes()
+    public void ResetNode(byte nodeID) //set nodeID = 0 to ping all
     {
-        MasterNode.Reset();
-        MasterNode.ResetRemoteNode(0);
-    }
-
-    public void ResetNode(byte nodeID)
-    {
-        if(nodeID == NodeID)
+        if(nodeID == 0 || nodeID == MasterNode.NodeID)
         {
             MasterNode.Reset();
         }
-        else
+        if(nodeID != MasterNode.NodeID)
         {
-            MasterNode.ResetRemoteNode(nodeID);
+            MasterNode.SendRequest(MessageType.RESET, nodeID);
         }
     }
 
-    public void RaiseError(byte nodeID, MCP2515.MCP2515ErrorCode ecode, UInt32 edata = 0)
+    public void RaiseNodeError(byte nodeID, MCP2515.MCP2515ErrorCode ecode, UInt32 edata = 0)
     {
-        if(nodeID == NodeID)
+        if(nodeID == 0 || nodeID == MasterNode.NodeID)
         {
-            MasterNode.RaiseError(ecode, edata);
+            var msg = new ArduinoMessage(MessageType.ERROR_TEST);
+            msg.Add(ecode);
+            msg.Add(edata);
+            MasterNode.SendMessage(msg);
         }
-        else
+        if(nodeID != MasterNode.NodeID)
         {
-            MasterNode.RaiseRemoteNodeError(nodeID, ecode, edata);
+            MasterNode.SendRequest(MessageType.ERROR_TEST, nodeID, (byte)ecode, edata);
         }
-    }
-    
-    public void FinaliseNodes()
-    {
-        MasterNode.Finalise();
-        MasterNode.FinaliseRemoteNode(0);
     }
 
     public void FinaliseNode(byte nodeID)
     {
-        if(nodeID == NodeID)
+        if(nodeID == 0 || nodeID == MasterNode.NodeID)
         {
             MasterNode.Finalise();
         }
-        else
+        if(nodeID != MasterNode.NodeID)
         {
-            MasterNode.FinaliseRemoteNode(nodeID);
+            MasterNode.SendRequest(MessageType.FINALISE, nodeID);
         }
     }
-    
     #endregion
 }

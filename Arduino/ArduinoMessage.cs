@@ -184,12 +184,25 @@ public class ArduinoMessage : IMessageQueueItem<ArduinoMessage>
         Add(System.Convert.ToInt32(arg), idx);
     }
 
+    public void Add(ArduinoMessage message, int startAtIdx = 0)
+    {
+        for(int i = startAtIdx; i < message.Arguments.Count; i++)
+        {
+            if(message.Arguments[i] != null)
+            {
+                Add(message.Arguments[i]);
+            }
+        }
+    }
+
     public void Add(Object arg, int idx = -1)
     {
         var bytes = Chetch.Utilities.Convert.ToBytes(arg);
         Add(bytes, idx);
     }
+    #endregion
 
+    #region Populate a message according to a list of types
     public int Populate<T>(byte[] data, int n = 0)
     {
         int k = n + GetSizeOf<T>();

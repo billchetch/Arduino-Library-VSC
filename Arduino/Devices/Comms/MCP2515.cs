@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 using Chetch.Messaging;
 using Chetch.Messaging.Attributes;
 using Chetch.Utilities;
@@ -122,9 +123,31 @@ abstract public class MCP2515 : ArduinoDevice
             StatusFlags = statusFlags; 
         }
     }
+    
+    public enum NodeState
+    {
+        NOT_SET, //Before the canbus monitor
+        SILENT, //If we have heard nothing for some period of time
+        TRANSMITTING_ONLY, //If we are receiving messages but no responses
+        RESPONDING //if we are receiving reponses (this is the desired state)
+    }
+    
     #endregion
 
     #region Properties
+    public NodeState State 
+    { 
+        get{ return nodeState; } 
+        internal set
+        {
+            if(nodeState != value)
+            {
+                StateChanged?.Invoke(this, value);
+            }
+            nodeState = value;
+        } 
+    }
+
     public MCP2515ErrorCode LastError => (MCP2515ErrorCode)Error;
 
     [ArduinoMessageMap(Messaging.MessageType.ERROR, 2)]
@@ -240,9 +263,17 @@ abstract public class MCP2515 : ArduinoDevice
     public DateTime LastStatusResponse { get; internal set; }
 
     public DateTime LastReadyOn { get; internal set; }
+
+    public uint MessageCount { get; internal set; } = 0;
+    
+    public double MessageRate { get; internal set; } = -1.0;
+
+    public UInt32 MessageLatency { get; internal set; } = 0;
     #endregion
 
     #region Events
+    public EventHandler<NodeState>? StateChanged;
+
     public EventHandler<FlagsChangedEventArgs>? StatusFlagsChanged;
 
     public EventHandler<FlagsChangedEventArgs>? ErrorFlagsChanged;
@@ -252,12 +283,16 @@ abstract public class MCP2515 : ArduinoDevice
     #endregion
 
     #region Fields
+    private NodeState nodeState = NodeState.NOT_SET;
+
     private byte statusFlags = 0;
     private byte errorFlags = 0;
     private UInt16 errorCodeFlags = 0;
     private UInt32 nodeMillis = 0;
+    private DateTime nodeMillisSetOn;
+    private uint lastMessageCount = 0;
 
-    private DateTime nodeMillisSetOn = default(DateTime);
+    private DateTime lastMessageOn;
 
     #endregion
 
@@ -287,6 +322,50 @@ abstract public class MCP2515 : ArduinoDevice
     public bool IsErrorCodeFlagged(MCP2515ErrorCode ecflg)
     {
         return (errorCodeFlags & (int)ecflg) == 1;
+    }
+
+    /// <summary>
+    /// To be called by sub-class when processing a CAN Bus message
+    /// </summary>
+    public void UpdateMessageCount(byte messageTimestamp)
+    {
+        if(TimestampResolution >= 0)
+        {
+            int estimatedTimestamp = (int)((EstimatedNodeMillis >> TimestampResolution) & 0xFF);
+            int diff = Math.Abs((int)messageTimestamp - estimatedTimestamp);
+            uint diffInMillis = (uint)Math.Min(256 - diff, diff) << TimestampResolution;
+            MessageLatency = diffInMillis;
+        }
+        lastMessageOn = DateTime.Now;
+        MessageCount++;
+    }
+
+    public void UpdateMessageRate(TimeSpan timeSpan)
+    {
+        MessageRate = (double)(MessageCount - lastMessageCount) / timeSpan.TotalSeconds;
+        lastMessageCount = MessageCount;
+
+        if(lastMessageOn != default(DateTime))
+        {
+            bool transmitting = (DateTime.Now - lastMessageOn).TotalSeconds <= timeSpan.TotalSeconds;
+            if(transmitting)
+            {
+                //Two possibiliities:  Transmitting or Responding (which )
+                if(State != NodeState.TRANSMITTING_ONLY && (DateTime.Now - LastStatusResponse).TotalSeconds > timeSpan.TotalSeconds)
+                {
+                    State = NodeState.TRANSMITTING_ONLY;
+                } 
+                else if(State != NodeState.RESPONDING)
+                {
+                    State = NodeState.RESPONDING;    
+                }
+            }
+            else
+            {
+                //silent
+                State = NodeState.SILENT;
+            }
+        }
     }
     #endregion
 

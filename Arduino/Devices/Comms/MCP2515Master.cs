@@ -62,7 +62,7 @@ public class MCP2515Master : MCP2515
     #endregion
 
     #region Constructors
-    public MCP2515Master(byte nodeID, string? name = null) : base(nodeID, name)
+    public MCP2515Master(byte nodeID = 1, string? name = null) : base(nodeID, name)
     {}
     #endregion
 
@@ -84,42 +84,40 @@ public class MCP2515Master : MCP2515
         return base.HandleMessage(message);
     }
 
-    public void InitialiseRemoteNode(byte nodeID) //set nodeID = 0 to initialise all
+    public ArduinoMessage FormulateMessageForNode(byte nodeID, ArduinoMessage message)
     {
-        SendCommand(DeviceCommand.REQUEST, (byte)MessageType.INITIALISE, nodeID);
-    }
-    
-    public void RequestRemoteNodesStatus()
-    {
-        SendCommand(DeviceCommand.REQUEST, (byte)MessageType.STATUS_REQUEST);
+        var fmsg = new ArduinoMessage(MessageType.COMMAND);
+        fmsg.Target = ID;
+        fmsg.Sender = message.Sender;
+
+        switch (message.Type)
+        {
+            case MessageType.STATUS_REQUEST:
+            case MessageType.PING:
+            case MessageType.INITIALISE:
+            case MessageType.RESET:
+            case MessageType.ERROR_TEST:
+                fmsg.Add(ArduinoDevice.DeviceCommand.REQUEST);
+                fmsg.Add(message.Type);
+                fmsg.Add(nodeID);
+                fmsg.Add(message);
+                break;
+
+            case MessageType.COMMAND:
+                fmsg.Add(message.Get<ArduinoDevice.DeviceCommand>(0));
+                fmsg.Add(nodeID);
+                fmsg.Add(message, 1);
+                break;
+
+            default:
+                throw new Exception("Cannot formulate this message!");
+        }
+        return fmsg;
     }
 
-    public void PingRemoteNode(byte nodeID) //set nodeID = 0 to ping all
+    public void SendRequest(MessageType requestType, byte nodeID, params object[] arguments)
     {
-        SendCommand(DeviceCommand.REQUEST, (byte)MessageType.PING, nodeID);
-    }
-
-    public void ResetRemoteNode(byte nodeID) //set nodeID = 0 to ping all
-    {
-        SendCommand(DeviceCommand.REQUEST, (byte)MessageType.RESET, nodeID);
-    }
-
-    public void RaiseError(MCP2515ErrorCode ecode, UInt32 edata = 0)
-    {
-        var msg = new ArduinoMessage(MessageType.ERROR_TEST);
-        msg.Add(ecode);
-        msg.Add(edata);
-        SendMessage(msg);
-    }
-
-    public void RaiseRemoteNodeError(byte nodeID, MCP2515ErrorCode ecode, UInt32 edata = 0) //set nodeID = 0 to ping all
-    {
-        SendCommand(DeviceCommand.REQUEST, (byte)MessageType.ERROR_TEST, nodeID, (byte)ecode, edata);
-    }
-
-    public void FinaliseRemoteNode(byte nodeID)
-    {
-        SendCommand(DeviceCommand.REQUEST, (byte)MessageType.FINALISE, nodeID);    
+        SendCommand(ArduinoDevice.DeviceCommand.REQUEST, (byte)requestType, nodeID, arguments);
     }
     #endregion
 }
