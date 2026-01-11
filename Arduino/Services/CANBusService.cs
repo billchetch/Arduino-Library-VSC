@@ -113,7 +113,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 sb = new StringBuilder();
                 foreach (var node in nodes)
                 {
-                    var mcp = node.MCPNode;
+                    var mcp = node.MCPDevice;
                     if (mcp.IsReady)
                     {
                         sb.AppendFormat(" - Bus Message Count and Rate = {0} ... {1}mps", mcp.MessageCount, mcp.MessageRate);
@@ -147,7 +147,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     {
                         sb.Append("Not Ready");
                     }
-                    response.AddValue(String.Format("Node {0} Status", node.MCPNode.NodeID), sb.ToString());
+                    response.AddValue(String.Format("Node {0} Status", node.MCPDevice.NodeID), sb.ToString());
                     sb.Clear();
                 }    
                 return true;
@@ -206,7 +206,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 bm = GetBusMonitor(busIdx);
                 bm.RequestNodeStatus(nodeID); //get them all
                 if(nodeID != 0){
-                    MessageParser.Parse(response, bm.GetNode(nodeID).MCPNode);
+                    MessageParser.Parse(response, bm.GetNode(nodeID).MCPDevice);
                 }
                 return true;
 
@@ -283,13 +283,13 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 sb = new StringBuilder();
                 foreach (var node in nodes)
                 {
-                    var mcp = node.MCPNode;
+                    var mcp = node.MCPDevice;
                     foreach(var kv in mcp.ErrorCounts)
                     {
                         sb.AppendFormat("{0} = {1}", kv.Key.ToString(), kv.Value);
                         sb.AppendLine();
                     }
-                    response.AddValue(String.Format("Node {0} Error Counts", node.MCPNode.NodeID), sb.ToString());
+                    response.AddValue(String.Format("Node {0} Error Counts", node.MCPDevice.NodeID), sb.ToString());
                     sb.Clear();
                 }
 

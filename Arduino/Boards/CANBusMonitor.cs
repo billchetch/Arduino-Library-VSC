@@ -27,9 +27,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     #region Properties
     public MCP2515Master MasterNode { get; } = new MCP2515Master(1);
 
-    public MCP2515 MCPNode => MasterNode; // for interface compliance
-
-    public IEnumerable<MCP2515.ErrorLogEntry> ErrorLog => MCPNode.ErrorLog;
+    public MCP2515 MCPDevice => MasterNode; // for interface compliance
 
     public int BusSize => 1 + RemoteNodes.Count;
 
@@ -43,7 +41,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
             var allNodes = GetAllNodes();
             foreach(var nd in allNodes)
             {
-                mc += nd.MCPNode.MessageCount;
+                mc += nd.MCPDevice.MessageCount;
             }
             return mc;
         }
@@ -57,7 +55,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
             var allNodes = GetAllNodes();
             foreach(var nd in allNodes)
             {
-                mr += nd.MCPNode.MessageRate;
+                mr += nd.MCPDevice.MessageRate;
             }
             return allNodes.Count > 0 ? mr / (double)allNodes.Count : 0.0;
         }
@@ -84,7 +82,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     #endregion
 
     #region Events
-    public EventHandler<CANBusNode>? NodeReady;
+    public EventHandler<ICANBusNode>? NodeReady;
     
     public EventHandler<MCP2515Master.BusMessageEventArgs>? BusMessageReceived;
 
@@ -113,8 +111,8 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
                 case MessageType.STATUS_RESPONSE:
                     //Status Flags, Error Flags, errorCountTX, errorCountRX, errorCountFlags
                     message.Populate<byte, byte, byte, byte, UInt16>(canData);
-                    message.Add(busNode.MCPNode.ReportInterval, 0);
-                    message.Add(busNode.MCPNode.NodeID, 1);
+                    message.Add(busNode.MCPDevice.ReportInterval, 0);
+                    message.Add(busNode.MCPDevice.NodeID, 1);
                     break;
 
                 case MessageType.INITIALISE_RESPONSE:
@@ -123,6 +121,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
                     break;
 
                 case MessageType.COMMAND_RESPONSE:
+                    message.Populate<byte>(canData);
                     break;
 
                 case MessageType.ERROR:
@@ -137,7 +136,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
                     break;
             }
 
-            busNode.MCPNode.UpdateMessageCount(eargs.CanID.Timestamp);
+            busNode.MCPDevice.UpdateMessageCount(eargs.CanID.Timestamp);
             busNode.IO.Inject(message);
             
             //Fire received event
@@ -164,7 +163,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     #region Methods
     public void AddRemoteNode(ICANBusNode remoteNode)
     {
-        byte rnid = remoteNode.MCPNode.NodeID;
+        byte rnid = remoteNode.MCPDevice.NodeID;
         if (rnid == 0 || rnid == MasterNode.NodeID)
         {
             throw new Exception(String.Format("Node ID {0} is not a valid ID for a remote node", rnid));
@@ -182,10 +181,12 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
             {
                 try{
                     var message = MasterNode.FormulateMessageForNode(remoteNode.NodeID, msg);
-                    this.IO.Inject(message);
+                    this.SendMessage(message);
+                    Console.WriteLine(">>>>>> Formulated {0} message from Node {1} and sender {2} as message of type {3} and target {4}", msg.Type, remoteNode.NodeID, msg.Sender, message.Type, message.Target);
                 } 
-                catch
+                catch (Exception e)
                 {
+                    Console.WriteLine("Exception: {0}", e.Message);
                     //Hmmm
                 }
             }
@@ -195,7 +196,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     
     public void AddRemoteNode()
     {
-        byte nid = (byte)(MasterNode.ID + RemoteNodes.Count + 1);
+        byte nid = (byte)(MasterNode.NodeID + RemoteNodes.Count + 1);
         AddRemoteNode(new CANBusNode(nid));
     }
 

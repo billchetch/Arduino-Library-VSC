@@ -10,17 +10,15 @@ public class CANBusNode : ArduinoBoard, ICANBusNode
     #endregion
 
     #region Properties
-    public MCP2515 MCPNode { get; set; }
+    public MCP2515Node MCPNode { get; set; }
 
-    public byte NodeID => MCPNode.NodeID;
-
-    public IEnumerable<MCP2515.ErrorLogEntry> ErrorLog => MCPNode.ErrorLog;
+    public MCP2515 MCPDevice => MCPNode; // for interface compliance
 
     
     #endregion
 
     #region Constructors
-    public CANBusNode(MCP2515 mcpNode, String sid) : base(sid)
+    public CANBusNode(MCP2515Node mcpNode, String sid) : base(sid)
     {
         MCPNode = mcpNode;
         

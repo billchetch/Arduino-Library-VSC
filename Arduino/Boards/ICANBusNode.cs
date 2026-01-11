@@ -9,11 +9,11 @@ public interface ICANBusNode
 {
     byte ID { get; }
 
-    byte NodeID => MCPNode.NodeID;
+    byte NodeID => MCPDevice.NodeID;
 
-    MCP2515 MCPNode { get; }
+    MCP2515 MCPDevice { get; }
 
-    IEnumerable<MCP2515.ErrorLogEntry> ErrorLog { get; }
+    IEnumerable<MCP2515.ErrorLogEntry> ErrorLog => MCPDevice.ErrorLog;
 
     MessageIO<ArduinoMessage> IO { get; set; }
 
