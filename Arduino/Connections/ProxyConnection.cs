@@ -13,11 +13,15 @@ public class ProxyConnection : IConnection
 
     bool activeProxy = false;
 
-    public ProxyConnection(IConnection proxy, bool active = false)
+    public ProxyConnection(IConnection proxy, bool active = false, int waitB4connect = 250)
     {
         Proxy = proxy;
         Proxy.Connected += (sender, connected) =>
         {
+            if(waitB4connect > 0)
+            {
+                Thread.Sleep(1000);
+            }
             OnConnect(connected);
         };
         activeProxy = active;

@@ -189,12 +189,13 @@ public class ArduinoBoard : IMessageUpdatableObject
     virtual public String StatusSummary => IsReady ? String.Format("Board: {0}, Memory: {1}, Devices: {2}", Name, FreeMemory, DeviceCount) : "Not Ready";
 
     public String MessageSummary => IsReady && io.LastMessageReceived != null ? String.Format("Received: {0} {1}s ago", io.LastMessageReceived.Type, Math.Round((DateTime.Now - io.LastMessageReceived.Created).TotalSeconds, 1)) : "No messages received";
+
+    protected System.Timers.Timer RequestStatusTimer { get; } = new System.Timers.Timer();
     #endregion
 
     #region Fields
     MessageIO<ArduinoMessage> io = new MessageIO<ArduinoMessage>(Frame.FrameSchema.SMALL_SIMPLE_CHECKSUM, MessageEncoding.SYSTEM_DEFINED); 
-
-    System.Timers.Timer requestStatusTimer = new System.Timers.Timer();
+    
 
     IConnection? cnn;
 
@@ -212,9 +213,9 @@ public class ArduinoBoard : IMessageUpdatableObject
 
         //Configure request status timer, this effectively pings the board if no message has been
         //received for some period .. starts based on board being ready or not (see OnReady)
-        requestStatusTimer.AutoReset = true;
-        requestStatusTimer.Interval = REQUEST_STATUS_TIMER_INTERVAL * 1000;
-        requestStatusTimer.Elapsed += (sender, eargs) =>
+        RequestStatusTimer.AutoReset = true;
+        RequestStatusTimer.Interval = REQUEST_STATUS_TIMER_INTERVAL * 1000;
+        RequestStatusTimer.Elapsed += (sender, eargs) =>
         {
             if (IsReady && io.LastMessageReceived.Created != default && (DateTime.Now - io.LastMessageReceived.Created).TotalSeconds > REQUEST_STATUS_TIMER_INTERVAL)
             {
@@ -236,7 +237,7 @@ public class ArduinoBoard : IMessageUpdatableObject
                 try
                 {
                     //this will route the message
-                    if (!OnMessageReceived(message))
+                    if (!RouteMessage(message))
                     {
                         //TODO: if here means the message has not been processed
                     } 
@@ -313,7 +314,7 @@ public class ArduinoBoard : IMessageUpdatableObject
                     int attempts = 0;
                     do
                     {
-                        //Console.WriteLine("Requesting status...");
+                        //Console.WriteLine("{0} requesting status...", SID);
                         try
                         {
                             RequestStatus();
@@ -348,11 +349,11 @@ public class ArduinoBoard : IMessageUpdatableObject
         Ready?.Invoke(this, IsReady);
         if (IsReady)
         {
-            requestStatusTimer.Start();
+            RequestStatusTimer.Start();
         }
         else
         {
-            requestStatusTimer.Stop();
+            RequestStatusTimer.Stop();
         }
     }
     #endregion
@@ -370,7 +371,7 @@ public class ArduinoBoard : IMessageUpdatableObject
     /// </summary>
     /// <param name="message">The messaget to be routed.</param>
     /// <returns>bool</returns>
-    protected bool OnMessageReceived(ArduinoMessage message)
+    public bool RouteMessage(ArduinoMessage message)
     {
         bool handled = false;
         ArduinoMessageMap.UpdatedProperties updatedProperties = new ArduinoMessageMap.UpdatedProperties();

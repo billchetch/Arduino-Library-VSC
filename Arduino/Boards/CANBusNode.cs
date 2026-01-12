@@ -34,6 +34,5 @@ public class CANBusNode : ArduinoBoard, ICANBusNode
     #endregion
 
     #region Messaging
-   
     #endregion
 }

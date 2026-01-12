@@ -187,7 +187,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
                 }
                 bm = GetBusMonitor(busIdx);
-                bm.InitialiseNode(nodeID);
+                //bm.InitialiseNode(nodeID);
                 return true;
 
             case COMMAND_STAT_NODE:
@@ -204,7 +204,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
                 }
                 bm = GetBusMonitor(busIdx);
-                bm.RequestNodeStatus(nodeID); //get them all
+                //bm.RequestNodeStatus(nodeID); //get them all
                 if(nodeID != 0){
                     MessageParser.Parse(response, bm.GetNode(nodeID).MCPDevice);
                 }
@@ -224,7 +224,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
                 }
                 bm = GetBusMonitor(busIdx);
-                bm.PingNode(nodeID);
+                //bm.PingNode(nodeID);
                 return true;
 
             case COMMAND_RESET_NODE:
@@ -241,7 +241,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
                 }
                 bm = GetBusMonitor(busIdx);
-                bm.ResetNode(nodeID);
+                //bm.ResetNode(nodeID);
                 return true;
 
             case COMMAND_RAISE_ERROR:
@@ -264,7 +264,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
                 }
                 bm = GetBusMonitor(busIdx);
-                bm.RaiseNodeError(nodeID, ecode);
+                //bm.RaiseNodeError(nodeID, ecode);
                 return true;
 
             case COMMAND_ERROR_COUNTS:

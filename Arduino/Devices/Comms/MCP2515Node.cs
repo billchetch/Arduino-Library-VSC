@@ -11,9 +11,4 @@ public class MCP2515Node : MCP2515
     public MCP2515Node(byte nodeID, string? name = null) : base(nodeID, name)
     {}
     #endregion
-
-    override public ArduinoMessageMap.UpdatedProperties HandleMessage(ArduinoMessage message)
-    {       
-        return base.HandleMessage(message);
-    }
 }
