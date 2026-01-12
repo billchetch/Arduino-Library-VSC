@@ -114,9 +114,14 @@ public class ArduinoMessage : IMessageQueueItem<ArduinoMessage>
         {
             if (idx < Arguments.Count)
             {
-                //Arguments[idx] = bytes;
-                Arguments.Insert(idx, bytes);
-            
+                if(Arguments[idx] == null
+                ){
+                    Arguments[idx] = bytes;
+                } 
+                else
+                {
+                    Arguments.Insert(idx, bytes);   
+                }
             }
             else
             {

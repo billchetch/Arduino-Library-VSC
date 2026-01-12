@@ -57,6 +57,12 @@ public class ArduinoMessageMap : Attribute
 
     public static Dictionary<PropertyInfo, byte> GetArduinoMessageMapProperties(Type type, MessageType messageType)
     {
+        //Check it's not already in the map
+        if(map.ContainsKey(type) && map[type].ContainsKey(messageType))
+        {
+            return map[type][messageType];
+        }
+
         var prop2index = new Dictionary<PropertyInfo, byte>();
 
         var props = type.GetProperties().Where(

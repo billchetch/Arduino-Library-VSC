@@ -3,6 +3,7 @@ using System.Collections.Immutable;
 using System.Reflection;
 using System.Text;
 using Chetch.Arduino.Connections;
+using Chetch.Arduino.Devices;
 using Chetch.Arduino.Devices.Comms;
 using Chetch.Messaging;
 using Microsoft.Extensions.Logging;
@@ -126,7 +127,11 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
                     } 
                     else
                     {
-                        
+                        if (HasDevice(message.Sender))
+                        {
+                            var device = GetDevice(message.Sender);
+                            var template = ArduinoMessageMap.CreateMessageFor(device, message.Type);
+                        }
                     }
                     break;
 
@@ -217,18 +222,6 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
             var msg = remoteNode.IO.LastMessageDispatched;
             if(msg != null)
             {
-                //Hack because Arduino Devices by default sent a STATUS_REQUEST when the Board IsReady
-                //However for MCP comms we only allow STATUS_REQUEST messages remoteNode
-                /*if(msg.Type == MessageType.STATUS_REQUEST)
-                {
-                    if(msg.Sender == remoteNode.ID){
-                        msg.Sender = remoteNode.MCPDevice.ID;
-                    } else if(msg.Sender != remoteNode.MCPDevice.ID)
-                    {
-                        return;
-                    }
-                }*/
-                
                 try{
                     var message = MasterNode.FormulateMessageForRemoteNode(remoteNode.NodeID, msg);
                     this.SendMessage(message);

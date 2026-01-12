@@ -14,7 +14,7 @@ abstract public class SwitchDevice : ArduinoDevice
     #endregion
 
     #region Classes and Enums
-    public enum SwitchMode
+    public enum SwitchMode : byte
     {
         NOT_SET = 0,
         ACITVE = 1,
