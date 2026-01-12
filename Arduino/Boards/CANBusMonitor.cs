@@ -131,6 +131,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
                         {
                             var device = GetDevice(message.Sender);
                             var template = ArduinoMessageMap.CreateMessageFor(device, message.Type);
+                            //template.Add(message, 1);
                         }
                     }
                     break;
