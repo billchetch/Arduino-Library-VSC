@@ -238,6 +238,30 @@ public class ArduinoMessage : IMessageQueueItem<ArduinoMessage>
     {
         return Populate<T>(data, Populate<T1, T2, T3, T4, T5>(data));
     }
+
+    public void Populate(ArduinoMessage template, byte[] data, int startAt = 0)
+    {
+        int idx = 0;
+        for(int i = startAt; i < template.Arguments.Count; i++)
+        {
+            var argument = template.Arguments[i];
+            if(argument == null)
+            {
+                throw new ArgumentException(String.Format("Cannot populate message with this template as it contains a null argument at index {0}", i));
+            }
+
+            int n = idx + argument.Length;
+            if(n <= data.Length){
+                Add(data[idx .. n]);
+                idx = n;
+            } 
+            else
+            {
+                break;
+            }
+        }
+    }
+
     #endregion
 
     #region Serialization methods

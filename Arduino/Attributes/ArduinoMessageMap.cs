@@ -19,25 +19,10 @@ public class ArduinoMessageMap : Attribute
     public static UpdatedProperties AssignMessageValues(IMessageUpdatableObject obj, ArduinoMessage message)
     {
         var type = obj.GetType();
-        if(!map.ContainsKey(type))
-        {
-            lock(mapLock)
-            {
-                map[type] = new Dictionary<MessageType, Dictionary<PropertyInfo, byte>>();
-            }
-        }
-        if(!map[type].ContainsKey(message.Type))
-        {
-            var prop2index = GetArduinoMessageMapProperties(type, message.Type);
-            
-            lock(mapLock)
-            {
-                map[type][message.Type] = prop2index;
-            }
-        }
+        var prop2index = GetArduinoMessageMapProperties(type, message.Type);
         
         var updatedProperties = new UpdatedProperties(obj, message);
-        foreach(var kv in map[type][message.Type])
+        foreach(var kv in prop2index)
         {
             var prop2set = kv.Key;
             var argIdx = kv.Value;
@@ -57,12 +42,13 @@ public class ArduinoMessageMap : Attribute
 
     public static Dictionary<PropertyInfo, byte> GetArduinoMessageMapProperties(Type type, MessageType messageType)
     {
-        //Check it's not already in the map
+        //Check if it's already in the map, if so return to caller
         if(map.ContainsKey(type) && map[type].ContainsKey(messageType))
         {
             return map[type][messageType];
         }
-
+        
+        //It's not yet in the map so compile the list
         var prop2index = new Dictionary<PropertyInfo, byte>();
 
         var props = type.GetProperties().Where(
@@ -80,6 +66,20 @@ public class ArduinoMessageMap : Attribute
             }
         }
 
+        //Store for later use
+        if(!map.ContainsKey(type))
+        {
+            lock(mapLock)
+            {
+                map[type] = new Dictionary<MessageType, Dictionary<PropertyInfo, byte>>();
+            }
+        }
+        lock(mapLock)
+        {
+            map[type][messageType] = prop2index;
+        }
+        
+        //return to caller
         return prop2index;
     }
 

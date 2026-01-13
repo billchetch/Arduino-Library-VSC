@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Immutable;
 using System.Reflection;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using Chetch.Arduino.Connections;
 using Chetch.Arduino.Devices;
@@ -127,11 +128,12 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
                     } 
                     else
                     {
+                        //TODO: maybe seperate types here
                         if (HasDevice(message.Sender))
                         {
                             var device = GetDevice(message.Sender);
                             var template = ArduinoMessageMap.CreateMessageFor(device, message.Type);
-                            //template.Add(message, 1);
+                            message.Populate(template, canData, 0);
                         }
                     }
                     break;
@@ -154,6 +156,15 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
                 case MessageType.PRESENCE:
                     //Nodemillis, Interval, Initial presence, Status Flags
                     message.Populate<UInt32, UInt16, bool, byte>(canData);
+                    break;
+
+                case MessageType.DATA:
+                    if (HasDevice(message.Sender))
+                    {
+                        var device = GetDevice(message.Sender);
+                        var template = ArduinoMessageMap.CreateMessageFor(device, message.Type);
+                        message.Populate(template, canData, 0);
+                    }
                     break;
             }
 
