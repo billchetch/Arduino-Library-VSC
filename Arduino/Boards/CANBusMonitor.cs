@@ -107,7 +107,6 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
         {
             //Determine which node this message relates to
             ICANBusNode busNode = GetNode(eargs.NodeID);
-            //bool isRemoteNode = busNode.NodeID != MasterNode.NodeID;
             
             //Parse the message
             var message = eargs.Message;
@@ -237,11 +236,11 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
                 try{
                     var message = MasterNode.FormulateMessageForRemoteNode(remoteNode.NodeID, msg);
                     this.SendMessage(message);
-                    Console.WriteLine(">>>>>> Formulated {0} message for Node {1} and sender {2} as message of type {3} and target {4}", msg.Type, remoteNode.NodeID, msg.Sender, message.Type, message.Target);
+                    //Console.WriteLine(">>>>>> Formulated {0} message for Node {1} and sender {2} as message of type {3} and target {4}", msg.Type, remoteNode.NodeID, msg.Sender, message.Type, message.Target);
                 } 
-                catch (Exception e)
+                catch (Exception)
                 {
-                    Console.WriteLine("Exception: {0}", e.Message);
+                    //Console.WriteLine("Exception: {0}", e.Message);
                     //Hmmm
                 }
             }
