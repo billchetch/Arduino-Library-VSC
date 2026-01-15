@@ -285,7 +285,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
             summedRate += node.MCPDevice.MessageRate;
         }
 
-        BusMessageRate = summedRate / allNodes.Count;
+        BusMessageRate = summedRate;
     }
     #endregion
 
