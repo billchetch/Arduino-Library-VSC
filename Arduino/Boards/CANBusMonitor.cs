@@ -50,19 +50,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
         }
     }
 
-    public double BusMessageRate
-    {
-        get
-        {
-            double mr = 0.0;
-            var allNodes = GetAllNodes();
-            foreach(var nd in allNodes)
-            {
-                mr += nd.MCPDevice.MessageRate;
-            }
-            return allNodes.Count > 0 ? mr / (double)allNodes.Count : 0.0;
-        }
-    }
+    public double BusMessageRate { get; internal set; } = 0.0;
 
     public String BusSummary
     {
@@ -190,15 +178,14 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
         RequestStatusTimer.Elapsed += (sender, eargs) =>
         {
             var statusRequest = new ArduinoMessage(MessageType.STATUS_REQUEST);
-            double intervalInSeconds = RequestStatusTimer.Interval / 1000.0;
             foreach(var remoteNode in RemoteNodes.Values)
             {
                 statusRequest.Sender = remoteNode.MCPDevice.ID;
                 MasterNode.SendBusMessage(remoteNode.NodeID, statusRequest);
-                remoteNode.MCPDevice.UpdateMessageRate(intervalInSeconds);
             }
             MasterNode.RequestStatus();
-            MasterNode.UpdateMessageRate(intervalInSeconds);
+
+            UpdateBusMessageRate();
         };
     }    
 
@@ -285,6 +272,20 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
         {
             throw new ArgumentException(String.Format("There is no node with ID {0}", nodeID));
         }
+    }
+
+    public void UpdateBusMessageRate()
+    {
+        //Update the rates
+        double summedRate = 0.0;
+        var allNodes = GetAllNodes();
+        foreach(var node in allNodes)
+        {
+            node.MCPDevice.UpdateMessageRate();
+            summedRate += node.MCPDevice.MessageRate;
+        }
+
+        BusMessageRate = summedRate / allNodes.Count;
     }
     #endregion
 

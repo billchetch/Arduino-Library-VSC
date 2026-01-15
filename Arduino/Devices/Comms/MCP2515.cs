@@ -291,7 +291,7 @@ abstract public class MCP2515 : ArduinoDevice
     private UInt32 nodeMillis = 0;
     private DateTime nodeMillisSetOn;
     private uint lastMessageCount = 0;
-
+    private DateTime lastMessageRateUpdated;
     private DateTime lastMessageOn;
 
     #endregion
@@ -345,10 +345,13 @@ abstract public class MCP2515 : ArduinoDevice
         MessageCount++;
     }
 
-    public void UpdateMessageRate(double intervalInSeconds)
+    public void UpdateMessageRate()
     {
+
+        double intervalInSeconds = (DateTime.Now - lastMessageRateUpdated).TotalSeconds;
         MessageRate = (double)(MessageCount - lastMessageCount) / intervalInSeconds;
         lastMessageCount = MessageCount;
+        lastMessageRateUpdated = DateTime.Now;
 
         if(lastMessageOn != default(DateTime))
         {
