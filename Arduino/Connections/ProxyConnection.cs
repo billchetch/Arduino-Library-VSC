@@ -20,7 +20,7 @@ public class ProxyConnection : IConnection
         {
             if(waitB4connect > 0)
             {
-                Thread.Sleep(1000);
+                Thread.Sleep(waitB4connect);
             }
             OnConnect(connected);
         };
