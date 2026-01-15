@@ -18,11 +18,13 @@ public class ProxyConnection : IConnection
         Proxy = proxy;
         Proxy.Connected += (sender, connected) =>
         {
-            if(waitB4connect > 0)
-            {
-                Thread.Sleep(waitB4connect);
-            }
-            OnConnect(connected);
+            Task.Run(()=>{
+                if(waitB4connect > 0)
+                {
+                    Thread.Sleep(waitB4connect);
+                }
+                OnConnect(connected);
+            });
         };
         activeProxy = active;
 

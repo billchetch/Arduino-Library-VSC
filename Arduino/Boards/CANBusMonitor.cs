@@ -300,8 +300,8 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
             }
             remoteNode.Begin();
         }
-        base.Begin();
 
+        base.Begin();
     }
     public override async Task End()
     {
