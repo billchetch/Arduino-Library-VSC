@@ -355,7 +355,7 @@ abstract public class MCP2515 : ArduinoDevice
             lastMessageRateUpdated = DateTime.Now;
         }
 
-        if(lastMessageOn != default(DateTime))
+        /*if(lastMessageOn != default(DateTime))
         {
             bool transmitting = (DateTime.Now - lastMessageOn).TotalSeconds <= intervalInSeconds;
             if(transmitting)
@@ -375,7 +375,7 @@ abstract public class MCP2515 : ArduinoDevice
                 //silent
                 State = NodeState.SILENT;
             }
-        }
+        }*/
     }
     #endregion
 
