@@ -236,13 +236,12 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
             {
                 try
                 {
-                    var message = MasterNode.SendBusMessage(remoteNode.NodeID, msg);
-                    Console.WriteLine(">>>>>> Formulated {0} message for Node {1} and sender {2} as message of type {3} and target {4}", msg.Type, remoteNode.NodeID, msg.Sender, message.Type, message.Target);
+                    MasterNode.SendBusMessage(remoteNode.NodeID, msg);
                 } 
                 catch (Exception)
                 {
                     //Console.WriteLine("Exception: {0}", e.Message);
-                    //Hmmm
+                    //TODO: What exactly?
                 }
             }
         };
