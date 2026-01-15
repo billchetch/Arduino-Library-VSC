@@ -349,9 +349,11 @@ abstract public class MCP2515 : ArduinoDevice
     {
 
         double intervalInSeconds = (DateTime.Now - lastMessageRateUpdated).TotalSeconds;
-        MessageRate = (double)(MessageCount - lastMessageCount) / intervalInSeconds;
-        lastMessageCount = MessageCount;
-        lastMessageRateUpdated = DateTime.Now;
+        if(intervalInSeconds >= 1.0){
+            MessageRate = (double)(MessageCount - lastMessageCount) / intervalInSeconds;
+            lastMessageCount = MessageCount;
+            lastMessageRateUpdated = DateTime.Now;
+        }
 
         if(lastMessageOn != default(DateTime))
         {
