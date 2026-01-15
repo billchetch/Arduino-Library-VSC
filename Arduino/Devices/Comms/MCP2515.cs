@@ -336,22 +336,27 @@ abstract public class MCP2515 : ArduinoDevice
             uint diffInMillis = (uint)Math.Min(256 - diff, diff) << TimestampResolution;
             MessageLatency = diffInMillis;
         }
+        UpdateMessageCount();
+    }
+
+    public void UpdateMessageCount()
+    {
         lastMessageOn = DateTime.Now;
         MessageCount++;
     }
 
-    public void UpdateMessageRate(TimeSpan timeSpan)
+    public void UpdateMessageRate(double intervalInSeconds)
     {
-        MessageRate = (double)(MessageCount - lastMessageCount) / timeSpan.TotalSeconds;
+        MessageRate = (double)(MessageCount - lastMessageCount) / intervalInSeconds;
         lastMessageCount = MessageCount;
 
         if(lastMessageOn != default(DateTime))
         {
-            bool transmitting = (DateTime.Now - lastMessageOn).TotalSeconds <= timeSpan.TotalSeconds;
+            bool transmitting = (DateTime.Now - lastMessageOn).TotalSeconds <= intervalInSeconds;
             if(transmitting)
             {
                 //Two possibiliities:  Transmitting or Responding (which )
-                if(State != NodeState.TRANSMITTING_ONLY && (DateTime.Now - LastStatusResponse).TotalSeconds > timeSpan.TotalSeconds)
+                if(State != NodeState.TRANSMITTING_ONLY && (DateTime.Now - LastStatusResponse).TotalSeconds > intervalInSeconds)
                 {
                     State = NodeState.TRANSMITTING_ONLY;
                 } 

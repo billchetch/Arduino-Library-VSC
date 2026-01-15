@@ -189,15 +189,16 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
 
         RequestStatusTimer.Elapsed += (sender, eargs) =>
         {
-            //RequestNodeStatus(0);
-            var msg = new ArduinoMessage(MessageType.STATUS_REQUEST);
+            var statusRequest = new ArduinoMessage(MessageType.STATUS_REQUEST);
+            double intervalInSeconds = RequestStatusTimer.Interval / 1000.0;
             foreach(var remoteNode in RemoteNodes.Values)
             {
-                msg.Sender = remoteNode.MCPDevice.ID;
-                var m2s = MasterNode.FormulateMessageForRemoteNode(remoteNode.NodeID, msg);
-                SendMessage(m2s);
+                statusRequest.Sender = remoteNode.MCPDevice.ID;
+                MasterNode.SendBusMessage(remoteNode.NodeID, statusRequest);
+                remoteNode.MCPDevice.UpdateMessageRate(intervalInSeconds);
             }
             MasterNode.RequestStatus();
+            MasterNode.UpdateMessageRate(intervalInSeconds);
         };
     }    
 
@@ -233,10 +234,10 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
             var msg = remoteNode.IO.LastMessageDispatched;
             if(msg != null)
             {
-                try{
-                    var message = MasterNode.FormulateMessageForRemoteNode(remoteNode.NodeID, msg);
-                    this.SendMessage(message);
-                    //Console.WriteLine(">>>>>> Formulated {0} message for Node {1} and sender {2} as message of type {3} and target {4}", msg.Type, remoteNode.NodeID, msg.Sender, message.Type, message.Target);
+                try
+                {
+                    var message = MasterNode.SendBusMessage(remoteNode.NodeID, msg);
+                    Console.WriteLine(">>>>>> Formulated {0} message for Node {1} and sender {2} as message of type {3} and target {4}", msg.Type, remoteNode.NodeID, msg.Sender, message.Type, message.Target);
                 } 
                 catch (Exception)
                 {

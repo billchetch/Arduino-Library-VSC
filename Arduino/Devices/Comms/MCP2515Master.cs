@@ -84,7 +84,7 @@ public class MCP2515Master : MCP2515
         return base.HandleMessage(message);
     }
 
-    public ArduinoMessage FormulateMessageForRemoteNode(byte nodeID, ArduinoMessage message)
+    protected ArduinoMessage FormulateBusMessage(byte nodeID, ArduinoMessage message)
     {
         if(nodeID == NodeID)
         {
@@ -117,6 +117,19 @@ public class MCP2515Master : MCP2515
                 throw new Exception("Cannot formulate this message!");
         }
         return fmsg;
+    }
+    
+    public ArduinoMessage SendBusMessage(byte nodeID, ArduinoMessage message)
+    {
+        if(nodeID == NodeID)
+        {
+            throw new ArgumentException(String.Format("Node {0} is not remote", nodeID));
+        }
+        var m2s = FormulateBusMessage(nodeID, message);
+        SendMessage(m2s);
+        UpdateMessageCount();
+        
+        return m2s;
     }
     #endregion
 }

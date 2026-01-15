@@ -22,6 +22,8 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     public const int MAX_FRAME_PAYLOAD_SIZE = 50;
 
+    public const int MESSAGE_OUT_INTERVAL = 10; //ensures a minimal interval between sending messages
+
     public const int REQUEST_STATUS_TIMER_INTERVAL = 15; //in secs
     #endregion
 
@@ -194,8 +196,7 @@ public class ArduinoBoard : IMessageUpdatableObject
     #endregion
 
     #region Fields
-    MessageIO<ArduinoMessage> io = new MessageIO<ArduinoMessage>(Frame.FrameSchema.SMALL_SIMPLE_CHECKSUM, MessageEncoding.SYSTEM_DEFINED); 
-    
+    MessageIO<ArduinoMessage> io = new MessageIO<ArduinoMessage>(Frame.FrameSchema.SMALL_SIMPLE_CHECKSUM, MessageEncoding.SYSTEM_DEFINED, 0, MESSAGE_OUT_INTERVAL); 
 
     IConnection? cnn;
 
