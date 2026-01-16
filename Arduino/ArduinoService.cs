@@ -97,11 +97,17 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
                     throw new Exception(String.Format("Unrecodngised connection type {0}", useCnnType));
             }
             board.Connection = cnn;
+            board.Connection.Connected += (sender, connected) =>
+            {
+                Logger.LogInformation("Board {0} connected: {1}", board.UID, connected);
+            };
         }
 
         //Add EventHandler to send  out a message when the board is ready
         board.Ready += (sender, ready) =>
         {
+            Logger.LogInformation("Board {0} ready!: {1}", board.UID, ready);
+
             if (ServiceConnected)
             {
                 var msg = new Message(MessageType.NOTIFICATION);
@@ -134,6 +140,7 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
         {
             foreach (var board in boards)
             {
+                Logger.LogInformation("Beginning board {0}", board.UID);
                 board.Begin();
             }
         }
@@ -152,6 +159,7 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
         {
             try
             {
+                Logger.LogInformation("Ending board {0}", board.UID);
                 await board.End();
             }
             catch (Exception e)

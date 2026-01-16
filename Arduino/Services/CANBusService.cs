@@ -38,7 +38,11 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
     #region Methods
     public void AddBusMonitor(CANBusMonitor bus)
     {
-        
+        bus.NodeReady += (sender, ready) =>
+        {
+            ICANBusNode node = (ICANBusNode)sender;
+            Logger.LogInformation("Node {0} is ready: {1}", node.NodeID, ready);
+        };
         AddBoard(bus);
         BusCount++;
     }

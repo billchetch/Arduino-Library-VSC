@@ -20,7 +20,6 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     #region Constants   
     public const String DEFAULT_BOARD_NAME = "canbusmon";
 
-    public const uint REQUEST_BUS_NODES_STATUS_INTERVAL = 5000; //in ms
     #endregion
 
     #region Classes and Enums
@@ -82,7 +81,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     #endregion
 
     #region Fields
-    
+    System.Timers.Timer updateMessageRateTimer = new System.Timers.Timer();
     #endregion
 
     #region Constructors
@@ -184,8 +183,26 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
                 MasterNode.SendBusMessage(remoteNode.NodeID, statusRequest);
             }
             MasterNode.RequestStatus();
+        };
 
+        updateMessageRateTimer.Interval = 1000;
+        updateMessageRateTimer.AutoReset = true;
+        updateMessageRateTimer.Elapsed += (sender, eargs) =>
+        {
             UpdateBusMessageRate();
+        };
+
+        Ready += (sender, ready) =>
+        {
+            if (ready)
+            {
+                updateMessageRateTimer.Start();    
+            } 
+            else
+            {
+                updateMessageRateTimer.Stop();        
+            }
+            
         };
     }    
 
