@@ -58,12 +58,25 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
             var s = new StringBuilder();
             if (IsReady)
             {
-                //s.AppendFormat("Bus monitor {0}, {1} nodes out of {2} are ready!", SID, nodeReadyCount, BusSize);
-                s.AppendFormat(" Messages={0}, Rate={1} mps", BusMessageCount, BusMessageRate);
+                var allNodes = GetAllNodes();
+                int nodeReadyCount = 0;
+                foreach(var node in allNodes)
+                {
+                    if(node.IsReady)nodeReadyCount++;
+                }
+                if(nodeReadyCount == BusSize)
+                {
+                    s.AppendFormat("{0}: all {1} nodes ready!", SID, BusSize);    
+                } else
+                {
+                    s.AppendFormat("{0}: {1} of {2} nodes ready!", SID, nodeReadyCount, BusSize);    
+                }
+                TimeSpan uptime = DateTime.Now - MasterNode.LastReadyOn;
+                s.AppendFormat(" Uptime={0}, Messages={1}, Rate={2} mps", uptime.ToString("g"), BusMessageCount, BusMessageRate);
             }
             else
             {
-                s.AppendFormat("Bus monitor {0} is not ready", SID);
+                s.AppendFormat("{0} is not ready", SID);
             }
 
             return s.ToString();
@@ -189,7 +202,15 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
         updateMessageRateTimer.AutoReset = true;
         updateMessageRateTimer.Elapsed += (sender, eargs) =>
         {
-            UpdateBusMessageRate();
+            //Update the rates
+            double summedRate = 0.0;
+            var allNodes = GetAllNodes();
+            foreach(var node in allNodes)
+            {
+                summedRate += node.MCPDevice.UpdateMessageRate();
+            }
+
+            BusMessageRate = summedRate;
         };
 
         Ready += (sender, ready) =>
@@ -289,20 +310,6 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
         {
             throw new ArgumentException(String.Format("There is no node with ID {0}", nodeID));
         }
-    }
-
-    public void UpdateBusMessageRate()
-    {
-        //Update the rates
-        double summedRate = 0.0;
-        var allNodes = GetAllNodes();
-        foreach(var node in allNodes)
-        {
-            node.MCPDevice.UpdateMessageRate();
-            summedRate += node.MCPDevice.MessageRate;
-        }
-
-        BusMessageRate = summedRate;
     }
     #endregion
 

@@ -345,16 +345,14 @@ abstract public class MCP2515 : ArduinoDevice
         MessageCount++;
     }
 
-    public void UpdateMessageRate()
+    public double UpdateMessageRate()
     {
 
         double intervalInSeconds = (DateTime.Now - lastMessageRateUpdated).TotalSeconds;
-        if(intervalInSeconds >= 1.0){
-            MessageRate = (double)(MessageCount - lastMessageCount) / intervalInSeconds;
-            lastMessageCount = MessageCount;
-            lastMessageRateUpdated = DateTime.Now;
-        }
-
+        MessageRate = (double)(MessageCount - lastMessageCount) / intervalInSeconds;
+        lastMessageCount = MessageCount;
+        lastMessageRateUpdated = DateTime.Now;
+        
         /*if(lastMessageOn != default(DateTime))
         {
             bool transmitting = (DateTime.Now - lastMessageOn).TotalSeconds <= intervalInSeconds;
@@ -376,6 +374,8 @@ abstract public class MCP2515 : ArduinoDevice
                 State = NodeState.SILENT;
             }
         }*/
+
+        return MessageRate;
     }
     #endregion
 
