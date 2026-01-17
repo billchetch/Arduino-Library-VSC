@@ -339,6 +339,43 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     #endregion
 
     #region Messaging
-    
+    public void PingNode(byte nodeID)
+    {
+        if(nodeID == MasterNode.NodeID || nodeID == 0)
+        {
+            MasterNode.Ping();
+        }
+        if(nodeID != MasterNode.NodeID)
+        {
+            MasterNode.SendBusMessage(nodeID, MessageType.PING);
+        }
+    }
+
+    public void ResetNode(byte nodeID)
+    {
+        if(nodeID == MasterNode.NodeID || nodeID == 0)
+        {
+            MasterNode.Reset();
+        }
+        if(nodeID != MasterNode.NodeID)
+        {
+            MasterNode.SendBusMessage(nodeID, MessageType.RESET);
+        }
+    }
+
+    public void RaiseNodeError(byte nodeID, MCP2515.MCP2515ErrorCode ecode, UInt32 edata = 0)
+    {
+        var message = new ArduinoMessage(MessageType.ERROR_TEST);
+        message.Add((byte)ecode);
+        message.Add(edata);
+        if(nodeID == MasterNode.NodeID || nodeID == 0)
+        {
+            SendMessage(message);
+        }
+        if(nodeID != MasterNode.NodeID)
+        {
+            MasterNode.SendBusMessage(nodeID, message);
+        }
+    }
     #endregion
 }

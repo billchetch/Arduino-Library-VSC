@@ -228,7 +228,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
                 }
                 bm = GetBusMonitor(busIdx);
-                //bm.PingNode(nodeID);
+                bm.PingNode(nodeID);
                 return true;
 
             case COMMAND_RESET_NODE:
@@ -245,7 +245,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
                 }
                 bm = GetBusMonitor(busIdx);
-                //bm.ResetNode(nodeID);
+                bm.ResetNode(nodeID);
                 return true;
 
             case COMMAND_RAISE_ERROR:

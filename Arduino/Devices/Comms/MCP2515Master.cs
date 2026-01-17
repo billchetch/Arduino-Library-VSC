@@ -131,5 +131,10 @@ public class MCP2515Master : MCP2515
         
         return m2s;
     }
+
+    public ArduinoMessage SendBusMessage(byte nodeID, MessageType messageType)
+    {
+        return SendBusMessage(nodeID, new ArduinoMessage(messageType));
+    }
     #endregion
 }
