@@ -21,6 +21,11 @@ public class ArduinoDeviceGroup : ICollection<ArduinoDevice>
 
     public bool IsReady => deviceReadyCount == Count;
 
+    public ArduinoDevice this[int index]
+    {
+        get => (ArduinoDevice)devices[index];
+        set => throw new NotImplementedException("Cannot set device via an index operator");
+    }
     #endregion
 
     #region Events
