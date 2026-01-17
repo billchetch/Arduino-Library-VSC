@@ -268,7 +268,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
                 }
                 bm = GetBusMonitor(busIdx);
-                //bm.RaiseNodeError(nodeID, ecode);
+                bm.RaiseNodeError(nodeID, ecode);
                 return true;
 
             case COMMAND_ERROR_COUNTS:

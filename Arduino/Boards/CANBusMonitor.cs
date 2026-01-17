@@ -370,7 +370,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
         message.Add(edata);
         if(nodeID == MasterNode.NodeID || nodeID == 0)
         {
-            SendMessage(message);
+            MasterNode.SendMessage(message);
         }
         if(nodeID != MasterNode.NodeID)
         {
