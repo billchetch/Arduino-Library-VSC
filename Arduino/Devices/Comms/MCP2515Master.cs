@@ -51,19 +51,50 @@ public class MCP2515Master : MCP2515
             Message.Tag = CanID.Tag;
         }
     }
+    
+    public class BusActivityEventArgs
+    {
+        public BusActivityEventArgs()
+        {
+            
+        }
+    }
     #endregion
 
     #region Events
     public EventHandler<BusMessageEventArgs>? BusMessageReceived;
 
+    public EventHandler? BusActivityUpdated;
+
     #endregion
 
     #region Properties
+    [ArduinoMessageMap(MessageType.DATA, 0)]     
+    public UInt16 BusMessageCount{ 
+        get => busMessageCount;
+        set
+        {
+            busMessageCount = value;
+            OnUpdateBusActivity();
+        } 
+    }
+    
+    #endregion
+
+    #region Fields
+    private UInt16 busMessageCount = 0;
     #endregion
 
     #region Constructors
     public MCP2515Master(byte nodeID = 1, string? name = null) : base(nodeID, name)
     {}
+    #endregion
+
+    #region Methods
+    protected void OnUpdateBusActivity()
+    {
+        BusActivityUpdated?.Invoke(this, EventArgs.Empty);
+    }
     #endregion
 
     #region Messaging

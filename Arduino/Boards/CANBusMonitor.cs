@@ -7,6 +7,7 @@ using Chetch.Arduino.Connections;
 using Chetch.Arduino.Devices;
 using Chetch.Arduino.Devices.Comms;
 using Chetch.Messaging;
+using Chetch.Utilities;
 using Microsoft.Extensions.Logging;
 using XmppDotNet;
 using XmppDotNet.Xmpp.Delay;
@@ -23,7 +24,27 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     #endregion
 
     #region Classes and Enums
-    
+    public class BusActivity
+    {
+        public DateTime Created { get; }
+        public uint MessageCount { get; }
+
+        public double MessageRate { get; }
+        public String IOSummary { get; }
+
+        public BusActivity(uint messageCount = 0, double messageRate = 0.0, String ioSummary = "")
+        {
+            MessageCount = messageCount;
+            MessageRate = messageRate;
+            IOSummary = ioSummary;
+            Created = DateTime.Now;
+        }
+
+        public override string ToString()
+        {
+            return String.Format("Message Count={0}, Message Rate={1:F1}, IO={2}", MessageCount, MessageRate, IOSummary);
+        }
+    }
     #endregion
 
     #region Properties
@@ -35,22 +56,9 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
 
     public Dictionary<byte, ICANBusNode> RemoteNodes { get; } = new Dictionary<byte, ICANBusNode>();
     
-    public uint BusMessageCount
-    {
-        get
-        {
-            uint mc = 0;
-            var allNodes = GetAllNodes();
-            foreach(var nd in allNodes)
-            {
-                mc += nd.MCPDevice.MessageCount;
-            }
-            return mc;
-        }
-    }
+    public CircularLog<BusActivity> ActivityLog { get; } = new CircularLog<BusActivity>(64);
 
-    public double BusMessageRate { get; internal set; } = 0.0;
-
+    public BusActivity? Activity => ActivityLog.Count > 0 ? ActivityLog.Peek() : null;
     public String BusSummary
     {
         get
@@ -72,7 +80,11 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
                     s.AppendFormat("{0}: {1} of {2} nodes ready!", SID, nodeReadyCount, BusSize);    
                 }
                 TimeSpan uptime = DateTime.Now - MasterNode.LastReadyOn;
-                s.AppendFormat(" Uptime={0}, Messages={1}, Rate={2} mps", uptime.ToString("g"), BusMessageCount, BusMessageRate);
+                s.AppendFormat(" Uptime={0}, Messages={1}, Rate={2:F1} mps, IO={3}", 
+                                    uptime.ToString("g"), 
+                                    Activity != null ? Activity.MessageCount : "N/A", 
+                                    Activity != null ? Activity.MessageRate : "N/A",
+                                    Activity != null ? Activity.IOSummary : "N/A");
             }
             else
             {
@@ -94,7 +106,6 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     #endregion
 
     #region Fields
-    System.Timers.Timer updateMessageRateTimer = new System.Timers.Timer();
     #endregion
 
     #region Constructors
@@ -198,32 +209,20 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
             MasterNode.RequestStatus();
         };
 
-        updateMessageRateTimer.Interval = 1000;
-        updateMessageRateTimer.AutoReset = true;
-        updateMessageRateTimer.Elapsed += (sender, eargs) =>
+        MasterNode.BusActivityUpdated += (sender, eargs) =>
         {
             //Update the rates
             double summedRate = 0.0;
+            uint totalCount = 0;
             var allNodes = GetAllNodes();
             foreach(var node in allNodes)
             {
                 summedRate += node.MCPDevice.UpdateMessageRate();
+                totalCount += node.MCPDevice.MessageCount;
             }
 
-            BusMessageRate = summedRate;
-        };
-
-        Ready += (sender, ready) =>
-        {
-            if (ready)
-            {
-                updateMessageRateTimer.Start();    
-            } 
-            else
-            {
-                updateMessageRateTimer.Stop();        
-            }
-            
+            String ioSummary = String.Format("Recv: {0}, Disp: {1}", IO.ToReceive, IO.ToDispatch);
+            ActivityLog.Add(new BusActivity(totalCount, summedRate, ioSummary));
         };
     }    
 
@@ -249,7 +248,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
         {
             throw new ArgumentException(String.Format("Node {0} already added!", rnid));
         }
-        remoteNode.IO = new MessageIO<ArduinoMessage>(); 
+        remoteNode.IO = new MessageIO<ArduinoMessage>(0, 0); //Message IO with no throttling
         remoteNode.IO.MessageReceived += (sender, message) =>
         {
             remoteNode.RouteMessage(message); 
@@ -281,6 +280,10 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
         {
             NodeError?.Invoke(remoteNode, remoteNode.MCPDevice.LastError);
         };
+        
+        remoteNode.MCPDevice.MaxTimeIdle = (uint)(1.1*RequestStatusTimer.Interval/1000.0);
+
+        //Keep a list
         RemoteNodes[rnid] = remoteNode;
     }
     

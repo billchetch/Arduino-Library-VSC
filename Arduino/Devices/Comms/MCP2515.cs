@@ -269,6 +269,8 @@ abstract public class MCP2515 : ArduinoDevice
     public double MessageRate { get; internal set; } = -1.0;
 
     public UInt32 MessageLatency { get; internal set; } = 0;
+
+    public uint MaxTimeIdle { get; set; } = 0;
     #endregion
 
     #region Events
@@ -353,13 +355,13 @@ abstract public class MCP2515 : ArduinoDevice
         lastMessageCount = MessageCount;
         lastMessageRateUpdated = DateTime.Now;
         
-        /*if(lastMessageOn != default(DateTime))
+        if(MaxTimeIdle > 0 && lastMessageOn != default(DateTime))
         {
-            bool transmitting = (DateTime.Now - lastMessageOn).TotalSeconds <= intervalInSeconds;
+            bool transmitting = (DateTime.Now - lastMessageOn).TotalSeconds <= MaxTimeIdle;
             if(transmitting)
             {
                 //Two possibiliities:  Transmitting or Responding (which )
-                if(State != NodeState.TRANSMITTING_ONLY && (DateTime.Now - LastStatusResponse).TotalSeconds > intervalInSeconds)
+                if(State != NodeState.TRANSMITTING_ONLY && (DateTime.Now - LastStatusResponse).TotalSeconds > MaxTimeIdle)
                 {
                     State = NodeState.TRANSMITTING_ONLY;
                 } 
@@ -373,7 +375,7 @@ abstract public class MCP2515 : ArduinoDevice
                 //silent
                 State = NodeState.SILENT;
             }
-        }*/
+        }
 
         return MessageRate;
     }

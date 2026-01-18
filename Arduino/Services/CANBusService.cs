@@ -15,6 +15,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
 {
     #region Constants
     public const String COMMAND_LIST_BUSSES = "list-busses";
+    public const String COMMAND_BUS_ACTIVITY = "bus-activity";
     public const String COMMAND_NODES_STATUS = "nodes-status";
     public const String COMMAND_NODE_ERRORS = "node-errors";
     public const String COMMAND_ERROR_COUNTS = "error-counts";
@@ -71,6 +72,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
     protected override void AddCommands()
     {
         AddCommand(COMMAND_LIST_BUSSES, "Lists current busses and their ready status");
+        AddCommand(COMMAND_BUS_ACTIVITY, "Show recent activity for a particular <?bus>");
         AddCommand(COMMAND_INITIALISE_NODE, "Init a specific <?node> on a <?bus>");
         AddCommand(COMMAND_PING_NODE, "Ping a <?node> on a <?bus>");
         AddCommand(COMMAND_STAT_NODE, "Request status from a <?node> on a <?bus>");
@@ -99,6 +101,22 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     bl.Add(bus.BusSummary);
                 }
                 response.AddValue("Busses", bl);
+                return true;
+
+            case COMMAND_BUS_ACTIVITY:
+                if (arguments.Count > 0)
+                {
+                    busIdx = System.Convert.ToInt16(arguments[0].ToString());
+                }
+                if (busIdx < 0 || busIdx >= BusCount)
+                {
+                    throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
+                }
+                bm = GetBusMonitor(busIdx);
+                foreach(var s in bm.ActivityLog)
+                {
+                    response.AddValue(String.Format("Activity Entry {0}: ", n++), s.ToString());
+                }
                 return true;
 
             case COMMAND_NODES_STATUS:
