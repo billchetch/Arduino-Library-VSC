@@ -13,11 +13,6 @@ public class MCP2515Node : MCP2515
     #endregion
 
     #region Messaging
-    public override ArduinoMessageMap.UpdatedProperties HandleMessage(ArduinoMessage message)
-    {
-        UpdateMessageCount();
-        
-        return base.HandleMessage(message);
-    }
+    
     #endregion
 }

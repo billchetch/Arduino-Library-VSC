@@ -107,15 +107,12 @@ public class MCP2515Master : MCP2515
                 if (message.Tag == MESSAGE_ID_FORWARD_SENT || message.Tag == MESSAGE_ID_FORWARD_RECEIVED)
                 {
                     var eargs = new BusMessageEventArgs(message);
-                    if(eargs.NodeID == NodeID)
-                    {
-                        UpdateMessageCount();
-                    }
                     BusMessageReceived?.Invoke(this, eargs);
                 }
                 break;
-
         }
+
+        
         return base.HandleMessage(message);
     }
 

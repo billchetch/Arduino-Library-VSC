@@ -342,10 +342,7 @@ abstract public class MCP2515 : ArduinoDevice
 
             case MessageType.STATUS_RESPONSE:
                 LastStatusResponse = DateTime.Now;
-                if(State == CANNodeState.TRANSMITTING_ONLY)
-                {
-                    State = CANNodeState.RESPONDING;
-                }
+                State = CANNodeState.RESPONDING;
                 break;
 
             case MessageType.INITIALISE_RESPONSE:

@@ -181,6 +181,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
                     break;
             }
 
+            busNode.MCPDevice.UpdateMessageCount();
             busNode.IO.Inject(message);
             
             //Fire received event
