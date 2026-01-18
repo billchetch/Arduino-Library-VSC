@@ -58,7 +58,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     
     public CircularLog<BusActivity> ActivityLog { get; } = new CircularLog<BusActivity>(64);
 
-    public BusActivity? Activity => ActivityLog.Count > 0 ? ActivityLog.Peek() : null;
+    public BusActivity? Activity => ActivityLog.Count > 0 ? ActivityLog.First() : null;
     public String BusSummary
     {
         get
