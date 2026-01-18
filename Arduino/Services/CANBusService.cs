@@ -140,8 +140,6 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     {
                         sb.AppendFormat(" - Bus Message Count and Rate = {0} ... {1}mps", mcp.MessageCount, mcp.MessageRate);
                         sb.AppendLine();
-                        sb.AppendFormat(" - Bus Message Latency  = {0}ms", mcp.MessageLatency);
-                        sb.AppendLine();
                         sb.AppendFormat(" - Status Flags = {0}", Utilities.Convert.ToBitString(mcp.StatusFlags));
                         sb.AppendLine();
                         sb.AppendFormat(" - Error Flags = {0}", Utilities.Convert.ToBitString(mcp.ErrorFlags));

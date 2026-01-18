@@ -11,4 +11,13 @@ public class MCP2515Node : MCP2515
     public MCP2515Node(byte nodeID, string? name = null) : base(nodeID, name)
     {}
     #endregion
+
+    #region Messaging
+    public override ArduinoMessageMap.UpdatedProperties HandleMessage(ArduinoMessage message)
+    {
+        UpdateMessageCount();
+        
+        return base.HandleMessage(message);
+    }
+    #endregion
 }

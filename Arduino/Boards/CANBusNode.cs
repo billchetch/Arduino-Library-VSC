@@ -13,6 +13,8 @@ public class CANBusNode : ArduinoBoard, ICANBusNode
     public MCP2515Node MCPNode { get; set; }
 
     public MCP2515 MCPDevice => MCPNode; // for interface compliance
+
+    public CANNodeState NodeState => MCPDevice.State;
     #endregion
 
     #region Constructors

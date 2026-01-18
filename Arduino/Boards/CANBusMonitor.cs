@@ -50,7 +50,9 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     #region Properties
     public MCP2515Master MasterNode { get; } = new MCP2515Master(1);
 
-    public MCP2515 MCPDevice => MasterNode; // for interface compliance
+    public MCP2515 MCPDevice => MasterNode; //for interface compliance
+
+    public CANNodeState NodeState => MasterNode.State; //for interface compliance
 
     public int BusSize => 1 + RemoteNodes.Count;
 
@@ -106,6 +108,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     #endregion
 
     #region Fields
+    System.Timers.Timer monitorNodeStateTimer = new System.Timers.Timer();
     #endregion
 
     #region Constructors
@@ -149,8 +152,8 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
                     break;
 
                 case MessageType.INITIALISE_RESPONSE:
-                    //Millis and timestamp resolution
-                    message.Populate<UInt32, byte>(canData);
+                    //Millis timestamp resolution and presence interval
+                    message.Populate<UInt32, byte, UInt16>(canData);
                     break;
 
                 case MessageType.COMMAND_RESPONSE:
@@ -178,7 +181,6 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
                     break;
             }
 
-            busNode.MCPDevice.UpdateMessageCount(eargs.CanID.Timestamp);
             busNode.IO.Inject(message);
             
             //Fire received event
@@ -200,11 +202,13 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
 
         RequestStatusTimer.Elapsed += (sender, eargs) =>
         {
-            var statusRequest = new ArduinoMessage(MessageType.STATUS_REQUEST);
+            //var statusRequest = new ArduinoMessage(MessageType.STATUS_REQUEST);
             foreach(var remoteNode in RemoteNodes.Values)
             {
-                statusRequest.Sender = remoteNode.MCPDevice.ID;
-                MasterNode.SendBusMessage(remoteNode.NodeID, statusRequest);
+                //statusRequest.Sender = remoteNode.MCPDevice.ID;
+                //MasterNode.SendBusMessage(remoteNode.NodeID, statusRequest);
+                remoteNode.MCPDevice.RequestStatus();
+                remoteNode.MCPDevice.LastStatusRequest = DateTime.Now;
             }
             MasterNode.RequestStatus();
         };
@@ -223,6 +227,41 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
 
             String ioSummary = String.Format("Recv: {0}, Disp: {1}", IO.ToReceive, IO.ToDispatch);
             ActivityLog.Add(new BusActivity(totalCount, summedRate, ioSummary));
+        };
+    
+        monitorNodeStateTimer.AutoReset = true;
+        monitorNodeStateTimer.Interval = 1000;
+        monitorNodeStateTimer.Elapsed += (sender, eargs) =>
+        {
+            var allNodes = GetAllNodes();
+            foreach(var node in allNodes)
+            {
+                var mcpDev = node.MCPDevice;
+                if(mcpDev.State != CANNodeState.NOT_SET && mcpDev.PresenceInterval > 0 && (DateTime.Now - mcpDev.LastMessageOn).TotalMilliseconds > mcpDev.PresenceInterval + 100)
+                {
+                    mcpDev.State = CANNodeState.SILENT;
+                } 
+                else if(mcpDev.State == CANNodeState.RESPONDING)
+                {
+                    var timeSinceLastStatusRequest = (DateTime.Now - mcpDev.LastStatusRequest).TotalMilliseconds;
+                    if(timeSinceLastStatusRequest > 500 && mcpDev.LastStatusRequest > mcpDev.LastStatusResponse)
+                    {
+                        mcpDev.State = CANNodeState.TRANSMITTING_ONLY;
+                    }
+                }
+            }
+        };
+
+        Ready += (sender, ready) =>
+        {
+            if (ready)
+            {
+                monitorNodeStateTimer.Start();
+            }
+            else
+            {
+                monitorNodeStateTimer.Stop();
+            }
         };
     }    
 
@@ -281,8 +320,6 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
             NodeError?.Invoke(remoteNode, remoteNode.MCPDevice.LastError);
         };
         
-        remoteNode.MCPDevice.MaxTimeIdle = (uint)(1.1*RequestStatusTimer.Interval/1000.0);
-
         //Keep a list
         RemoteNodes[rnid] = remoteNode;
     }
