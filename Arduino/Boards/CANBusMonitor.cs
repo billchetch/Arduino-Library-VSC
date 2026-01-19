@@ -181,7 +181,6 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
                     break;
             }
 
-            busNode.MCPDevice.UpdateMessageCount();
             busNode.IO.Inject(message);
             
             //Fire received event
@@ -380,6 +379,11 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     #endregion
 
     #region Messaging
+    public override bool RouteMessage(ArduinoMessage message)
+    {
+        return base.RouteMessage(message);
+    }
+
     public void PingNode(byte nodeID)
     {
         if(nodeID == MasterNode.NodeID || nodeID == 0)

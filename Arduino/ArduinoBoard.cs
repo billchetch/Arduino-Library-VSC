@@ -372,7 +372,7 @@ public class ArduinoBoard : IMessageUpdatableObject
     /// </summary>
     /// <param name="message">The messaget to be routed.</param>
     /// <returns>bool</returns>
-    public bool RouteMessage(ArduinoMessage message)
+    virtual public bool RouteMessage(ArduinoMessage message)
     {
         bool handled = false;
         ArduinoMessageMap.UpdatedProperties updatedProperties = new ArduinoMessageMap.UpdatedProperties();
