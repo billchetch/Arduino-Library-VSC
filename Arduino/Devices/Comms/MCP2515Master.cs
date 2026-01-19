@@ -45,6 +45,11 @@ public class MCP2515Master : MCP2515
 
             CanData = message.Get<byte[]>(0);
             CanID = new CANID(message.Get<UInt32>(1));
+            if(!CanID.ValidateCRC(CanData))
+            {
+                throw new Exception("Not a valid CRC");
+            }
+
             Message.Type = message.Get<MessageType>(2);
             Message.Sender = message.Get<byte>(3);
             Message.Target = Message.Sender;
@@ -52,13 +57,6 @@ public class MCP2515Master : MCP2515
         }
     }
     
-    public class BusActivityEventArgs
-    {
-        public BusActivityEventArgs()
-        {
-            
-        }
-    }
     #endregion
 
     #region Events
@@ -107,11 +105,13 @@ public class MCP2515Master : MCP2515
                 if (message.Tag == MESSAGE_ID_FORWARD_SENT || message.Tag == MESSAGE_ID_FORWARD_RECEIVED)
                 {
                     var eargs = new BusMessageEventArgs(message);
+                        
                     if(eargs.NodeID == NodeID)
                     {
                         UpdateMessageCount();
                     }
                     BusMessageReceived?.Invoke(this, eargs);
+                    
                 }
                 break;
         }

@@ -205,8 +205,6 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
             //var statusRequest = new ArduinoMessage(MessageType.STATUS_REQUEST);
             foreach(var remoteNode in RemoteNodes.Values)
             {
-                //statusRequest.Sender = remoteNode.MCPDevice.ID;
-                //MasterNode.SendBusMessage(remoteNode.NodeID, statusRequest);
                 remoteNode.MCPDevice.RequestStatus();
                 remoteNode.MCPDevice.LastStatusRequest = DateTime.Now;
             }
@@ -237,7 +235,8 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
             foreach(var node in allNodes)
             {
                 var mcpDev = node.MCPDevice;
-                if(mcpDev.State != CANNodeState.NOT_SET && mcpDev.PresenceInterval > 0 && (DateTime.Now - mcpDev.LastMessageOn).TotalMilliseconds > mcpDev.PresenceInterval + 100)
+                double sinceLastMessage = (DateTime.Now - mcpDev.LastMessageOn).TotalMilliseconds;
+                if(mcpDev.State != CANNodeState.NOT_SET && mcpDev.PresenceInterval > 0 &&  sinceLastMessage > mcpDev.PresenceInterval + 100)
                 {
                     mcpDev.State = CANNodeState.SILENT;
                 } 
@@ -246,7 +245,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
                     var timeSinceLastStatusRequest = (DateTime.Now - mcpDev.LastStatusRequest).TotalMilliseconds;
                     if(timeSinceLastStatusRequest > 500 && mcpDev.LastStatusRequest > mcpDev.LastStatusResponse)
                     {
-                        mcpDev.State = CANNodeState.TRANSMITTING_ONLY;
+                        mcpDev.State = CANNodeState.TRANSMITTING;
                     }
                 }
             }
@@ -290,7 +289,15 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
         remoteNode.IO = new MessageIO<ArduinoMessage>(0, 0); //Message IO with no throttling
         remoteNode.IO.MessageReceived += (sender, message) =>
         {
-            remoteNode.RouteMessage(message); 
+            try
+            {
+                remoteNode.RouteMessage(message); 
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("Exception: {0}", e.Message);
+                //TODO: What exactly?
+            }
         };
         remoteNode.IO.MessageDispatched += (sender, eargs) =>
         {

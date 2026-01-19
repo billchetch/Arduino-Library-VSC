@@ -316,7 +316,7 @@ abstract public class MCP2515 : ArduinoDevice
         MessageCount++;
         if(State == CANNodeState.NOT_SET || State == CANNodeState.SILENT)
         {
-            State = CANNodeState.TRANSMITTING_ONLY;
+            State = CANNodeState.TRANSMITTING;
         }
     }
 
@@ -354,7 +354,12 @@ abstract public class MCP2515 : ArduinoDevice
                 break;
 
             case MessageType.PRESENCE:
-                LastPresenceOn = DateTime.Now;    
+                LastPresenceOn = DateTime.Now; 
+                bool firstPresence = message.Get<bool>(2);
+                if (firstPresence)
+                {
+                    int k = 3;
+                }   
                 break;
         }
         return base.HandleMessage(message);

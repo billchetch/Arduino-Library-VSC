@@ -10,7 +10,7 @@ public enum CANNodeState
 {
     NOT_SET, //Before the canbus monitor
     SILENT, //If we have heard nothing for some period of time
-    TRANSMITTING_ONLY, //If we are receiving messages but no responses
+    TRANSMITTING, //If we are receiving messages but no responses
     RESPONDING //if we are receiving reponses (this is the desired state)
 }
 
