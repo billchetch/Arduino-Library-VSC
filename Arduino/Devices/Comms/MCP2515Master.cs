@@ -51,6 +51,11 @@ public class MCP2515Master : MCP2515
             }
 
             Message.Type = message.Get<MessageType>(2);
+            if (!Enum.IsDefined<MessageType>(Message.Type))
+            {
+                throw new Exception(String.Format("{0} is not a valid message type", message.Type));
+            }
+
             Message.Sender = message.Get<byte>(3);
             Message.Target = Message.Sender;
             Message.Tag = CanID.Tag;

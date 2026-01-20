@@ -2,6 +2,7 @@ using System;
 using Chetch.Arduino.Devices.Comms;
 using Chetch.Arduino.Connections;
 using Chetch.Messaging;
+using XmppDotNet.Xmpp.MessageEvents;
 
 
 namespace Chetch.Arduino.Boards;
@@ -23,6 +24,8 @@ public interface ICANBusNode
     byte NodeID => MCPDevice.NodeID;
 
     CANNodeState NodeState {get; }
+
+    EventHandler<CANNodeState>? NodeStateChanged => MCPDevice.NodeStateChanged;
 
     MCP2515 MCPDevice { get; }
 

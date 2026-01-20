@@ -14,7 +14,7 @@ abstract public class MCP2515 : ArduinoDevice
     #endregion
 
     #region Classes and Enums
-    public enum MCP2515ErrorCode
+    public enum MCP2515ErrorCode : byte
     {
         NO_ERROR = 0,
         UNKNOWN_RECEIVE_ERROR,
@@ -29,6 +29,13 @@ abstract public class MCP2515 : ArduinoDevice
         SYNC_ERROR, //if presence is out of sync
         CUSTOM_ERROR,
         DEBUG_ASSERT
+    };
+
+    public enum ResetRegime : byte
+    {
+        NOT_NOT_SET = 0,
+        FULL_RESET = 1,
+        CLEAR_ERRORS = 2  
     };
 
     /*
@@ -146,7 +153,18 @@ abstract public class MCP2515 : ArduinoDevice
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 1)] //Start at 1 as 0 is for ReportInterval
     public byte NodeID { get; internal set; } //Default is 1 as this is the normal bus master node ID
 
-    public CANNodeState State { get; set; } = CANNodeState.NOT_SET;
+    public CANNodeState State 
+    { 
+        get => nodeState;
+        set
+        {
+            if(value != nodeState)
+            {
+                NodeStateChanged?.Invoke(this, value);
+            }    
+            nodeState = value;
+        } 
+    } 
 
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 2)]
     [ArduinoMessageMap(Messaging.MessageType.PRESENCE, 3)]
@@ -259,7 +277,7 @@ abstract public class MCP2515 : ArduinoDevice
     #endregion
 
     #region Events
-    //public EventHandler<NodeState>? StateChanged;
+    public EventHandler<CANNodeState>? NodeStateChanged;
 
     public EventHandler<FlagsChangedEventArgs>? StatusFlagsChanged;
 
@@ -270,7 +288,7 @@ abstract public class MCP2515 : ArduinoDevice
     #endregion
 
     #region Fields
-    //private NodeState nodeState = NodeState.NOT_SET;
+    private CANNodeState nodeState = CANNodeState.NOT_SET;
 
     private byte statusFlags = 0;
     private byte errorFlags = 0;
@@ -333,6 +351,23 @@ abstract public class MCP2515 : ArduinoDevice
     #endregion
 
     #region Messaging
+    public override bool AssignMessageValue(PropertyInfo propertyInfo, object propertyValue, ArduinoMessage message)
+    {
+        switch (message.Type)
+        {
+            case MessageType.ERROR:
+                if (propertyInfo.Name == "Error")
+                {
+                    if (!Enum.IsDefined<MCP2515ErrorCode>((MCP2515ErrorCode)propertyValue))
+                    {
+                        throw new Exception(String.Format("{0} is not a valid MPC2515Error code", propertyValue));
+                    }
+                }
+                break;
+        }
+        return base.AssignMessageValue(propertyInfo, propertyValue, message);
+    }
+
     override public ArduinoMessageMap.UpdatedProperties HandleMessage(ArduinoMessage message)
     {
         switch (message.Type)
@@ -356,9 +391,10 @@ abstract public class MCP2515 : ArduinoDevice
             case MessageType.PRESENCE:
                 LastPresenceOn = DateTime.Now; 
                 bool firstPresence = message.Get<bool>(2);
-                if (firstPresence)
+                if (firstPresence) //signals a node (re)-joining
                 {
-                    int k = 3;
+                    RequestStatus();
+                    Initialise();
                 }   
                 break;
         }

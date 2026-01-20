@@ -96,9 +96,12 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
             return s.ToString();
         }
     }
+
     #endregion
 
     #region Events
+    //public EventHandler<CANNodeState> NodeStateChange => throw new NotImplementedException();
+    
     public EventHandler<bool>? NodeReady;
 
     public EventHandler<MCP2515.MCP2515ErrorCode>? NodeError;
@@ -163,7 +166,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
                 case MessageType.ERROR:
                     //Error Code, Error Data, Error Code Flags, MCP Error Flags
                     message.Populate<byte, UInt32, UInt16, byte>(canData);
-                    message.Add(ArduinoBoard.ErrorCode.DEVICE_ERROR, 0);
+                    message.Add(ArduinoBoard.ErrorCode.DEVICE_ERROR, 0); //To follow normal error message structure
                     break;
 
                 case MessageType.PRESENCE:
@@ -209,6 +212,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
                 remoteNode.MCPDevice.LastStatusRequest = DateTime.Now;
             }
             MasterNode.RequestStatus();
+            MasterNode.LastStatusRequest = DateTime.Now;
         };
 
         MasterNode.BusActivityUpdated += (sender, eargs) =>
@@ -308,9 +312,9 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
                 {
                     MasterNode.SendBusMessage(remoteNode.NodeID, msg);
                 } 
-                catch (Exception)
+                catch (Exception e)
                 {
-                    //Console.WriteLine("Exception: {0}", e.Message);
+                    Console.WriteLine("Exception: {0}", e.Message);
                     //TODO: What exactly?
                 }
             }
@@ -417,9 +421,27 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
 
     public void RaiseNodeError(byte nodeID, MCP2515.MCP2515ErrorCode ecode, UInt32 edata = 0)
     {
+        RaiseNodeError(nodeID, (byte)ecode, edata);
+    }
+
+    public void RaiseNodeError(byte nodeID, byte ecode, UInt32 edata = 0)
+    {
         var message = new ArduinoMessage(MessageType.ERROR_TEST);
-        message.Add((byte)ecode);
+        message.Add(ecode);
         message.Add(edata);
+        if(nodeID == MasterNode.NodeID || nodeID == 0)
+        {
+            MasterNode.SendMessage(message);
+        }
+        if(nodeID != MasterNode.NodeID)
+        {
+            MasterNode.SendBusMessage(nodeID, message);
+        }
+    }
+
+    public void FinaliseNode(byte nodeID)
+    {
+        var message = new ArduinoMessage(MessageType.FINALISE);
         if(nodeID == MasterNode.NodeID || nodeID == 0)
         {
             MasterNode.SendMessage(message);

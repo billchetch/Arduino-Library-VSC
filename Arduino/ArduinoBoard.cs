@@ -22,7 +22,7 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     public const int MAX_FRAME_PAYLOAD_SIZE = 50;
 
-    public const int MESSAGE_OUT_INTERVAL = 10; //ensures a minimal interval between sending messages
+    public const int MESSAGE_OUT_INTERVAL = 100; //ensures a minimal interval between sending messages
 
     public const int REQUEST_STATUS_TIMER_INTERVAL = 15; //in secs
     #endregion
