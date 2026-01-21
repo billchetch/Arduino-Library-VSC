@@ -15,17 +15,33 @@ public enum CANNodeState
     RESPONDING //if we are receiving reponses (this is the desired state)
 }
 
+public class CANNodeStateChange : System.EventArgs
+{
+    public byte NodeID {get; }
+
+    public CANNodeState NewState { get; }
+
+    public CANNodeState OldState { get; }
+
+    public CANNodeStateChange(byte nodeID, CANNodeState newValue, CANNodeState oldValue)
+    {
+        NodeID = nodeID;
+        NewState = newValue;
+        OldState = oldValue;
+    }
+}
+
 public interface ICANBusNode
 {
     byte ID { get; }
 
     bool IsReady { get; }
 
-    byte NodeID => MCPDevice.NodeID;
+    byte NodeID { get; }
 
     CANNodeState NodeState {get; }
 
-    EventHandler<CANNodeState>? NodeStateChanged => MCPDevice.NodeStateChanged;
+    EventHandler<CANNodeStateChange>? NodeStateChanged { get; set; }
 
     MCP2515 MCPDevice { get; }
 

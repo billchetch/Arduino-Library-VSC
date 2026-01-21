@@ -10,17 +10,25 @@ public class CANBusNode : ArduinoBoard, ICANBusNode
     #endregion
 
     #region Properties
+    public byte NodeID => MCPNode.NodeID;
+
+    public MCP2515 MCPDevice => MCPNode;
     public MCP2515Node MCPNode { get; set; }
 
-    public MCP2515 MCPDevice => MCPNode; // for interface compliance
+    public CANNodeState NodeState => MCPNode.State;
 
-    public CANNodeState NodeState => MCPDevice.State;
+    public EventHandler<CANNodeStateChange>? NodeStateChanged { get; set; }
     #endregion
 
     #region Constructors
     public CANBusNode(MCP2515Node mcpNode, String sid) : base(sid)
     {
         MCPNode = mcpNode;
+
+        MCPNode.NodeStateChanged += (sender, eargs) =>
+        {
+            NodeStateChanged?.Invoke(this, eargs);  
+        };
         
         AddDevice(MCPNode);
     }

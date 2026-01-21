@@ -50,13 +50,17 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     #region Properties
     public MCP2515Master MasterNode { get; } = new MCP2515Master(1);
 
+    public byte NodeID => MasterNode.NodeID;
+
+    public EventHandler<CANNodeStateChange>? NodeStateChanged { get; set; }
+
     public MCP2515 MCPDevice => MasterNode; //for interface compliance
 
     public CANNodeState NodeState => MasterNode.State; //for interface compliance
 
     public int BusSize => 1 + RemoteNodes.Count;
 
-    public Dictionary<byte, ICANBusNode> RemoteNodes { get; } = new Dictionary<byte, ICANBusNode>();
+    protected Dictionary<byte, ICANBusNode> RemoteNodes { get; } = new Dictionary<byte, ICANBusNode>();
     
     public CircularLog<BusActivity> ActivityLog { get; } = new CircularLog<BusActivity>(64);
 
@@ -193,7 +197,6 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
         MasterNode.Ready += (sender, ready) =>
         {
             NodeReady?.Invoke(this, ready);
-            MasterNode.Initialise();
         };
 
         MasterNode.ErrorReceived += (sender, emsg) =>
@@ -201,6 +204,11 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
             NodeError?.Invoke(this, MasterNode.LastError);
         };
 
+        MasterNode.NodeStateChanged += (sender, eargs) =>
+        {
+            NodeStateChanged?.Invoke(this, eargs);
+        };
+        
         AddDevice(MasterNode);
 
         RequestStatusTimer.Elapsed += (sender, eargs) =>
@@ -320,10 +328,14 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
             }
         };
         
+        remoteNode.NodeStateChanged += (sender, eargs) =>
+        {
+            NodeStateChanged?.Invoke(sender, eargs);
+        };
+
         remoteNode.MCPDevice.Ready += (sender, ready) =>
         {
             NodeReady?.Invoke(remoteNode, ready);
-            remoteNode.MCPDevice.Initialise();
         };
 
         remoteNode.MCPDevice.ErrorReceived += (sender, emsg) =>
@@ -340,6 +352,11 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
         byte nid = (byte)(MasterNode.NodeID + RemoteNodes.Count + 1);
         AddRemoteNode(new CANBusNode(nid));
     }
+
+    public List<ICANBusNode> GetRemoteNodes()
+    {
+        return RemoteNodes.Values.ToList();
+    }    
 
     public List<ICANBusNode> GetAllNodes()
     {
@@ -380,6 +397,8 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     }
     public override async Task End()
     {
+        FinaliseNode(1);
+
         foreach(var remoteNode in RemoteNodes.Values)
         {
             await remoteNode.End();
@@ -407,15 +426,30 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
         }
     }
 
-    public void ResetNode(byte nodeID)
+    public void InitialiseNode(byte nodeID)
     {
         if(nodeID == MasterNode.NodeID || nodeID == 0)
         {
-            MasterNode.Reset();
+            MasterNode.Initialise();
         }
         if(nodeID != MasterNode.NodeID)
         {
-            MasterNode.SendBusMessage(nodeID, MessageType.RESET);
+            MasterNode.SendBusMessage(nodeID, MessageType.INITIALISE);
+        }
+    }
+
+    public void ResetNode(byte nodeID, MCP2515.ResetRegime regime = MCP2515.ResetRegime.FULL_RESET)
+    {
+        var message = new ArduinoMessage(MessageType.RESET);
+        message.Add((byte)regime);
+
+        if(nodeID == MasterNode.NodeID || nodeID == 0)
+        {
+            MasterNode.SendMessage(message);
+        }
+        if(nodeID != MasterNode.NodeID)
+        {
+            MasterNode.SendBusMessage(nodeID, message);
         }
     }
 

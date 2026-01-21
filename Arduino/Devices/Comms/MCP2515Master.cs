@@ -142,6 +142,7 @@ public class MCP2515Master : MCP2515
             case MessageType.INITIALISE:
             case MessageType.RESET:
             case MessageType.ERROR_TEST:
+            case MessageType.FINALISE:
                 fmsg.Add(ArduinoDevice.DeviceCommand.REQUEST);
                 fmsg.Add(message.Type);
                 fmsg.Add(nodeID);
@@ -155,7 +156,7 @@ public class MCP2515Master : MCP2515
                 break;
 
             default:
-                throw new Exception("Cannot formulate this message!");
+                throw new Exception(String.Format("Cannot formulate message of type {0}!", message.Type));
         }
         return fmsg;
     }
@@ -169,7 +170,6 @@ public class MCP2515Master : MCP2515
         var m2s = FormulateBusMessage(nodeID, message);
         SendMessage(m2s);
         UpdateMessageCount();
-        
         return m2s;
     }
 

@@ -152,6 +152,7 @@ public class ArduinoBoard : IMessageUpdatableObject
                     try
                     {
                         OnConnected(connected);
+                        //Console.WriteLine("{0} is connected: {1}", SID, connected);
                     }
                     catch (Exception e)
                     {

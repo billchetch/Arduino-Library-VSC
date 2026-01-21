@@ -160,7 +160,7 @@ abstract public class MCP2515 : ArduinoDevice
         {
             if(value != nodeState)
             {
-                NodeStateChanged?.Invoke(this, value);
+                NodeStateChanged?.Invoke(this, new CANNodeStateChange(NodeID, value, nodeState));
             }    
             nodeState = value;
         } 
@@ -277,7 +277,7 @@ abstract public class MCP2515 : ArduinoDevice
     #endregion
 
     #region Events
-    public EventHandler<CANNodeState>? NodeStateChanged;
+    public EventHandler<CANNodeStateChange>? NodeStateChanged;
 
     public EventHandler<FlagsChangedEventArgs>? StatusFlagsChanged;
 
@@ -425,6 +425,11 @@ abstract public class MCP2515 : ArduinoDevice
         if(ready)
         {
             LastReadyOn = DateTime.Now;
+            Initialise();
+        }
+        else
+        {
+            
         }
     }
 
