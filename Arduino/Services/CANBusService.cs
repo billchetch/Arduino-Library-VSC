@@ -297,9 +297,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
                 }
                 bm = bm = GetBusMonitor(busIdx);
-                nodes = new List<ICANBusNode>();
-                nodes.Add(bm);
-                nodes.AddRange(bm.RemoteNodes.Values);
+                nodes = bm.GetAllNodes();
                 sb = new StringBuilder();
                 foreach (var node in nodes)
                 {
