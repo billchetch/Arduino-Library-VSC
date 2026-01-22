@@ -167,7 +167,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     {
                         sb.Append("Not Ready");
                     }
-                    response.AddValue(String.Format("Node {0} Status", node.MCPDevice.NodeID), sb.ToString());
+                    response.AddValue(String.Format("N{0} {1}", node.MCPDevice.NodeID, node.NodeState), sb.ToString());
                     sb.Clear();
                 }    
                 return true;
