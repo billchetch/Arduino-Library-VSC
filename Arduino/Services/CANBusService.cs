@@ -16,6 +16,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
     #region Constants
     public const String COMMAND_LIST_BUSSES = "list-busses";
     public const String COMMAND_BUS_ACTIVITY = "bus-activity";
+    public const String COMMAND_NODE_STATE_CHANGES = "state-changes";
     public const String COMMAND_NODES_STATUS = "nodes-status";
     public const String COMMAND_NODE_ERRORS = "node-errors";
     public const String COMMAND_ERROR_COUNTS = "error-counts";
@@ -73,6 +74,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
     {
         AddCommand(COMMAND_LIST_BUSSES, "Lists current busses and their ready status");
         AddCommand(COMMAND_BUS_ACTIVITY, "Show recent activity for a particular <?bus>");
+        AddCommand(COMMAND_NODE_STATE_CHANGES, "Log of state changes for a paritcular <?bus>");
         AddCommand(COMMAND_INITIALISE_NODE, "Init a specific <?node> on a <?bus>");
         AddCommand(COMMAND_PING_NODE, "Ping a <?node> on a <?bus>");
         AddCommand(COMMAND_STAT_NODE, "Request status from a <?node> on a <?bus>");
@@ -82,6 +84,20 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
         AddCommand(COMMAND_ERROR_COUNTS, "Number of errors per type on a particular <bus?>");
         AddCommand(COMMAND_RAISE_ERROR, "Target <node> to raise <?error> on <?bus>");
         base.AddCommands();
+    }
+
+    CANBusMonitor getBusMonitor(List<Object> arguments)
+    {
+        int busIdx = 0;
+        if (arguments.Count > 0)
+        {
+            busIdx = System.Convert.ToInt16(arguments[0].ToString());
+        }
+        if (busIdx < 0 || busIdx >= BusCount)
+        {
+            throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
+        }
+        return GetBusMonitor(busIdx);
     }
 
     protected override bool HandleCommandReceived(ServiceCommand command, List<object> arguments, Message response)
@@ -104,31 +120,23 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 return true;
 
             case COMMAND_BUS_ACTIVITY:
-                if (arguments.Count > 0)
-                {
-                    busIdx = System.Convert.ToInt16(arguments[0].ToString());
-                }
-                if (busIdx < 0 || busIdx >= BusCount)
-                {
-                    throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
-                }
-                bm = GetBusMonitor(busIdx);
+                bm = getBusMonitor(arguments);
                 foreach(var s in bm.ActivityLog)
                 {
                     response.AddValue(String.Format("Activity Entry {0}: ", n++), s.ToString());
                 }
                 return true;
 
+            case COMMAND_NODE_STATE_CHANGES:
+                bm = getBusMonitor(arguments);
+                foreach(var s in bm.StateChanges)
+                {
+                    response.AddValue(String.Format("State Change {0}: ", n++), s.ToString());
+                }
+                return true;
+
             case COMMAND_NODES_STATUS:
-                if (arguments.Count > 0)
-                {
-                    busIdx = System.Convert.ToInt16(arguments[0].ToString());
-                }
-                if (busIdx < 0 || busIdx >= BusCount)
-                {
-                    throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
-                }
-                bm = GetBusMonitor(busIdx);
+                bm = getBusMonitor(arguments);
 
                 //Master node first
                 nodes = bm.GetAllNodes();
@@ -177,15 +185,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 {
                     nodeID = System.Convert.ToByte(arguments[0].ToString());
                 }
-                if (arguments.Count > 1)
-                {
-                    busIdx = System.Convert.ToInt16(arguments[0].ToString());
-                }
-                if (busIdx < 0 || busIdx >= BusCount)
-                {
-                    throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
-                }
-                bm = GetBusMonitor(busIdx);
+                bm = getBusMonitor(arguments);
                 var nd = bm.GetNode(nodeID);
                 foreach(var s in nd.ErrorLog)
                 {
@@ -198,15 +198,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 {
                     nodeID = System.Convert.ToByte(arguments[0].ToString());
                 }
-                if (arguments.Count > 1)
-                {
-                    busIdx = System.Convert.ToInt16(arguments[1].ToString());
-                }
-                if (busIdx < 0 || busIdx >= BusCount)
-                {
-                    throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
-                }
-                bm = GetBusMonitor(busIdx);
+                bm = getBusMonitor(arguments);
                 //bm.InitialiseNode(nodeID);
                 return true;
 
@@ -215,15 +207,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 {
                     nodeID = System.Convert.ToByte(arguments[0].ToString());
                 }
-                if (arguments.Count > 1)
-                {
-                    busIdx = System.Convert.ToInt16(arguments[1].ToString());
-                }
-                if (busIdx < 0 || busIdx >= BusCount)
-                {
-                    throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
-                }
-                bm = GetBusMonitor(busIdx);
+                bm = getBusMonitor(arguments);
                 //bm.RequestNodeStatus(nodeID); //get them all
                 if(nodeID != 0){
                     MessageParser.Parse(response, bm.GetNode(nodeID).MCPDevice);
@@ -235,15 +219,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 {
                     nodeID = System.Convert.ToByte(arguments[0].ToString());
                 }
-                if (arguments.Count > 1)
-                {
-                    busIdx = System.Convert.ToInt16(arguments[1].ToString());
-                }
-                if (busIdx < 0 || busIdx >= BusCount)
-                {
-                    throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
-                }
-                bm = GetBusMonitor(busIdx);
+                bm = getBusMonitor(arguments);
                 bm.PingNode(nodeID);
                 return true;
 
@@ -252,15 +228,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 {
                     nodeID = System.Convert.ToByte(arguments[0].ToString());
                 }
-                if (arguments.Count > 1)
-                {
-                    busIdx = System.Convert.ToInt16(arguments[1].ToString());
-                }
-                if (busIdx < 0 || busIdx >= BusCount)
-                {
-                    throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
-                }
-                bm = GetBusMonitor(busIdx);
+                bm = getBusMonitor(arguments);
                 bm.ResetNode(nodeID, MCP2515.ResetRegime.FULL_RESET);
                 return true;
 
@@ -275,28 +243,12 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 {
                     ecode = (MCP2515.MCP2515ErrorCode)System.Convert.ToByte(arguments[1].ToString());
                 }        
-                if (arguments.Count > 2)
-                {
-                    busIdx = System.Convert.ToInt16(arguments[2].ToString());
-                }
-                if (busIdx < 0 || busIdx >= BusCount)
-                {
-                    throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
-                }
-                bm = GetBusMonitor(busIdx);
+                bm = getBusMonitor(arguments);
                 bm.RaiseNodeError(nodeID, ecode);
                 return true;
 
             case COMMAND_ERROR_COUNTS:
-                if (arguments.Count > 0)
-                {
-                    busIdx = System.Convert.ToInt16(arguments[0].ToString());
-                }
-                if (busIdx < 0 || busIdx >= BusCount)
-                {
-                    throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
-                }
-                bm = bm = GetBusMonitor(busIdx);
+                bm = getBusMonitor(arguments);
                 nodes = bm.GetAllNodes();
                 sb = new StringBuilder();
                 foreach (var node in nodes)

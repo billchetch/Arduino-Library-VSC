@@ -65,6 +65,8 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     
     public CircularLog<BusActivity> ActivityLog { get; } = new CircularLog<BusActivity>(64);
 
+    public CircularLog<CANNodeStateChange> StateChanges { get; } = new CircularLog<CANNodeStateChange>(64);
+
     public BusActivity? Activity => ActivityLog.Count > 0 ? ActivityLog.First() : null;
     public String BusSummary
     {
@@ -207,6 +209,8 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
 
         MasterNode.NodeStateChanged += (sender, eargs) =>
         {
+            StateChanges.Add(eargs);
+            
             NodeStateChanged?.Invoke(this, eargs);
         };
 

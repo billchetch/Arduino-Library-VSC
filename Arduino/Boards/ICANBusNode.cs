@@ -29,6 +29,11 @@ public class CANNodeStateChange : System.EventArgs
         NewState = newValue;
         OldState = oldValue;
     }
+
+    public override string ToString()
+    {
+        return String.Format("N{0} changed from {1} to {2}", NodeID, OldState, NewState);
+    }
 }
 
 public interface ICANBusNode
