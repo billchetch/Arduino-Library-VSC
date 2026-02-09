@@ -86,12 +86,12 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
         base.AddCommands();
     }
 
-    CANBusMonitor getBusMonitor(List<Object> arguments)
+    CANBusMonitor getBusMonitor(List<Object> arguments, int minArgs = 0)
     {
         int busIdx = 0;
-        if (arguments.Count > 0)
+        if (arguments.Count > minArgs)
         {
-            busIdx = System.Convert.ToInt16(arguments[0].ToString());
+            busIdx = System.Convert.ToInt16(arguments.Last().ToString());
         }
         if (busIdx < 0 || busIdx >= BusCount)
         {
@@ -102,7 +102,6 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
 
     protected override bool HandleCommandReceived(ServiceCommand command, List<object> arguments, Message response)
     {
-        int busIdx = 0;
         CANBusMonitor bm;
         StringBuilder sb;
         List<ICANBusNode> nodes;
@@ -184,8 +183,9 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 if (arguments.Count > 0)
                 {
                     nodeID = System.Convert.ToByte(arguments[0].ToString());
-                }
-                bm = getBusMonitor(arguments);
+                } 
+                bm = getBusMonitor(arguments, 1);
+                
                 var nd = bm.GetNode(nodeID);
                 foreach(var s in nd.ErrorLog)
                 {
@@ -198,7 +198,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 {
                     nodeID = System.Convert.ToByte(arguments[0].ToString());
                 }
-                bm = getBusMonitor(arguments);
+                bm = getBusMonitor(arguments, 1);
                 //bm.InitialiseNode(nodeID);
                 return true;
 
@@ -207,7 +207,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 {
                     nodeID = System.Convert.ToByte(arguments[0].ToString());
                 }
-                bm = getBusMonitor(arguments);
+                bm = getBusMonitor(arguments, 1);
                 //bm.RequestNodeStatus(nodeID); //get them all
                 if(nodeID != 0){
                     MessageParser.Parse(response, bm.GetNode(nodeID).MCPDevice);
@@ -219,7 +219,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 {
                     nodeID = System.Convert.ToByte(arguments[0].ToString());
                 }
-                bm = getBusMonitor(arguments);
+                bm = getBusMonitor(arguments, 1);
                 bm.PingNode(nodeID);
                 return true;
 
@@ -228,7 +228,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 {
                     nodeID = System.Convert.ToByte(arguments[0].ToString());
                 }
-                bm = getBusMonitor(arguments);
+                bm = getBusMonitor(arguments, 1);
                 bm.ResetNode(nodeID, MCP2515.ResetRegime.FULL_RESET);
                 return true;
 
@@ -243,7 +243,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 {
                     ecode = (MCP2515.MCP2515ErrorCode)System.Convert.ToByte(arguments[1].ToString());
                 }        
-                bm = getBusMonitor(arguments);
+                bm = getBusMonitor(arguments, arguments.Count > 1 ? 2 : 1);
                 bm.RaiseNodeError(nodeID, ecode);
                 return true;
 
