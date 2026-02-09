@@ -34,4 +34,9 @@ public class OLEDTextDisplay : ArduinoDevice
     {
         DiplsayPreset(DisplayPreset.CLEAR, displayAndLockFor);
     }
+
+    public void UpdateDisplay(byte updateTag)
+    {
+        SendCommand(DeviceCommand.UPDATE, updateTag);
+    }
 }

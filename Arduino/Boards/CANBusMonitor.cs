@@ -6,6 +6,7 @@ using System.Text;
 using Chetch.Arduino.Connections;
 using Chetch.Arduino.Devices;
 using Chetch.Arduino.Devices.Comms;
+using Chetch.Arduino.Devices.Displays;
 using Chetch.Messaging;
 using Chetch.Utilities;
 using Microsoft.Extensions.Logging;
@@ -50,9 +51,9 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     #region Properties
     public MCP2515Master MasterNode { get; } = new MCP2515Master(1);
 
-    public byte NodeID => MasterNode.NodeID;
+    public OLEDTextDisplay OLED { get; } = new OLEDTextDisplay("oled");
 
-    public EventHandler<CANNodeStateChange>? NodeStateChanged { get; set; }
+    public byte NodeID => MasterNode.NodeID;
 
     public MCP2515 MCPDevice => MasterNode; //for interface compliance
 
@@ -104,8 +105,8 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     #endregion
 
     #region Events
-    //public EventHandler<CANNodeState> NodeStateChange => throw new NotImplementedException();
-    
+    public EventHandler<CANNodeStateChange>? NodeStateChanged { get; set; }
+
     public EventHandler<bool>? NodeReady;
 
     public EventHandler<MCP2515.MCP2515ErrorCode>? NodeError;
@@ -208,20 +209,6 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
         {
             NodeStateChanged?.Invoke(this, eargs);
         };
-        
-        AddDevice(MasterNode);
-
-        RequestStatusTimer.Elapsed += (sender, eargs) =>
-        {
-            //var statusRequest = new ArduinoMessage(MessageType.STATUS_REQUEST);
-            foreach(var remoteNode in RemoteNodes.Values)
-            {
-                remoteNode.MCPDevice.RequestStatus();
-                remoteNode.MCPDevice.LastStatusRequest = DateTime.Now;
-            }
-            MasterNode.RequestStatus();
-            MasterNode.LastStatusRequest = DateTime.Now;
-        };
 
         MasterNode.BusActivityUpdated += (sender, eargs) =>
         {
@@ -237,6 +224,25 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
 
             String ioSummary = String.Format("Recv: {0}, Disp: {1}", IO.ToReceive, IO.ToDispatch);
             ActivityLog.Add(new BusActivity(totalCount, summedRate, ioSummary));
+        };
+        
+        //Add MasterNode to Board
+        AddDevice(MasterNode);
+
+        //Add OLED to Board
+        //AddDevice(OLED);
+
+        //Timers
+        RequestStatusTimer.Elapsed += (sender, eargs) =>
+        {
+            //var statusRequest = new ArduinoMessage(MessageType.STATUS_REQUEST);
+            foreach(var remoteNode in RemoteNodes.Values)
+            {
+                remoteNode.MCPDevice.RequestStatus();
+                remoteNode.MCPDevice.LastStatusRequest = DateTime.Now;
+            }
+            MasterNode.RequestStatus();
+            MasterNode.LastStatusRequest = DateTime.Now;
         };
     
         monitorNodeStateTimer.AutoReset = true;
@@ -263,11 +269,13 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
             }
         };
 
+        //Event Listeners
         Ready += (sender, ready) =>
         {
             if (ready)
             {
                 monitorNodeStateTimer.Start();
+                //OLED.UpdateDisplay(1);
             }
             else
             {
@@ -288,7 +296,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     #region Methods
     public void AddRemoteNode(ICANBusNode remoteNode)
     {
-        byte rnid = remoteNode.MCPDevice.NodeID;
+        byte rnid = remoteNode.NodeID;
         if (rnid == 0 || rnid == MasterNode.NodeID)
         {
             throw new Exception(String.Format("Node ID {0} is not a valid ID for a remote node", rnid));
@@ -307,7 +315,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
             }
             catch (Exception e)
             {
-                Console.WriteLine("Exception: {0}", e.Message);
+                Console.WriteLine("Remote Node {0} Message Received Exception: {1}", remoteNode.NodeID, e.Message);
                 //TODO: What exactly?
             }
         };
@@ -397,8 +405,9 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     }
     public override async Task End()
     {
-        FinaliseNode(1);
-
+        //OLED.UpdateDisplay(1);
+        MasterNode.Finalise();
+        
         foreach(var remoteNode in RemoteNodes.Values)
         {
             await remoteNode.End();
@@ -475,14 +484,13 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
 
     public void FinaliseNode(byte nodeID)
     {
-        var message = new ArduinoMessage(MessageType.FINALISE);
         if(nodeID == MasterNode.NodeID || nodeID == 0)
         {
-            MasterNode.SendMessage(message);
+            MasterNode.Finalise();
         }
         if(nodeID != MasterNode.NodeID)
         {
-            MasterNode.SendBusMessage(nodeID, message);
+            MasterNode.SendBusMessage(nodeID, MessageType.FINALISE);
         }
     }
     #endregion

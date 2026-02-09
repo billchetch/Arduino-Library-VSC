@@ -46,7 +46,8 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
         LOCK,
         UNLOCK,
         REQUEST,
-        SYNCHRONISE
+        SYNCHRONISE,
+        UPDATE,
     }
     #endregion
 

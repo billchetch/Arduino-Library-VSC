@@ -316,13 +316,13 @@ public class ArduinoBoard : IMessageUpdatableObject
                     int attempts = 0;
                     do
                     {
-                        //Console.WriteLine("{0} requesting status...", SID);
+                        Console.WriteLine("{0} requesting status...", SID);
                         try
                         {
                             RequestStatus();
                         }
                         catch { }
-                        Thread.Sleep(250);
+                        Thread.Sleep(500);
                     } while (IsConnected && !IsReady && ++attempts < 3);
 
                     if (!IsReady && IsConnected)
@@ -348,7 +348,14 @@ public class ArduinoBoard : IMessageUpdatableObject
 
     virtual protected void OnReady()
     {
-        Ready?.Invoke(this, IsReady);
+        try{
+            Ready?.Invoke(this, IsReady);
+        } 
+        catch (Exception e)
+        {
+            ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));    
+        }
+        
         if (IsReady)
         {
             RequestStatusTimer.Start();

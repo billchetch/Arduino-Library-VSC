@@ -74,11 +74,11 @@ public class ArduinoDeviceGroup : ICollection<ArduinoDevice>
             //Console.WriteLine("Device {0} fired Ready Event, ready: {1}", device.SID, ready);
             if (!ready && deviceReadyCount <= 0)
             {
-                throw new Exception("Unexpected trigger of device ready");
+                throw new Exception("No devices ready so this is an Unexpected Ready=false event");
             }
             if (deviceReadyCount >= Count && ready)
             {
-                throw new Exception("Unexpected trigger of device ready");
+                throw new Exception(String.Format("All {0} devices are ready so this is an unexpected Ready=true event by device {1}", deviceReadyCount, device.SID));
             }
 
             bool prevReady = IsReady;
