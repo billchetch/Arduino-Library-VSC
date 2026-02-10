@@ -113,7 +113,7 @@ public class MCP2515Master : MCP2515
                         
                     if(eargs.NodeID == NodeID)
                     {
-                        UpdateMessageCount();
+                        UpdateMessageCount(eargs.Message);
                     }
                     BusMessageReceived?.Invoke(this, eargs);
                     
@@ -169,7 +169,7 @@ public class MCP2515Master : MCP2515
         }
         var m2s = FormulateBusMessage(nodeID, message);
         SendMessage(m2s);
-        UpdateMessageCount();
+        UpdateMessageCount(m2s);
         return m2s;
     }
 

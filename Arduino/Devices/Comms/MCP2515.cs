@@ -272,6 +272,7 @@ abstract public class MCP2515 : ArduinoDevice
     
     public double MessageRate { get; internal set; } = -1.0;
 
+    public ArduinoMessage LastMessage {get; internal set; }
     public DateTime LastMessageOn { get; internal set; }
 
     #endregion
@@ -328,8 +329,9 @@ abstract public class MCP2515 : ArduinoDevice
         return (errorCodeFlags & (int)ecflg) == 1;
     }
 
-    public void UpdateMessageCount()
+    public void UpdateMessageCount(ArduinoMessage message)
     {
+        LastMessage = message;
         LastMessageOn = DateTime.Now;
         MessageCount++;
         if(State == CANNodeState.NOT_SET || State == CANNodeState.SILENT)

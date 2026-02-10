@@ -46,7 +46,7 @@ public class CANBusNode : ArduinoBoard, ICANBusNode
     #region Messaging
     public override bool RouteMessage(ArduinoMessage message)
     {
-        MCPNode.UpdateMessageCount();
+        MCPNode.UpdateMessageCount(message);
             
         return base.RouteMessage(message);
     } 

@@ -120,7 +120,12 @@ public class ArduinoService<T> : ChetchXMPPService<T> where T : ArduinoService<T
         //Handle errors either thrown or generated from the board by just logging them
         board.ErrorReceived += (sender, errorArgs) =>
         {
-            Logger.LogError("Arduino Error Message received.. Code: {0}, Source: {1}", errorArgs.Error, errorArgs.ErrorSource);
+            String message = "N/A";
+            if(errorArgs.ErrorMessage != null)
+            {
+                message = errorArgs.ErrorMessage.ToString();
+            }
+            Logger.LogError("ErrorCode: {0}, Message: {1}, Source: {2}", errorArgs.Error, message, errorArgs.ErrorSource);
         };
 
         board.ExceptionThrown += (sender, errorArgs) =>
