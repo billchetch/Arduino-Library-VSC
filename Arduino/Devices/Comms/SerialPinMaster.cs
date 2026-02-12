@@ -4,7 +4,7 @@ namespace Chetch.Arduino.Devices.Comms;
 
 public class SerialPinMaster : SerialPin
 {
-    public SerialPinMaster(byte id, string sid, string? name = null) : base(id, sid, name)
+    public SerialPinMaster(string sid, string? name = null) : base(sid, name)
     {
     }
 
