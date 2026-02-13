@@ -3,7 +3,7 @@ using Chetch.Messaging;
 
 namespace Chetch.Arduino.Devices.Comms;
 
-public class SerialPin : ArduinoDevice
+abstract public class SerialPin : ArduinoDevice
 {
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 1)] //Start at 1 as 0 is for ReportInterval
     public byte Pin { get; internal set; }   
