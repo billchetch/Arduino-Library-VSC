@@ -147,7 +147,7 @@ public sealed class TestBoard
     public void BoardWithOLEDAndTicker()
     {
         var board = new ArduinoBoard("oled");
-        var oled = new OLEDTextDisplay("oled");
+        var oled = new GenericDisplay("oled");
         var ticker = new Ticker("ticker");
 
         try
@@ -166,7 +166,7 @@ public sealed class TestBoard
                 Console.WriteLine("Board {0} ready: {1}", board.SID, ready);
                 if (ready)
                 {
-                    oled.DiplsayPreset(OLEDTextDisplay.DisplayPreset.BOARD_STATS, 1000);
+                    oled.DiplsayPreset(GenericDisplay.DisplayPreset.BOARD_STATS, 1000);
                 }
             };
             board.ExceptionThrown += (sender, eargs) =>

@@ -51,7 +51,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     #region Properties
     public MCP2515Master MasterNode { get; } = new MCP2515Master(1);
 
-    public OLEDTextDisplay OLED { get; } = new OLEDTextDisplay("oled");
+    public GenericDisplay Display { get; } = new GenericDisplay("display");
 
     public byte NodeID => MasterNode.NodeID;
 
@@ -233,8 +233,8 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
         //Add MasterNode to Board
         AddDevice(MasterNode);
 
-        //Add OLED to Board
-        //AddDevice(OLED);
+        //Add Display to Board
+        //AddDevice(Display);
 
         //Timers
         RequestStatusTimer.Elapsed += (sender, eargs) =>
@@ -279,7 +279,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
             if (ready)
             {
                 monitorNodeStateTimer.Start();
-                //OLED.UpdateDisplay(1);
+                //Display.UpdateDisplay(1);
             }
             else
             {
@@ -409,7 +409,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     }
     public override async Task End()
     {
-        //OLED.UpdateDisplay(1);
+        //Display.UpdateDisplay(1);
         MasterNode.Finalise();
         
         foreach(var remoteNode in RemoteNodes.Values)

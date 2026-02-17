@@ -28,9 +28,12 @@ abstract public class SwitchDevice : ArduinoDevice
     
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 1)]
     public SwitchMode Mode { get; internal set; } = SwitchMode.NOT_SET;
+
+    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 2)]
+    public bool OnState { get; internal set; } = false;
     
     [ArduinoMessageMap(Messaging.MessageType.DATA, 0)] //Operational value (will change depending on switch activity)
-    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 2)] //Initial value
+    [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 3)] //Initial value
     public bool PinState 
     { 
         get
@@ -51,8 +54,11 @@ abstract public class SwitchDevice : ArduinoDevice
         }
     }
     
+    [ArduinoMessageMap(Messaging.MessageType.DATA, 1)] //Operational value (will change depending on switch activity)
+    public byte Pin { get; internal set; } = 0;
+
     //NOTE: if the switch nature was reversed (i.e. being 'on' was a low pin) then this would be different. for now this is just notatin.
-    public bool IsOn => PinState; 
+    public bool IsOn => PinState == OnState; 
     public bool IsOff => !IsOn; 
     #endregion
 
@@ -108,7 +114,7 @@ abstract public class SwitchDevice : ArduinoDevice
         base.OnReady(ready);
         if (!ready)
         {
-            PinState = false; //return to orignal pin state
+            PinState = !OnState; //return to orignal pin state
             modeAssigned = false;
         }
     }
