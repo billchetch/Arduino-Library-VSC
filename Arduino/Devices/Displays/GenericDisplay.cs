@@ -4,6 +4,9 @@ namespace Chetch.Arduino.Devices.Displays;
 
 public class GenericDisplay : ArduinoDevice
 {
+    #region Constants
+    public const String GENERIC_DISPLAY_SID = "display";
+    #endregion
 
     #region Classes and enums
 
@@ -42,6 +45,8 @@ public class GenericDisplay : ArduinoDevice
     }
 
     public GenericDisplay(String sid, String? name = null) : this(0, sid, name) { }
+    
+    public GenericDisplay(String? name = null) : this(GENERIC_DISPLAY_SID, name){}
     #endregion
 
 

@@ -70,6 +70,7 @@ public class ArduinoBoard : IMessageUpdatableObject
         DEVICE_LIMIT_REACHED = 41,
         DEVICE_ID_ALREADY_USED = 42,
         DEVICE_NOT_FOUND = 43,
+        CUSTOM_ERROR = 50,
         DEVICE_ERROR = 100, //To indicate this is an error from the device (not Board)
     }
 

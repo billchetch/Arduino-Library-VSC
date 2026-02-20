@@ -15,6 +15,8 @@ public class CANBusNode : ArduinoBoard, ICANBusNode
     public MCP2515 MCPDevice => MCPNode;
     public MCP2515Node MCPNode { get; set; }
 
+    public SerialPinSlave SerialPin { get; } = new SerialPinSlave();
+
     public CANNodeState NodeState => MCPNode.State;
 
     public EventHandler<CANNodeStateChange>? NodeStateChanged { get; set; }
@@ -31,6 +33,8 @@ public class CANBusNode : ArduinoBoard, ICANBusNode
         };
         
         AddDevice(MCPNode);
+
+        AddDevice(SerialPin);
     }
 
     public CANBusNode(byte nodeID, String sid) : this(new MCP2515Node(nodeID), sid)

@@ -51,7 +51,9 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     #region Properties
     public MCP2515Master MasterNode { get; } = new MCP2515Master(1);
 
-    public GenericDisplay Display { get; } = new GenericDisplay("display");
+    public SerialPinMaster SerialPin { get; } = new SerialPinMaster();
+
+    public GenericDisplay Display { get; } = new GenericDisplay();
 
     public byte NodeID => MasterNode.NodeID;
 
@@ -232,6 +234,9 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
         
         //Add MasterNode to Board
         AddDevice(MasterNode);
+
+        //Add SerialPin to Board
+        AddDevice(SerialPin);
 
         //Add Display to Board
         //AddDevice(Display);
