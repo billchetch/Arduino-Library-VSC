@@ -499,6 +499,10 @@ public class ArduinoBoard : IMessageUpdatableObject
             target = ID;
         }
         var msg = new ArduinoMessage(MessageType.STATUS_REQUEST);
+        
+        msg.Add(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+        msg.Add((Int16)DateTimeOffset.Now.Offset.Hours);
+
         msg.Target = target;
         SendMessage(msg);
         statusRequested = true; //flag that this has been requested
