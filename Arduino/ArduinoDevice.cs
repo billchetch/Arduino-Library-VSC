@@ -235,6 +235,7 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
     public void RequestStatus()
     {
         var msg = new ArduinoMessage(MessageType.STATUS_REQUEST);
+        Console.WriteLine("---- Device {0} requesting status...", UID);
         SendMessage(msg);
         statusRequested = true; //flag that this has been requested
     }

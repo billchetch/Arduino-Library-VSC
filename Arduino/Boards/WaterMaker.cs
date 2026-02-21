@@ -68,15 +68,22 @@ public class WaterMaker : CANBusNode
         //Inputs
         AddDevice(ModeSelector);
         AddDevice(StartButton);
-        AddDevice(LPS);
+        /*AddDevice(LPS);
         AddDevice(HPS);
 
         //Outputs
         AddDevice(SaltWaterValve);
         AddDevice(FreshWaterValve);
         AddDevice(FeederPump);
-        AddDevice(PressurePump);
+        AddDevice(PressurePump);*/
         
+    }
+    #endregion
+
+    #region Messaging
+    public override bool RouteMessage(ArduinoMessage message)
+    {
+        return base.RouteMessage(message);
     }
     #endregion
 }

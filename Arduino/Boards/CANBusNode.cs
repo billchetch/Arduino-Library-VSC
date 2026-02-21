@@ -1,5 +1,6 @@
 using System;
-using Chetch.Arduino.Devices.Comms;
+using Chetch.Arduino.Devices.Comms.Serial;
+using Chetch.Arduino.Devices.Comms.CAN;
 
 namespace Chetch.Arduino.Boards;
 
@@ -12,14 +13,12 @@ public class CANBusNode : ArduinoBoard, ICANBusNode
     #region Properties
     public byte NodeID => MCPNode.NodeID;
 
-    public MCP2515 MCPDevice => MCPNode;
-    public MCP2515Node MCPNode { get; set; }
+    public ICANDevice CANDevice => MCPNode;
+    
+    protected MCP2515Node MCPNode { get; set; }
 
     public SerialPinSlave SerialPin { get; } = new SerialPinSlave();
 
-    public CANNodeState NodeState => MCPNode.State;
-
-    public EventHandler<CANNodeStateChange>? NodeStateChanged { get; set; }
     #endregion
 
     #region Constructors
@@ -27,11 +26,6 @@ public class CANBusNode : ArduinoBoard, ICANBusNode
     {
         MCPNode = mcpNode;
 
-        MCPNode.NodeStateChanged += (sender, eargs) =>
-        {
-            NodeStateChanged?.Invoke(this, eargs);  
-        };
-        
         AddDevice(MCPNode);
 
         AddDevice(SerialPin);
@@ -48,11 +42,10 @@ public class CANBusNode : ArduinoBoard, ICANBusNode
     #endregion
 
     #region Messaging
-    public override bool RouteMessage(ArduinoMessage message)
+    override public bool RouteMessage(ArduinoMessage message)
     {
         MCPNode.UpdateMessageCount(message);
-            
         return base.RouteMessage(message);
-    } 
+    }
     #endregion
 }

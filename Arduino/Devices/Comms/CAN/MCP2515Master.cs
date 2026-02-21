@@ -1,7 +1,7 @@
 using System;
 using Chetch.Messaging;
 
-namespace Chetch.Arduino.Devices.Comms;
+namespace Chetch.Arduino.Devices.Comms.CAN;
 
 public class MCP2515Master : MCP2515
 {
@@ -115,6 +115,7 @@ public class MCP2515Master : MCP2515
                     {
                         UpdateMessageCount(eargs.Message);
                     }
+
                     BusMessageReceived?.Invoke(this, eargs);
                     
                 }
@@ -123,6 +124,11 @@ public class MCP2515Master : MCP2515
 
         
         return base.HandleMessage(message);
+    }
+
+    public void ParseBusMessage(ArduinoMessage message, byte[] canData)
+    {
+        
     }
 
     protected ArduinoMessage FormulateBusMessage(byte nodeID, ArduinoMessage message)

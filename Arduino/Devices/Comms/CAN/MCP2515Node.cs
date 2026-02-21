@@ -1,6 +1,6 @@
 using System;
 
-namespace Chetch.Arduino.Devices.Comms;
+namespace Chetch.Arduino.Devices.Comms.CAN;
 
 public class MCP2515Node : MCP2515
 {

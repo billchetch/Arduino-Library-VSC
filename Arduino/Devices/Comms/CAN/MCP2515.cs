@@ -5,9 +5,9 @@ using Chetch.Messaging;
 using Chetch.Messaging.Attributes;
 using Chetch.Utilities;
 
-namespace Chetch.Arduino.Devices.Comms;
+namespace Chetch.Arduino.Devices.Comms.CAN;
 
-abstract public class MCP2515 : ArduinoDevice
+abstract public class MCP2515 : ArduinoDevice, ICANDevice
 {
     #region Constants
     public const int ERROR_LOG_SIZE = 64;
@@ -160,7 +160,7 @@ abstract public class MCP2515 : ArduinoDevice
         {
             if(value != nodeState)
             {
-                NodeStateChanged?.Invoke(this, new CANNodeStateChange(NodeID, value, nodeState));
+                StateChanged?.Invoke(this, new CANNodeStateChange(NodeID, value, nodeState));
             }    
             nodeState = value;
         } 
@@ -274,11 +274,10 @@ abstract public class MCP2515 : ArduinoDevice
 
     public ArduinoMessage LastMessage {get; internal set; }
     public DateTime LastMessageOn { get; internal set; }
-
     #endregion
 
     #region Events
-    public EventHandler<CANNodeStateChange>? NodeStateChanged;
+    public EventHandler<CANNodeStateChange>? StateChanged { get; set; }
 
     public EventHandler<FlagsChangedEventArgs>? StatusFlagsChanged;
 
@@ -299,12 +298,40 @@ abstract public class MCP2515 : ArduinoDevice
     private uint lastMessageCount = 0;
     private DateTime lastMessageRateUpdated;
 
+    private System.Timers.Timer monitorStateTimer = new System.Timers.Timer();
+
     #endregion
 
     #region Constructors
     public MCP2515(byte nodeID, string? name = null) : base("mcp" + nodeID, name)
     {
         NodeID = nodeID;
+
+        monitorStateTimer.AutoReset = true;
+        monitorStateTimer.Interval = 1000;
+        monitorStateTimer.Elapsed += (sender, eargs) =>
+        {
+            double millisSinceLastMessage = (DateTime.Now - LastMessageOn).TotalMilliseconds;
+            if(State != CANNodeState.NOT_SET && PresenceInterval > 0 &&  millisSinceLastMessage > PresenceInterval + 100)
+            {
+                State = CANNodeState.SILENT;
+            } 
+            else if(State == CANNodeState.RESPONDING)
+            {
+                if(LastStatusRequest > LastStatusResponse)
+                {
+                    var millisSinceLastStatusRequest = (DateTime.Now - LastStatusRequest).TotalMilliseconds;
+                    if(millisSinceLastStatusRequest > 500)
+                    {
+                        State = CANNodeState.TRANSMITTING;
+                    }
+                }
+            }
+            
+            //TODO!!!
+            //RequestStatus();
+            //LastStatusRequest = DateTime.Now;
+        };
     }
     #endregion
 
@@ -428,10 +455,11 @@ abstract public class MCP2515 : ArduinoDevice
         {
             LastReadyOn = DateTime.Now;
             Initialise();
+            monitorStateTimer.Start();
         }
         else
         {
-            
+            monitorStateTimer.Stop();
         }
     }
 

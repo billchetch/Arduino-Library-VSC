@@ -3,7 +3,7 @@ using System.Net.NetworkInformation;
 using System.Reflection.Metadata;
 using System.Text;
 using Chetch.Arduino.Boards;
-using Chetch.Arduino.Devices.Comms;
+using Chetch.Arduino.Devices.Comms.CAN;
 using Chetch.Messaging;
 using Chetch.Messaging.Attributes;
 using Microsoft.Extensions.Logging;
@@ -142,7 +142,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 sb = new StringBuilder();
                 foreach (var node in nodes)
                 {
-                    var mcp = node.MCPDevice;
+                    /*var mcp = node.MCPDevice;
                     if (mcp.IsReady)
                     {
                         sb.AppendFormat(" - Bus Message Count and Rate = {0} ... {1}mps", mcp.MessageCount, mcp.MessageRate);
@@ -175,8 +175,8 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     else
                     {
                         sb.Append("Not Ready");
-                    }
-                    response.AddValue(String.Format("N{0} {1}", node.MCPDevice.NodeID, node.NodeState), sb.ToString());
+                    }*/
+                    response.AddValue(String.Format("N{0} {1}", node.NodeID, node.NodeState), sb.ToString());
                     sb.Clear();
                 }    
                 return true;
@@ -189,10 +189,10 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 bm = getBusMonitor(arguments, 1);
                 
                 var nd = bm.GetNode(nodeID);
-                foreach(var s in nd.ErrorLog)
+                /*foreach(var s in nd.ErrorLog)
                 {
                     response.AddValue(String.Format("Log Entry {0}", n++), s.Summary);
-                }
+                }*/
                 return true;
 
             case COMMAND_INITIALISE_NODE:
@@ -212,7 +212,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 bm = getBusMonitor(arguments, 1);
                 //bm.RequestNodeStatus(nodeID); //get them all
                 if(nodeID != 0){
-                    MessageParser.Parse(response, bm.GetNode(nodeID).MCPDevice);
+                    MessageParser.Parse(response, bm.GetNode(nodeID).CANDevice);
                 }
                 return true;
 
@@ -255,13 +255,13 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                 sb = new StringBuilder();
                 foreach (var node in nodes)
                 {
-                    var mcp = node.MCPDevice;
-                    foreach(var kv in mcp.ErrorCounts)
+                    var mcp = node.CANDevice;
+                    /*foreach(var kv in mcp.ErrorCounts)
                     {
                         sb.AppendFormat("{0} = {1}", kv.Key.ToString(), kv.Value);
                         sb.AppendLine();
-                    }
-                    response.AddValue(String.Format("Node {0} Error Counts", node.MCPDevice.NodeID), sb.ToString());
+                    }*/
+                    response.AddValue(String.Format("Node {0} Error Counts", node.CANDevice.NodeID), sb.ToString());
                     sb.Clear();
                 }
 

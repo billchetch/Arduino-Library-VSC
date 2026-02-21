@@ -1,6 +1,6 @@
 using System;
 
-namespace Chetch.Arduino.Devices.Comms;
+namespace Chetch.Arduino.Devices.Comms.Serial;
 
 public class SerialPinSlave : SerialPin
 {

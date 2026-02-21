@@ -5,7 +5,8 @@ using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using Chetch.Arduino.Connections;
 using Chetch.Arduino.Devices;
-using Chetch.Arduino.Devices.Comms;
+using Chetch.Arduino.Devices.Comms.CAN;
+using Chetch.Arduino.Devices.Comms.Serial;
 using Chetch.Arduino.Devices.Displays;
 using Chetch.Messaging;
 using Chetch.Utilities;
@@ -57,7 +58,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
 
     public byte NodeID => MasterNode.NodeID;
 
-    public MCP2515 MCPDevice => MasterNode; //for interface compliance
+    public ICANDevice CANDevice => MasterNode; //for interface compliance
 
     public CANNodeState NodeState => MasterNode.State; //for interface compliance
 
@@ -120,7 +121,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     #endregion
 
     #region Fields
-    System.Timers.Timer monitorNodeStateTimer = new System.Timers.Timer();
+    
     #endregion
 
     #region Constructors
@@ -137,63 +138,72 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
             //Parse the message
             var message = eargs.Message;
             var canData = eargs.CanData;
-            switch (message.Type)
+
+            //determine if messsage is for the board or a particular device
+            bool injectMessage = true;
+            if(message.Sender == busNode.ID)
             {
-                case MessageType.STATUS_RESPONSE:
-                    if(message.Sender == busNode.ID)
-                    {
+                switch (message.Type)
+                {
+                    case MessageType.STATUS_RESPONSE:
                         message.Populate<byte, UInt32, byte, Int16>(canData);
-                    } 
-                    else if(message.Sender == busNode.MCPDevice.ID)
+                        break;
+
+                    default:
+                        //TODO:!!!
+                        break;    
+                }
+            } 
+            else if(busNode.HasDevice(message.Sender))
+            {
+                var device = busNode.GetDevice(message.Sender);
+                if(device is MCP2515)
+                {
+                    switch (message.Type)
                     {
-                        //Status Flags, Error Flags, errorCountTX, errorCountRX, errorCountFlags
-                        message.Populate<byte, byte, byte, byte, UInt16>(canData);
-                        message.Add(busNode.MCPDevice.ReportInterval, 0);
-                        message.Add(busNode.MCPDevice.NodeID, 1);
-                    } 
-                    else
-                    {
-                        //TODO: maybe seperate types here
-                        if (HasDevice(message.Sender))
-                        {
-                            var device = GetDevice(message.Sender);
-                            var template = ArduinoMessageMap.CreateMessageFor(device, message.Type);
-                            message.Populate(template, canData, 0);
-                        }
+                        case MessageType.STATUS_RESPONSE:
+                            message.Populate<byte, byte, byte, byte, UInt16>(canData);
+                            message.Add(device.ReportInterval, 0);
+                            message.Add(busNode.NodeID, 1);
+                            break;
+
+                        case MessageType.INITIALISE_RESPONSE:
+                            //Millis timestamp resolution and presence interval
+                            message.Populate<UInt32, byte, UInt16>(canData);
+                            break;
+
+                        case MessageType.COMMAND_RESPONSE:
+                            message.Populate<byte>(canData);
+                            break;
+
+                        case MessageType.ERROR:
+                            //Error Code, Error Data, Error Code Flags, MCP Error Flags
+                            message.Populate<byte, UInt32, UInt16, byte>(canData);
+                            message.Add(ArduinoBoard.ErrorCode.DEVICE_ERROR, 0); //To follow normal error message structure
+                            break;
+
+                        case MessageType.PRESENCE:
+                            //Nodemillis, Interval, Initial presence, Status Flags
+                            message.Populate<UInt32, UInt16, bool, byte>(canData);
+                            break;
                     }
-                    break;
-
-                case MessageType.INITIALISE_RESPONSE:
-                    //Millis timestamp resolution and presence interval
-                    message.Populate<UInt32, byte, UInt16>(canData);
-                    break;
-
-                case MessageType.COMMAND_RESPONSE:
-                    message.Populate<byte>(canData);
-                    break;
-
-                case MessageType.ERROR:
-                    //Error Code, Error Data, Error Code Flags, MCP Error Flags
-                    message.Populate<byte, UInt32, UInt16, byte>(canData);
-                    message.Add(ArduinoBoard.ErrorCode.DEVICE_ERROR, 0); //To follow normal error message structure
-                    break;
-
-                case MessageType.PRESENCE:
-                    //Nodemillis, Interval, Initial presence, Status Flags
-                    message.Populate<UInt32, UInt16, bool, byte>(canData);
-                    break;
-
-                case MessageType.DATA:
-                    if (HasDevice(message.Sender))
-                    {
-                        var device = GetDevice(message.Sender);
-                        var template = ArduinoMessageMap.CreateMessageFor(device, message.Type);
-                        message.Populate(template, canData, 0);
-                    }
-                    break;
+                }
+                else
+                {
+                    //Try and dynamically populate based on device attributes
+                    var template = ArduinoMessageMap.CreateMessageFor(device, message.Type);
+                    message.Populate(template, canData, 0);
+                }
+            }
+            else
+            {
+                injectMessage = false;
             }
 
-            busNode.IO.Inject(message);
+            if (injectMessage)
+            {
+                busNode.IO.Inject(message);
+            }
             
             //Fire received event
             BusMessageReceived?.Invoke(busNode, eargs);
@@ -209,7 +219,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
             NodeError?.Invoke(this, MasterNode.LastError);
         };
 
-        MasterNode.NodeStateChanged += (sender, eargs) =>
+        MasterNode.StateChanged += (sender, eargs) =>
         {
             StateChanges.Add(eargs);
             
@@ -222,6 +232,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
             double summedRate = 0.0;
             uint totalCount = 0;
             var allNodes = GetAllNodes();
+            /*
             foreach(var node in allNodes)
             {
                 summedRate += node.MCPDevice.UpdateMessageRate();
@@ -229,7 +240,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
             }
 
             String ioSummary = String.Format("Recv: {0}, Disp: {1}", IO.ToReceive, IO.ToDispatch);
-            ActivityLog.Add(new BusActivity(totalCount, summedRate, ioSummary));
+            ActivityLog.Add(new BusActivity(totalCount, summedRate, ioSummary));*/
         };
         
         //Add MasterNode to Board
@@ -240,57 +251,6 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
 
         //Add Display to Board
         //AddDevice(Display);
-
-        //Timers
-        RequestStatusTimer.Elapsed += (sender, eargs) =>
-        {
-            //var statusRequest = new ArduinoMessage(MessageType.STATUS_REQUEST);
-            foreach(var remoteNode in RemoteNodes.Values)
-            {
-                remoteNode.MCPDevice.RequestStatus();
-                remoteNode.MCPDevice.LastStatusRequest = DateTime.Now;
-            }
-            MasterNode.RequestStatus();
-            MasterNode.LastStatusRequest = DateTime.Now;
-        };
-    
-        monitorNodeStateTimer.AutoReset = true;
-        monitorNodeStateTimer.Interval = 1000;
-        monitorNodeStateTimer.Elapsed += (sender, eargs) =>
-        {
-            var allNodes = GetAllNodes();
-            foreach(var node in allNodes)
-            {
-                var mcpDev = node.MCPDevice;
-                double sinceLastMessage = (DateTime.Now - mcpDev.LastMessageOn).TotalMilliseconds;
-                if(mcpDev.State != CANNodeState.NOT_SET && mcpDev.PresenceInterval > 0 &&  sinceLastMessage > mcpDev.PresenceInterval + 100)
-                {
-                    mcpDev.State = CANNodeState.SILENT;
-                } 
-                else if(mcpDev.State == CANNodeState.RESPONDING)
-                {
-                    var timeSinceLastStatusRequest = (DateTime.Now - mcpDev.LastStatusRequest).TotalMilliseconds;
-                    if(timeSinceLastStatusRequest > 500 && mcpDev.LastStatusRequest > mcpDev.LastStatusResponse)
-                    {
-                        mcpDev.State = CANNodeState.TRANSMITTING;
-                    }
-                }
-            }
-        };
-
-        //Event Listeners
-        Ready += (sender, ready) =>
-        {
-            if (ready)
-            {
-                monitorNodeStateTimer.Start();
-                //Display.UpdateDisplay(1);
-            }
-            else
-            {
-                monitorNodeStateTimer.Stop();
-            }
-        };
     }    
 
     public CANBusMonitor(int remoteNodes, String sid = DEFAULT_BOARD_NAME) : this(sid)
@@ -315,11 +275,13 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
         {
             throw new ArgumentException(String.Format("Node {0} already added!", rnid));
         }
+
         remoteNode.IO = new MessageIO<ArduinoMessage>(0, 0); //Message IO with no throttling
         remoteNode.IO.MessageReceived += (sender, message) =>
         {
             try
             {
+
                 remoteNode.RouteMessage(message); 
             }
             catch (Exception e)
@@ -345,21 +307,16 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
             }
         };
         
-        remoteNode.NodeStateChanged += (sender, eargs) =>
+        remoteNode.CANDevice.StateChanged += (sender, eargs) =>
         {
             NodeStateChanged?.Invoke(sender, eargs);
         };
-
-        remoteNode.MCPDevice.Ready += (sender, ready) =>
-        {
-            NodeReady?.Invoke(remoteNode, ready);
-        };
-
-        remoteNode.MCPDevice.ErrorReceived += (sender, emsg) =>
-        {
-            NodeError?.Invoke(remoteNode, remoteNode.MCPDevice.LastError);
-        };
         
+        remoteNode.Ready += (sender, ready) =>
+        {
+            NodeReady?.Invoke(remoteNode, ready);    
+        };
+
         //Keep a list
         RemoteNodes[rnid] = remoteNode;
     }
@@ -395,6 +352,15 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
         {
             throw new ArgumentException(String.Format("There is no node with ID {0}", nodeID));
         }
+    }
+
+    public ICANBusNode GetRemoteNode(byte nodeID)
+    {
+        if (nodeID == MasterNode.NodeID)
+        {
+            throw new ArgumentException(String.Format("Node ID {0} is the master node", nodeID));
+        }
+        return GetNode(nodeID);    
     }
     #endregion
 

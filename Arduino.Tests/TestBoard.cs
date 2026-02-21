@@ -182,7 +182,7 @@ public sealed class TestBoard
             {
                 Thread.Sleep(1000);
             }
-            oled.DiplsayPreset(OLEDTextDisplay.DisplayPreset.HELLO_WORLD);
+            //oled.DiplsayPreset(OLEDTextDisplay.DisplayPreset.HELLO_WORLD);
         }
         catch (Exception e)
         {

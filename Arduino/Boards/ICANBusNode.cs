@@ -1,5 +1,5 @@
 using System;
-using Chetch.Arduino.Devices.Comms;
+using Chetch.Arduino.Devices.Comms.CAN;
 using Chetch.Arduino.Connections;
 using Chetch.Messaging;
 using XmppDotNet.Xmpp.MessageEvents;
@@ -36,29 +36,11 @@ public class CANNodeStateChange : System.EventArgs
     }
 }
 
-public interface ICANBusNode
+public interface ICANBusNode : IArduinoBoard
 {
-    byte ID { get; }
+    ICANDevice CANDevice { get; }
 
-    bool IsReady { get; }
+    byte NodeID => CANDevice.NodeID;
 
-    byte NodeID { get; }
-
-    CANNodeState NodeState {get; }
-
-    EventHandler<CANNodeStateChange>? NodeStateChanged { get; set; }
-
-    MCP2515 MCPDevice { get; }
-
-    IEnumerable<MCP2515.ErrorLogEntry> ErrorLog => MCPDevice.ErrorLog;
-
-    MessageIO<ArduinoMessage> IO { get; set; }
-
-    public bool RouteMessage(ArduinoMessage message);
-
-    IConnection? Connection {get; set; }
-
-    void Begin();
-
-    Task End();
+    CANNodeState NodeState => CANDevice.State;
 }

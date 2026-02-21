@@ -1,7 +1,7 @@
 using System;
 using Chetch.Messaging;
 
-namespace Chetch.Arduino.Devices.Comms;
+namespace Chetch.Arduino.Devices.Comms.Serial;
 
 abstract public class SerialPin : ArduinoDevice
 {

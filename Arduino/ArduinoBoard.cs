@@ -9,7 +9,7 @@ using System.Collections.Specialized;
 
 namespace Chetch.Arduino;
 
-public class ArduinoBoard : IMessageUpdatableObject
+public class ArduinoBoard : IMessageUpdatableObject, IArduinoBoard
 {
     #region Constants
     public const byte DEFAULT_BOARD_ID = 1;
@@ -546,6 +546,25 @@ public class ArduinoBoard : IMessageUpdatableObject
 
         devices[device.ID] = device;
         device.Board = this;
+    }
+
+    public void InsertDevice(ArduinoDevice device)
+    {
+        if (!HasDevice(device.ID))
+        {
+            AddDevice(device);
+        }
+        else
+        {
+            List<ArduinoDevice> devs = devices.Values.ToList();
+            foreach(var dev in devs)
+            {
+                if(dev.ID >= device.ID)dev.ID++;
+            }
+            devices.Clear();
+            devs.Add(device);
+            AddDevices(devs);
+        }
     }
 
     public void AddDevices(ICollection<ArduinoDevice> devices)
