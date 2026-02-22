@@ -8,14 +8,43 @@ public class SerialPinMaster : SerialPin
     public const String SPIN_MASTER_SID = "spinm";
     #endregion
 
-    public SerialPinMaster(string sid, string? name = null) : base(sid, name)
+    public SerialPinMaster(string sid = SPIN_MASTER_SID, string? name = null) : base(sid, name)
     {
     }
 
-    public SerialPinMaster(String? name = null) : this(SPIN_MASTER_SID, name){}
-
-    public void Send(byte b2s)
+    public void Send(byte[] data)
     {
-        SendCommand(DeviceCommand.SEND, b2s);
+        if(data.Length != BufferSize)
+        {
+            throw new Exception("Data and buffer are not equal");
+        }
+        SendCommand(DeviceCommand.SEND, data);
+    }
+
+    public void Send(DeviceCommand command, params Object[] arguments)
+    {
+        List<byte> data = new List<byte>();
+        data.Add((byte)command);
+
+        foreach(var arg in arguments)
+        {
+            var bytes = Chetch.Utilities.Convert.ToBytes(arg);
+            if(data.Count + bytes.Length > BufferSize)
+            {
+                break;
+            } 
+            else
+            {
+                data.AddRange(bytes);
+            }
+        }
+
+        //finally we pad with 0s
+        for(int i = data.Count; i < BufferSize; i++)
+        {
+            data.Add(0);
+        }
+
+        Send(data.ToArray());
     }
 }

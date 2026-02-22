@@ -10,8 +10,9 @@ public class GenericDisplay : ArduinoDevice
 
     #region Classes and enums
 
-    public enum RefreshRate
+    public enum RefreshRate : Int16
     {
+        NOT_SET = -1,
         NO_REFRESH = 0,
         REFRESH_1HZ = 1000,
         REFRESH_10HZ = 100,
@@ -49,6 +50,24 @@ public class GenericDisplay : ArduinoDevice
     public GenericDisplay(String? name = null) : this(GENERIC_DISPLAY_SID, name){}
     #endregion
 
+
+    #region Messaging
+    /*public override bool AssignMessageValue(PropertyInfo propertyInfo, object propertyValue, ArduinoMessage message)
+    {
+        if (propertyInfo.Name == "RefreshHz")
+        {
+            if (RefreshHz == RefreshRate.NOT_SET || (SwitchMode)propertyValue == Mode)
+            {
+                base.AssignMessageValue(propertyInfo, propertyValue, message);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }*/
+    #endregion
 
     public void DiplsayPreset(DisplayPreset preset, UInt16 displayAndLockFor = 0)
     {

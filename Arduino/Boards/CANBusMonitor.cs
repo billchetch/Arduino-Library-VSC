@@ -243,7 +243,8 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
             ActivityLog.Add(new BusActivity(totalCount, summedRate, ioSummary));*/
         };
         
-        //Ensure this is set so that comms remain open between this computer and the bus monitor ont eh ardurino
+        //Ensure this is set so that comms remain open between this computer and the bus monitor ont eh arduino
+        //Arduino code will assume long absence of status request as disconnection of computer
         MasterNode.RequestStatusInterval = 5000; 
 
         //Add MasterNode to Board
