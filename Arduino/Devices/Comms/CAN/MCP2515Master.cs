@@ -90,7 +90,8 @@ public class MCP2515Master : MCP2515
 
     #region Constructors
     public MCP2515Master(byte nodeID = 1, string? name = null) : base(nodeID, name)
-    {}
+    {
+    }
     #endregion
 
     #region Methods

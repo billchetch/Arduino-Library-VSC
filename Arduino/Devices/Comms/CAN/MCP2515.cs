@@ -262,10 +262,9 @@ abstract public class MCP2515 : ArduinoDevice, ICANDevice
 
     public DateTime LastPresenceOn { get; internal set; }
 
-    public DateTime LastStatusRequest { get; internal set; }
+    public int RequestStatusInterval { get; set; } = 5000;
 
-    public DateTime LastStatusResponse { get; internal set; }
-
+    
     public DateTime LastReadyOn { get; internal set; }
 
     public uint MessageCount { get; internal set; } = 0;
@@ -328,9 +327,11 @@ abstract public class MCP2515 : ArduinoDevice, ICANDevice
                 }
             }
             
-            //TODO!!!
-            //RequestStatus();
-            //LastStatusRequest = DateTime.Now;
+            //Periodic status requests
+            if(RequestStatusInterval > 0 && (DateTime.Now - LastStatusRequest).TotalMilliseconds >= RequestStatusInterval)
+            {
+               RequestStatus(); 
+            }
         };
     }
     #endregion
@@ -405,7 +406,6 @@ abstract public class MCP2515 : ArduinoDevice, ICANDevice
                 break;
 
             case MessageType.STATUS_RESPONSE:
-                LastStatusResponse = DateTime.Now;
                 State = CANNodeState.RESPONDING;
                 break;
 

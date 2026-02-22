@@ -16,9 +16,9 @@ public class WaterMaker : CANBusNode
     public enum OperationalMode : byte
     {
         NOT_SET,
-        MAKE_WATER = 6,
-        EXPEL_AIR = 7,
-        RINSE = 8,
+        MAKE_WATER,
+        EXPEL_AIR,
+        RINSE,
     }
     #endregion
 
@@ -30,7 +30,7 @@ public class WaterMaker : CANBusNode
     public GenericDisplay Display { get; } = new GenericDisplay();
 
     #region Inputs
-    public SelectorSwitch ModeSelector { get; } = new SelectorSwitch("mode");
+    public SelectorSwitch<OperationalMode> ModeSelector { get; } = new SelectorSwitch<OperationalMode>("opmode");
 
     public PassiveSwitch StartButton { get; } = new PassiveSwitch("start");
 
@@ -68,11 +68,11 @@ public class WaterMaker : CANBusNode
         //Inputs
         AddDevice(ModeSelector);
         AddDevice(StartButton);
-        /*AddDevice(LPS);
+        AddDevice(LPS);
         AddDevice(HPS);
 
         //Outputs
-        AddDevice(SaltWaterValve);
+        /*AddDevice(SaltWaterValve);
         AddDevice(FreshWaterValve);
         AddDevice(FeederPump);
         AddDevice(PressurePump);*/

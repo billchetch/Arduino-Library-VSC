@@ -43,6 +43,7 @@ abstract public class SwitchDevice : ArduinoDevice
 
         internal set
         {
+            Console.WriteLine("--- {0}: Pin state from {1} to {2} with on state={3}", SID, pinState, value, OnState);
             if(value != pinState)
             {
                 pinState = value;
@@ -73,7 +74,7 @@ abstract public class SwitchDevice : ArduinoDevice
 
     #region Constructors
     public SwitchDevice(byte id, String sid, String? name = null) : base(id, sid, name)
-    { }
+    {}
     
     public SwitchDevice(String sid, String? name = null) : base(sid, name)
     {}
@@ -102,7 +103,13 @@ abstract public class SwitchDevice : ArduinoDevice
         }
         else
         {
-            return base.AssignMessageValue(propertyInfo, propertyValue, message);
+
+            bool assigned = base.AssignMessageValue(propertyInfo, propertyValue, message);
+            if(propertyInfo.Name == "OnState")
+            {
+                pinState = !OnState; //ensure pin is in offstate
+            }
+            return assigned;
         }
 
     }

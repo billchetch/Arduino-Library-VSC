@@ -105,6 +105,11 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
 
     virtual public bool StatusRequested => statusRequested;
 
+    public DateTime LastStatusRequest { get; private set; }
+
+    public DateTime LastStatusResponse { get; private set; }
+
+
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 0)]
     [ArduinoMessageMap(Messaging.MessageType.COMMAND_RESPONSE, 0)]
     public Int16 ReportInterval { get; set; } = DEFAULT_REPORT_INTEVAL;
@@ -175,6 +180,7 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
             case MessageType.STATUS_RESPONSE:
                 bool changed = !statusResponseReceived;
                 statusResponseReceived = true;
+                LastStatusResponse = DateTime.Now;
                 updatedProperties = ArduinoMessageMap.AssignMessageValues(this, message);
                 if (changed)
                 {
@@ -235,9 +241,10 @@ abstract public class ArduinoDevice : IMessageUpdatableObject
     public void RequestStatus()
     {
         var msg = new ArduinoMessage(MessageType.STATUS_REQUEST);
-        Console.WriteLine("---- Device {0} requesting status...", UID);
+        //Console.WriteLine("---- Device {0} requesting status...", UID);
         SendMessage(msg);
         statusRequested = true; //flag that this has been requested
+        LastStatusRequest = DateTime.Now;
     }
 
     public void Ping()
