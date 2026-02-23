@@ -43,7 +43,6 @@ abstract public class SwitchDevice : ArduinoDevice
 
         internal set
         {
-            Console.WriteLine("--- {0}: Pin state from {1} to {2} with on state={3}", SID, pinState, value, OnState);
             if(value != pinState)
             {
                 pinState = value;

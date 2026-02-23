@@ -72,10 +72,10 @@ public class WaterMaker : CANBusNode
         AddDevice(HPS);
 
         //Outputs
-        /*AddDevice(SaltWaterValve);
+        AddDevice(SaltWaterValve);
         AddDevice(FreshWaterValve);
         AddDevice(FeederPump);
-        AddDevice(PressurePump);*/
+        AddDevice(PressurePump);
         
     }
     #endregion
