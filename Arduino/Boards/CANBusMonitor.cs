@@ -26,6 +26,12 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     #endregion
 
     #region Classes and Enums
+    public enum SPINCommand : byte
+    {
+        MCP_INDICATE = 1,
+        MCP_INDICATE_DIRECT = 2,
+        MCP_DISPLAY = 3,
+    }
     public class BusActivity
     {
         public DateTime Created { get; }
@@ -402,78 +408,18 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     }
     #endregion
 
-    #region NMessaging
-    public void PingNode(byte nodeID)
+    #region SP NMessaging
+    public void SPINSendCommand(byte nodeID, byte command)
     {
-        /*if(nodeID == MasterNode.NodeID || nodeID == 0)
-        {
-            MasterNode.Ping();
-        }
-        if(nodeID != MasterNode.NodeID)
-        {
-            
-        }*/
-        var node = GetNode(nodeID);
-        //node.CANDevice.Ping();
+        byte[] data = new byte[2];
+        data[0] = nodeID;
+        data[1] = command;
+        SerialPin.Send(data);
     }
 
-    public void InitialiseNode(byte nodeID)
+    public void SPINSendCommand(byte nodeID, SPINCommand command)
     {
-        if(nodeID == MasterNode.NodeID || nodeID == 0)
-        {
-            MasterNode.Initialise();
-        }
-        if(nodeID != MasterNode.NodeID)
-        {
-            MasterNode.SendBusMessage(nodeID, MessageType.INITIALISE);
-        }
-    }
-
-    public void ResetNode(byte nodeID, MCP2515.ResetRegime regime = MCP2515.ResetRegime.FULL_RESET)
-    {
-        var message = new ArduinoMessage(MessageType.RESET);
-        message.Add((byte)regime);
-
-        if(nodeID == MasterNode.NodeID || nodeID == 0)
-        {
-            MasterNode.SendMessage(message);
-        }
-        if(nodeID != MasterNode.NodeID)
-        {
-            MasterNode.SendBusMessage(nodeID, message);
-        }
-    }
-
-    public void RaiseNodeError(byte nodeID, MCP2515.MCP2515ErrorCode ecode, UInt32 edata = 0)
-    {
-        RaiseNodeError(nodeID, (byte)ecode, edata);
-    }
-
-    public void RaiseNodeError(byte nodeID, byte ecode, UInt32 edata = 0)
-    {
-        var message = new ArduinoMessage(MessageType.ERROR_TEST);
-        message.Add(ecode);
-        message.Add(edata);
-        if(nodeID == MasterNode.NodeID || nodeID == 0)
-        {
-            MasterNode.SendMessage(message);
-        }
-        if(nodeID != MasterNode.NodeID)
-        {
-            MasterNode.SendBusMessage(nodeID, message);
-        }
-    }
-
-    public void FinaliseNode(byte nodeID)
-    {
-        if(nodeID == MasterNode.NodeID || nodeID == 0)
-        {
-            MasterNode.Finalise();
-        }
-        if(nodeID != MasterNode.NodeID)
-        {
-            MasterNode.SendBusMessage(nodeID, MessageType.FINALISE);
-        }
+        SPINSendCommand(nodeID, (byte)command);
     }
     #endregion
 }

@@ -222,7 +222,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     nodeID = System.Convert.ToByte(arguments[0].ToString());
                 }
                 bm = getBusMonitor(arguments, 1);
-                bm.PingNode(nodeID);
+                bm.GetNode(nodeID).CANDevice.Ping();
                 return true;
 
             case COMMAND_RESET_NODE:
@@ -231,7 +231,6 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     nodeID = System.Convert.ToByte(arguments[0].ToString());
                 }
                 bm = getBusMonitor(arguments, 1);
-                bm.ResetNode(nodeID, MCP2515.ResetRegime.FULL_RESET);
                 return true;
 
             case COMMAND_RAISE_ERROR:
@@ -246,7 +245,6 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
                     ecode = (MCP2515.MCP2515ErrorCode)System.Convert.ToByte(arguments[1].ToString());
                 }        
                 bm = getBusMonitor(arguments, arguments.Count > 1 ? 2 : 1);
-                bm.RaiseNodeError(nodeID, ecode);
                 return true;
 
             case COMMAND_ERROR_COUNTS:
