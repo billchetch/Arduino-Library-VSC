@@ -1,4 +1,5 @@
 using System;
+using System.Reflection;
 
 namespace Chetch.Arduino.Devices.Displays;
 
@@ -35,7 +36,7 @@ public class GenericDisplay : ArduinoDevice
     public UInt16 Cols { get; internal set; } = 0;
     
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 3)]
-    public RefreshRate RefreshHz { get; internal set; } = RefreshRate.NO_REFRESH;
+    public RefreshRate RefreshHz { get; internal set; } = RefreshRate.NOT_SET;
     #endregion
 
 
@@ -52,9 +53,9 @@ public class GenericDisplay : ArduinoDevice
 
 
     #region Messaging
-    /*public override bool AssignMessageValue(PropertyInfo propertyInfo, object propertyValue, ArduinoMessage message)
+    public override bool AssignMessageValue(PropertyInfo propertyInfo, object propertyValue, ArduinoMessage message)
     {
-        if (propertyInfo.Name == "RefreshHz")
+        /*if (propertyInfo.Name == "RefreshHz")
         {
             if (RefreshHz == RefreshRate.NOT_SET || (SwitchMode)propertyValue == Mode)
             {
@@ -65,8 +66,14 @@ public class GenericDisplay : ArduinoDevice
             {
                 return false;
             }
-        }
-    }*/
+        }*/
+        return base.AssignMessageValue(propertyInfo, propertyValue, message);
+    }
+
+    public override ArduinoMessageMap.UpdatedProperties HandleMessage(ArduinoMessage message)
+    {
+        return base.HandleMessage(message);
+    }
     #endregion
 
     public void DiplsayPreset(DisplayPreset preset, UInt16 displayAndLockFor = 0)

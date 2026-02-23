@@ -191,8 +191,14 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
                 else
                 {
                     //Try and dynamically populate based on device attributes
-                    var template = ArduinoMessageMap.CreateMessageFor(device, message.Type);
-                    message.Populate(template, canData, 0);
+                    try{
+                        var template = ArduinoMessageMap.CreateMessageFor(device, message.Type);
+                        message.Populate(template, canData, 0);
+                    }
+                    catch (Exception e)
+                    {
+                        throw;
+                    }
                 }
             }
             else
