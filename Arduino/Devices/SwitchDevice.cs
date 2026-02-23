@@ -56,8 +56,6 @@ abstract public class SwitchDevice : ArduinoDevice
     
     [ArduinoMessageMap(Messaging.MessageType.DATA, 1)] //Operational value (will change depending on switch activity)
     public byte Pin { get; internal set; } = 0;
-
-    //NOTE: if the switch nature was reversed (i.e. being 'on' was a low pin) then this would be different. for now this is just notatin.
     public bool IsOn => PinState == OnState; 
     public bool IsOff => !IsOn; 
     #endregion
