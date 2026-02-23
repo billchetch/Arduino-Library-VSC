@@ -3,7 +3,7 @@ using Chetch.Arduino.Boards;
 
 namespace Chetch.Arduino.Devices.Comms.CAN;
 
-public interface ICANDevice
+public interface ICANDevice : IArduinoDevice
 {
     byte NodeID { get; }
 

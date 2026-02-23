@@ -80,10 +80,10 @@ public class WaterMaker : CANBusNode
     }
     #endregion
 
+    #region Methods
+    #endregion
+
     #region Messaging
-    public override bool RouteMessage(ArduinoMessage message)
-    {
-        return base.RouteMessage(message);
-    }
+    
     #endregion
 }

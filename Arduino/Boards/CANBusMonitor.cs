@@ -402,22 +402,19 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     }
     #endregion
 
-    #region Messaging
-    public override bool RouteMessage(ArduinoMessage message)
-    {
-        return base.RouteMessage(message);
-    }
-
+    #region NMessaging
     public void PingNode(byte nodeID)
     {
-        if(nodeID == MasterNode.NodeID || nodeID == 0)
+        /*if(nodeID == MasterNode.NodeID || nodeID == 0)
         {
             MasterNode.Ping();
         }
         if(nodeID != MasterNode.NodeID)
         {
-            MasterNode.SendBusMessage(nodeID, MessageType.PING);
-        }
+            
+        }*/
+        var node = GetNode(nodeID);
+        //node.CANDevice.Ping();
     }
 
     public void InitialiseNode(byte nodeID)
