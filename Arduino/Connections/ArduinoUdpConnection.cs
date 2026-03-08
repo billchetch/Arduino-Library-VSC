@@ -62,7 +62,7 @@ public class ArduinoUdpConnection : IConnection
                     UdpReceiveResult result = await client.ReceiveAsync(ctkSource.Token);
                     if(result.Buffer.Length > 0)
                     {
-                        Console.WriteLine("Received {0} bytes!", result.Buffer.Length);
+                        //Console.WriteLine("Received {0} bytes!", result.Buffer.Length);
                         DataReceived?.Invoke(this, result.Buffer);
                     }
                 } while(!ctkSource.Token.IsCancellationRequested);
