@@ -17,7 +17,7 @@ public class TDSMeter : AnalogSampler
 
     private float ppm = 0.0f;
 
-    EventHandler<double>? PPMAvailable;
+    public EventHandler<double>? PPMAvailable;
 
     public TDSMeter(string sid, string? name = null) : base(sid, name)
     {}
