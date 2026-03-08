@@ -18,7 +18,7 @@ public class AnalogSampler : ArduinoDevice
         internal set
         {
             meanValue = value;
-            SampleComplete?.Invoke(this, meanValue);
+            SamplingComplete?.Invoke(this, meanValue);
         }
     }
 
@@ -30,7 +30,7 @@ public class AnalogSampler : ArduinoDevice
     #endregion
 
     #region Events
-    public EventHandler<double>? SampleComplete;
+    public EventHandler<double>? SamplingComplete;
     #endregion
 
     #region Fields
