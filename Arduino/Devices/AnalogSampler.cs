@@ -21,12 +21,6 @@ public class AnalogSampler : ArduinoDevice
             SamplingComplete?.Invoke(this, meanValue);
         }
     }
-
-    [ArduinoMessageMap(Messaging.MessageType.DATA, 1)] //Mean sampled value
-    public UInt16 MinValue { get; internal set; } = 0;
-
-    [ArduinoMessageMap(Messaging.MessageType.DATA, 2)] //Mean sampled value
-    public UInt16 MaxValue { get; internal set; } = 0;
     #endregion
 
     #region Events
@@ -43,5 +37,8 @@ public class AnalogSampler : ArduinoDevice
 
     public AnalogSampler(string sid, string? name = null) : base(sid, name)
     {}
+    #endregion
+
+    #region Methods
     #endregion
 }
