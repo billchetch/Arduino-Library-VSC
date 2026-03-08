@@ -1,21 +1,24 @@
 using System;
 using System.Net.Sockets;
-using System.Text;
+using System.Net;
+
 
 namespace Chetch.Arduino.Connections;
 
-public class ArduinoTcpConnection : IConnection
+public class ArduinoUdpConnection : IConnection
 {
     #region Constants
-    const int REMOTE_PORT = 80;
+    const int REMOTE_PORT = 18800;
+    const int LOCAL_PORT = 42000; //for stability we fix the port
+
     #endregion
 
     #region Properties
-    public bool IsConnected => client == null ? false : client.Connected;
-
     public String IP { get; set; } = String.Empty;
 
     public int Port { get; set; } = REMOTE_PORT;
+
+    public bool IsConnected => client == null ? false : connected;
     #endregion
 
     #region Events
@@ -24,15 +27,16 @@ public class ArduinoTcpConnection : IConnection
     #endregion
 
     #region Fields
-    TcpClient? client;
+    UdpClient? client;
     Task? readTask; 
 
     CancellationTokenSource ctkSource = new CancellationTokenSource();
 
+    bool connected = false;
     #endregion
 
     #region Constructors
-    public ArduinoTcpConnection(String ipAddress, int port = REMOTE_PORT)
+    public ArduinoUdpConnection(String ipAddress, int port = REMOTE_PORT)
     {
         IP = ipAddress;
         Port = port;
@@ -42,37 +46,30 @@ public class ArduinoTcpConnection : IConnection
     #region Methods
     public void Connect()
     {
-        //Console.WriteLine("Connecting to: {0}:{1}", IPAddress, Port);
+        IPEndPoint localEP = new IPEndPoint(IPAddress.Any, LOCAL_PORT);
         if(client == null)
         {
-            client = new TcpClient();
+            client = new UdpClient(localEP);
         }
         ctkSource = new CancellationTokenSource();
         client.Connect(IP, Port);
-        client.NoDelay = true; //To avoid prediction caching
-
-        readTask = Task.Run(async ()=>{
-            //Console.WriteLine("Firing up read task");
-            byte[] buffer = new byte[1024];
-            var stream = client.GetStream();
-            do
+        connected = true;
+        readTask = Task.Run(async () => {
+            try
             {
-                try
+                do
                 {
-                    int k  = await stream.ReadAsync(buffer, 0, buffer.Length, ctkSource.Token);
-                    if(k > 0)
+                    UdpReceiveResult result = await client.ReceiveAsync(ctkSource.Token);
+                    if(result.Buffer.Length > 0)
                     {
-                        byte[] data = new byte[k];
-                        Array.Copy(buffer, data, k);
-                        DataReceived?.Invoke(this, data);
+                        Console.WriteLine("Received {0} bytes!", result.Buffer.Length);
+                        DataReceived?.Invoke(this, result.Buffer);
                     }
-                } catch {}
-            }
-            while(!ctkSource.Token.IsCancellationRequested);
+                } while(!ctkSource.Token.IsCancellationRequested);
+            } catch {}
 
-            
         }, ctkSource.Token);
-    
+
         Connected?.Invoke(this, IsConnected);
     }
 
@@ -80,7 +77,11 @@ public class ArduinoTcpConnection : IConnection
     {
         var task = Task.Run(async () =>
         {
-            await DisconnectAsync();
+            if(readTask != null){
+                ctkSource.Cancel();
+                await readTask;
+            }
+            connected = false;
         });
 
         for(int i = 0; i < 10; i++)
@@ -88,24 +89,15 @@ public class ArduinoTcpConnection : IConnection
             if(task.IsCompleted)break;
             Thread.Sleep(10);
         }
-        Connected?.Invoke(this, IsConnected);
-    }
-
-    public async Task DisconnectAsync()
-    {
-        if(readTask != null){
-            ctkSource.Cancel();
-            await readTask;
-        }
 
         if(client != null)
         {
-            var stream = client.GetStream();
-            stream.Close();
             client.Close();
             client.Dispose();
             client = null;
         }
+        
+        Connected?.Invoke(this, IsConnected);
     }
 
     public void Reconnect()
@@ -123,15 +115,8 @@ public class ArduinoTcpConnection : IConnection
         }
         if(client != null)
         {
-            var stream = client.GetStream();
-            stream.Write(data, 0, data.Length);
-            //stream.Flush();
+            client.Send(data, data.Length);
         }
-    }
-
-    public void Send(String s)
-    {
-        SendData(Encoding.ASCII.GetBytes(s));
     }
     #endregion
 }

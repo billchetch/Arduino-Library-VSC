@@ -48,7 +48,7 @@ abstract public class SwitchDevice : ArduinoDevice
                 pinState = value;
                 if(IsReady && Switched != null)
                 {
-                    Switched.Invoke(this, pinState);
+                    Switched.Invoke(this, IsOn);
                 }
             }
         }

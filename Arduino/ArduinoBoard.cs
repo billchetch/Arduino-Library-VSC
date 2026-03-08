@@ -20,11 +20,9 @@ public class ArduinoBoard : IMessageUpdatableObject, IArduinoBoard
 
     public const MessageEncoding DEFAULT_MESSAGE_ENCODING = MessageEncoding.BYTES_ARRAY;
 
-    public const int MAX_FRAME_PAYLOAD_SIZE = 50;
-
     public const int MESSAGE_OUT_INTERVAL = 10; //ensures a minimal interval between sending messages
 
-    public const int REQUEST_STATUS_TIMER_INTERVAL = 15; //in secs
+    public const int DEFAULT_REQUEST_STATUS_TIMER_INTERVAL = 15; //in secs
     #endregion
 
     #region Classes and Enums
@@ -194,7 +192,7 @@ public class ArduinoBoard : IMessageUpdatableObject, IArduinoBoard
 
     public String MessageSummary => IsReady && io.LastMessageReceived != null ? String.Format("Received: {0} {1}s ago", io.LastMessageReceived.Type, Math.Round((DateTime.Now - io.LastMessageReceived.Created).TotalSeconds, 1)) : "No messages received";
 
-    protected System.Timers.Timer RequestStatusTimer { get; } = new System.Timers.Timer();
+    public System.Timers.Timer RequestStatusTimer { get; } = new System.Timers.Timer();
     #endregion
 
     #region Fields
@@ -217,10 +215,10 @@ public class ArduinoBoard : IMessageUpdatableObject, IArduinoBoard
         //Configure request status timer, this effectively pings the board if no message has been
         //received for some period .. starts based on board being ready or not (see OnReady)
         RequestStatusTimer.AutoReset = true;
-        RequestStatusTimer.Interval = REQUEST_STATUS_TIMER_INTERVAL * 1000;
+        RequestStatusTimer.Interval = DEFAULT_REQUEST_STATUS_TIMER_INTERVAL * 1000;
         RequestStatusTimer.Elapsed += (sender, eargs) =>
         {
-            if (IsReady && io.LastMessageReceived.Created != default && (DateTime.Now - io.LastMessageReceived.Created).TotalSeconds > REQUEST_STATUS_TIMER_INTERVAL)
+            if (IsReady && io.LastMessageReceived.Created != default && (DateTime.Now - io.LastMessageReceived.Created).TotalMilliseconds >= RequestStatusTimer.Interval)
             {
                 try
                 {
