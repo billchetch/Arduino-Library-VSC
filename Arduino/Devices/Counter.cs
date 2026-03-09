@@ -6,13 +6,13 @@ public class Counter : ArduinoDevice
 {
     #region Properties
     [ArduinoMessageMap(Messaging.MessageType.STATUS_RESPONSE, 1)] //Because 0 is taken by report interval value
-    public UInt32 AssignValuesInterval { get; } = 0;
+    public UInt32 AssignValuesInterval { get; internal set; } = 0;
 
     [ArduinoMessageMap(Messaging.MessageType.DATA, 0)] //Because 0 is taken by report interval value
-    public UInt32 Count { get; } = 0;
+    public UInt32 Count { get; internal set; } = 0;
 
     [ArduinoMessageMap(Messaging.MessageType.DATA, 1)] //Because 0 is taken by report interval value
-    public float Hz { get; } = 0.0f;
+    public float Hz { get; internal set; } = 0.0f;
 
     #endregion
 
