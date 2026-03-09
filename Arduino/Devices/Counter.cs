@@ -23,16 +23,24 @@ public class Counter : ArduinoDevice
 
     #region Constructors
     public Counter(String sid, String? name = null) : base(sid, name)
-    {
+    {}
+    #endregion
 
-        Updated += (sender, updatedProps) =>
+    #region Messaging
+    override public ArduinoMessageMap.UpdatedProperties HandleMessage(ArduinoMessage message)
+    {
+        var updatedProperties = base.HandleMessage(message);
+        bool countUpdated = ContainsUpdatedProperty(updatedProperties, "Count", "Hz");
+        if (countUpdated)
         {
-            bool countUpdated = ContainsUpdatedProperty(updatedProps, "Count", "Hz");
-            if (countUpdated)
-            {
-                CountUpdated?.Invoke(this, Count);
-            }
-        };
+            OnCountUpdated();
+        }
+        return updatedProperties;
+    }
+
+    virtual protected void OnCountUpdated()
+    {
+        CountUpdated?.Invoke(this, Count);
     }
     #endregion
 }
