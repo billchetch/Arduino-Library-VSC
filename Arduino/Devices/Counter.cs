@@ -1,4 +1,5 @@
 using System;
+using XmppDotNet.Xmpp.Client;
 
 namespace Chetch.Arduino.Devices;
 
@@ -16,13 +17,21 @@ public class Counter : ArduinoDevice
 
     #endregion
 
+    #region Events
+    public EventHandler<UInt32>? CountUpdated;
+    #endregion
+
     #region Constructors
     public Counter(String sid, String? name = null) : base(sid, name)
     {
 
         Updated += (sender, updatedProps) =>
         {
-            Console.WriteLine("Updated!");
+            bool countUpdated = ContainsUpdatedProperty(updatedProps, "Count", "Hz");
+            if (countUpdated)
+            {
+                CountUpdated?.Invoke(this, Count);
+            }
         };
     }
     #endregion

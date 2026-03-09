@@ -170,6 +170,25 @@ abstract public class ArduinoDevice : IMessageUpdatableObject, IArduinoDevice
 
         return true;
     }
+
+    protected bool ContainsUpdatedProperty(ArduinoMessageMap.UpdatedProperties updatedProperties, params String[] propertyNames)
+    {
+        if(updatedProperties.Count > 0 && propertyNames.Length > 0)
+        {
+            foreach(var propInfo in updatedProperties.Properties)
+            {
+                if (propertyNames.Contains(propInfo.Name))
+                {
+                    return true;
+                }
+            }
+            return false;
+        } 
+        else
+        {
+            return false;   
+        }
+    }
     
     public virtual ArduinoMessageMap.UpdatedProperties HandleMessage(ArduinoMessage message)
     {
