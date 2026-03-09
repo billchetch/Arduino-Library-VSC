@@ -8,6 +8,10 @@ public class FlowMeter : Counter
 
     [ArduinoMessageMap(Messaging.MessageType.DATA, 2)] //Mean sampled value    
     public float FlowRate {get; internal set; }
+
+    public float LPM => FlowRate * 0.06f; //liters per minute
+
+    public float LPS => FlowRate / 1000.0f; //liters per minute
     #endregion
 
     #region Events
