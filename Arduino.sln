@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Messaging", "..\Messaging\M
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Arduino.Tests", "Arduino.Tests\Arduino.Tests.csproj", "{47E7676E-1D82-45B5-80BA-AC37B1C6C537}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Bluetooth", "..\Bluetooth\Bluetooth\Bluetooth.csproj", "{8B2990E8-77BA-4068-A11E-F1EA087BF007}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -48,5 +50,9 @@ Global
 		{47E7676E-1D82-45B5-80BA-AC37B1C6C537}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{47E7676E-1D82-45B5-80BA-AC37B1C6C537}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{47E7676E-1D82-45B5-80BA-AC37B1C6C537}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8B2990E8-77BA-4068-A11E-F1EA087BF007}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8B2990E8-77BA-4068-A11E-F1EA087BF007}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8B2990E8-77BA-4068-A11E-F1EA087BF007}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8B2990E8-77BA-4068-A11E-F1EA087BF007}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

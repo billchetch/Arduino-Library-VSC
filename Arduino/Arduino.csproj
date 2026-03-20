@@ -8,6 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="../../Bluetooth/Bluetooth/Bluetooth.csproj" />
     <ProjectReference Include="../../ChetchXMPP/ChetchXMPP/ChetchXMPP.csproj" />
     <ProjectReference Include="../../Database/Database/Database.csproj" />
     <ProjectReference Include="../../Utilities/Utilities/Utilities.csproj" />
