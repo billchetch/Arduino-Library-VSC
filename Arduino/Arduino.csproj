@@ -15,6 +15,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Devices/Temperature/" />
     <Folder Include="Devices/Water/" />
   </ItemGroup>
 
