@@ -4,6 +4,11 @@ using Chetch.Bluetooth;
 
 namespace Chetch.Arduino.Connections;
 
+/// <summary>
+/// NOTE: Currently uses the CoreBluetoothManager class which was designed for accessing Mac OS core bluetooth functionality.
+/// See CoreBluetoothManager.cs for more info.
+/// </summary>
+
 public class ArduinoBLEConnection : IConnection
 {
     public bool IsConnected => cbm.IsConnected && cbm.IsReady;
