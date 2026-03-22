@@ -7,7 +7,6 @@ using Chetch.Arduino.Connections;
 using Chetch.Arduino.Devices;
 using Chetch.Arduino.Devices.Comms.CAN;
 using Chetch.Arduino.Devices.Comms.Serial;
-using Chetch.Arduino.Devices.Displays;
 using Chetch.Messaging;
 using Chetch.Utilities;
 using Microsoft.Extensions.Logging;
@@ -60,8 +59,6 @@ public class CANBusMaster : ArduinoBoard, ICANBusNode
     public MCP2515Monitor MonitorNode { get; } = new MCP2515Monitor(MASTER_NODE_ID);
 
     public SerialPinMaster SerialPin { get; } = new SerialPinMaster();
-
-    public GenericDisplay Display { get; } = new GenericDisplay();
 
     public byte NodeID => MonitorNode.NodeID;
 
@@ -265,9 +262,6 @@ public class CANBusMaster : ArduinoBoard, ICANBusNode
 
         //Add SerialPin to Board
         AddDevice(SerialPin);
-
-        //Add Display to Board
-        //AddDevice(Display);
     }    
 
     public CANBusMaster(int remoteNodes, String sid = DEFAULT_BOARD_NAME) : this(sid)
@@ -397,7 +391,6 @@ public class CANBusMaster : ArduinoBoard, ICANBusNode
     }
     public override async Task End()
     {
-        //Display.UpdateDisplay(1);
         MonitorNode.Finalise();
         
         foreach(var remoteNode in RemoteNodes.Values)
