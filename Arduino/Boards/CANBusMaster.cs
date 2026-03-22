@@ -18,10 +18,11 @@ using XmppDotNet.Xmpp.Jingle;
 
 namespace Chetch.Arduino.Boards;
 
-public class CANBusMonitor : ArduinoBoard, ICANBusNode
+public class CANBusMaster : ArduinoBoard, ICANBusNode
 {
     #region Constants   
-    public const String DEFAULT_BOARD_NAME = "canbusmon";
+    public const String DEFAULT_BOARD_NAME = "canbusmas";
+    public const byte MASTER_NODE_ID = 1;
 
     #endregion
 
@@ -56,17 +57,17 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     #endregion
 
     #region Properties
-    public MCP2515Master MasterNode { get; } = new MCP2515Master(1);
+    public MCP2515Monitor MonitorNode { get; } = new MCP2515Monitor(MASTER_NODE_ID);
 
     public SerialPinMaster SerialPin { get; } = new SerialPinMaster();
 
     public GenericDisplay Display { get; } = new GenericDisplay();
 
-    public byte NodeID => MasterNode.NodeID;
+    public byte NodeID => MonitorNode.NodeID;
 
-    public ICANDevice CANDevice => MasterNode; //for interface compliance
+    public ICANDevice CANDevice => MonitorNode; //for interface compliance
 
-    public CANNodeState NodeState => MasterNode.State; //for interface compliance
+    public CANNodeState NodeState => MonitorNode.State; //for interface compliance
 
     public int BusSize => 1 + RemoteNodes.Count;
 
@@ -97,7 +98,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
                 {
                     s.AppendFormat("{0}: {1} of {2} nodes ready!", SID, nodeReadyCount, BusSize);    
                 }
-                TimeSpan uptime = DateTime.Now - MasterNode.LastReadyOn;
+                TimeSpan uptime = DateTime.Now - MonitorNode.LastReadyOn;
                 s.AppendFormat(" Uptime={0}, Messages={1}, Rate={2:F1} mps, IO={3}", 
                                     uptime.ToString("g"), 
                                     Activity != null ? Activity.MessageCount : "N/A", 
@@ -122,7 +123,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
 
     public EventHandler<MCP2515.MCP2515ErrorCode>? NodeError;
     
-    public EventHandler<MCP2515Master.BusMessageEventArgs>? BusMessageReceived;
+    public EventHandler<MCP2515Monitor.BusMessageEventArgs>? BusMessageReceived;
 
     #endregion
 
@@ -131,12 +132,12 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     #endregion
 
     #region Constructors
-    public CANBusMonitor(String sid = DEFAULT_BOARD_NAME) : base(sid)
+    public CANBusMaster(String sid = DEFAULT_BOARD_NAME) : base(sid)
     {
-        //The master node on the Arduino Board has parceled up a bus message and sent it as a normal arduino message
+        //The monitor node on the Arduino Board has parceled up a bus message and sent it as a normal arduino message
         //to this board which in turn directs it to the MCP node that then unwraps the message and fires this event.  The main purpose here
         //is to take tthe unwrapped message and pass it to the appropriate remote node.
-        MasterNode.BusMessageReceived += (sender, eargs) =>
+        MonitorNode.BusMessageReceived += (sender, eargs) =>
         {
             //Determine which node this message relates to
             ICANBusNode busNode = GetNode(eargs.NodeID);
@@ -221,24 +222,24 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
             BusMessageReceived?.Invoke(busNode, eargs);
         };
 
-        MasterNode.Ready += (sender, ready) =>
+        MonitorNode.Ready += (sender, ready) =>
         {
             NodeReady?.Invoke(this, ready);
         };
 
-        MasterNode.ErrorReceived += (sender, emsg) =>
+        MonitorNode.ErrorReceived += (sender, emsg) =>
         {
-            NodeError?.Invoke(this, MasterNode.LastError);
+            NodeError?.Invoke(this, MonitorNode.LastError);
         };
 
-        MasterNode.StateChanged += (sender, eargs) =>
+        MonitorNode.StateChanged += (sender, eargs) =>
         {
             StateChanges.Add(eargs);
             
             NodeStateChanged?.Invoke(this, eargs);
         };
 
-        MasterNode.BusActivityUpdated += (sender, eargs) =>
+        MonitorNode.BusActivityUpdated += (sender, eargs) =>
         {
             //Update the rates
             double summedRate = 0.0;
@@ -257,10 +258,10 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
         
         //Ensure this is set so that comms remain open between this computer and the bus monitor ont eh arduino
         //Arduino code will assume long absence of status request as disconnection of computer
-        MasterNode.RequestStatusInterval = 5000; 
+        MonitorNode.RequestStatusInterval = 5000; 
 
-        //Add MasterNode to Board
-        AddDevice(MasterNode);
+        //Add MonitorNode to Board
+        AddDevice(MonitorNode);
 
         //Add SerialPin to Board
         AddDevice(SerialPin);
@@ -269,7 +270,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
         //AddDevice(Display);
     }    
 
-    public CANBusMonitor(int remoteNodes, String sid = DEFAULT_BOARD_NAME) : this(sid)
+    public CANBusMaster(int remoteNodes, String sid = DEFAULT_BOARD_NAME) : this(sid)
     {
         for (int i = 0; i < remoteNodes; i++)
         {
@@ -282,7 +283,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     public void AddRemoteNode(ICANBusNode remoteNode)
     {
         byte rnid = remoteNode.NodeID;
-        if (rnid == 0 || rnid == MasterNode.NodeID)
+        if (rnid == 0 || rnid == MonitorNode.NodeID)
         {
             throw new Exception(String.Format("Node ID {0} is not a valid ID for a remote node", rnid));
         }
@@ -313,7 +314,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
             {
                 try
                 {
-                    MasterNode.SendBusMessage(remoteNode.NodeID, msg);
+                    MonitorNode.SendBusMessage(remoteNode.NodeID, msg);
                 } 
                 catch (Exception e)
                 {
@@ -339,7 +340,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     
     public void AddRemoteNode()
     {
-        byte nid = (byte)(MasterNode.NodeID + RemoteNodes.Count + 1);
+        byte nid = (byte)(MonitorNode.NodeID + RemoteNodes.Count + 1);
         AddRemoteNode(new CANBusNode(nid));
     }
 
@@ -357,7 +358,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     
     public ICANBusNode GetNode(byte nodeID)
     {
-        if (nodeID == MasterNode.NodeID)
+        if (nodeID == MonitorNode.NodeID)
         {
             return this;
         }
@@ -372,7 +373,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
 
     public ICANBusNode GetRemoteNode(byte nodeID)
     {
-        if (nodeID == MasterNode.NodeID)
+        if (nodeID == MonitorNode.NodeID)
         {
             throw new ArgumentException(String.Format("Node ID {0} is the master node", nodeID));
         }
@@ -397,7 +398,7 @@ public class CANBusMonitor : ArduinoBoard, ICANBusNode
     public override async Task End()
     {
         //Display.UpdateDisplay(1);
-        MasterNode.Finalise();
+        MonitorNode.Finalise();
         
         foreach(var remoteNode in RemoteNodes.Values)
         {

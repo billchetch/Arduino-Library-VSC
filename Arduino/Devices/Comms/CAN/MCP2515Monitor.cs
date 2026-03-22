@@ -3,7 +3,7 @@ using Chetch.Messaging;
 
 namespace Chetch.Arduino.Devices.Comms.CAN;
 
-public class MCP2515Master : MCP2515
+public class MCP2515Monitor : MCP2515
 {
 
     #region Constants
@@ -89,7 +89,7 @@ public class MCP2515Master : MCP2515
     #endregion
 
     #region Constructors
-    public MCP2515Master(byte nodeID = 1, string? name = null) : base(nodeID, name)
+    public MCP2515Monitor(byte nodeID, string? name = null) : base(nodeID, name)
     {
     }
     #endregion
@@ -125,11 +125,6 @@ public class MCP2515Master : MCP2515
 
         
         return base.HandleMessage(message);
-    }
-
-    public void ParseBusMessage(ArduinoMessage message, byte[] canData)
-    {
-        
     }
 
     protected ArduinoMessage FormulateBusMessage(byte nodeID, ArduinoMessage message)

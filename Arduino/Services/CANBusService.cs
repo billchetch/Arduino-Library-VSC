@@ -38,7 +38,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
     #endregion
 
     #region Methods
-    public void AddBusMonitor(CANBusMonitor bus)
+    public void AddBusMaster(CANBusMaster bus)
     {
         bus.NodeReady += (sender, ready) =>
         {
@@ -49,22 +49,22 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
         BusCount++;
     }
 
-    public List<CANBusMonitor> GetBusMonitors()
+    public List<CANBusMaster> GetBusMasters()
     {
-        List<CANBusMonitor> bl = new List<CANBusMonitor>();
+        List<CANBusMaster> bl = new List<CANBusMaster>();
         foreach (var bus in Boards)
         {
-            if (bus is CANBusMonitor)
+            if (bus is CANBusMaster)
             {
-                bl.Add((CANBusMonitor)bus);
+                bl.Add((CANBusMaster)bus);
             }
         }
         return bl;
     }
 
-    public CANBusMonitor GetBusMonitor(int busIdx)
+    public CANBusMaster GetBusMaster(int busIdx)
     {
-        var l = GetBusMonitors();
+        var l = GetBusMasters();
         return l[busIdx];
     }
     #endregion
@@ -86,7 +86,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
         base.AddCommands();
     }
 
-    CANBusMonitor getBusMonitor(List<Object> arguments, int minArgs = 0)
+    CANBusMaster getBusMonitor(List<Object> arguments, int minArgs = 0)
     {
         int busIdx = 0;
         if (arguments.Count > minArgs)
@@ -97,12 +97,12 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
         {
             throw new ArgumentException(String.Format("Index {0} is not valid", busIdx));
         }
-        return GetBusMonitor(busIdx);
+        return GetBusMaster(busIdx);
     }
 
     protected override bool HandleCommandReceived(ServiceCommand command, List<object> arguments, Message response)
     {
-        CANBusMonitor bm;
+        CANBusMaster bm;
         StringBuilder sb;
         List<ICANBusNode> nodes;
         byte nodeID = 0;
@@ -111,7 +111,7 @@ public class CANBusService<T> : ArduinoService<T> where T : CANBusService<T>
         {
             case COMMAND_LIST_BUSSES:
                 var bl = new List<String>();
-                foreach (var bus in GetBusMonitors())
+                foreach (var bus in GetBusMasters())
                 {
                     bl.Add(bus.BusSummary);
                 }
