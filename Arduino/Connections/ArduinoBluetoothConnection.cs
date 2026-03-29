@@ -11,7 +11,7 @@ namespace Chetch.Arduino.Connections;
 public class ArduinoBluetoothConnection : IConnection
 {
     #region Properties
-    public bool IsConnected => throw new NotImplementedException();
+    public bool IsConnected => bm.IsConnected;
 
     #endregion
 
