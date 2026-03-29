@@ -315,7 +315,7 @@ public class ArduinoBoard : IMessageUpdatableObject, IArduinoBoard
                     int attempts = 0;
                     do
                     {
-                        Console.WriteLine("{0} requesting status...", SID);
+                        //Console.WriteLine("{0} requesting status...", SID);
                         try
                         {
                             RequestStatus();
