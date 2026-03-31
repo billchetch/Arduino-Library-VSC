@@ -23,11 +23,17 @@ public class ArduinoBluetoothConnection : IConnection
     #region Fields
     IBluetoothManager? bm;
     IBluetoothManager.BluetoothDevice device;
+
+    String deviceName = String.Empty;
+    String devicePin = String.Empty;
     #endregion
 
     #region Constructors
-    public ArduinoBluetoothConnection(IBluetoothManager.BluetoothDevice device)
+    public ArduinoBluetoothConnection(IBluetoothManager.BluetoothDevice device, String deviceName = "", String devicePin = "")
     {
+        this.device = device;
+        this.deviceName = deviceName;
+        this.devicePin = devicePin;
         switch (device)
         {
             case IBluetoothManager.BluetoothDevice.JDY_31:
@@ -35,7 +41,6 @@ public class ArduinoBluetoothConnection : IConnection
                 {
                     bm = BlueUtilManager.Instance;
                 }
-                this.device = device;
                 break;
 
             default:
@@ -56,7 +61,7 @@ public class ArduinoBluetoothConnection : IConnection
 
     public void Connect()
     {
-       bm.Connect(device);
+       bm.Connect(device, deviceName, devicePin);
     }
 
     public void Disconnect()
@@ -68,7 +73,7 @@ public class ArduinoBluetoothConnection : IConnection
     {
         bm.Disconnect();
         Thread.Sleep(500);
-        bm.Connect(device);
+        bm.Connect(device, deviceName, devicePin);
     }
     
     public void SendData(byte[] data)
