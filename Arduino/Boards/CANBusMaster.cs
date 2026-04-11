@@ -150,6 +150,7 @@ public class CANBusMaster : ArduinoBoard, ICANBusNode
                 switch (message.Type)
                 {
                     case MessageType.STATUS_RESPONSE:
+                        //Node ID, millis, device count, memory
                         message.Populate<byte, UInt32, byte, Int16>(canData);
                         break;
 

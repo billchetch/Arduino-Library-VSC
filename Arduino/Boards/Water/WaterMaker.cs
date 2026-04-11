@@ -3,7 +3,7 @@ using Chetch.Arduino.Devices;
 using Chetch.Arduino.Devices.Comms;
 using Chetch.Arduino.Devices.Displays;
 
-namespace Chetch.Arduino.Boards;
+namespace Chetch.Arduino.Boards.Water;
 
 public class WaterMaker : CANBusNode
 {
