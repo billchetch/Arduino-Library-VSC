@@ -131,7 +131,7 @@ public class MCP2515Monitor : MCP2515
     {
         if(nodeID == NodeID)
         {
-            throw new Exception("Cannot formulate remote node message for the Master node as it is not remote!");
+            throw new Exception("Cannot formulate remote node message for the Monitor node as it is not remote!");
         }
 
         var fmsg = new ArduinoMessage(MessageType.COMMAND);

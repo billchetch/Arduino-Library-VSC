@@ -21,8 +21,7 @@ public class CANBusMaster : ArduinoBoard, ICANBusNode
 {
     #region Constants   
     public const String DEFAULT_BOARD_NAME = "canbusmas";
-    public const byte MASTER_NODE_ID = 1;
-
+    
     #endregion
 
     #region Classes and Enums
@@ -56,7 +55,7 @@ public class CANBusMaster : ArduinoBoard, ICANBusNode
     #endregion
 
     #region Properties
-    public MCP2515Monitor MonitorNode { get; } = new MCP2515Monitor(MASTER_NODE_ID);
+    public MCP2515Monitor MonitorNode { get; }
 
     public SerialPinMaster SerialPin { get; } = new SerialPinMaster();
 
@@ -129,13 +128,21 @@ public class CANBusMaster : ArduinoBoard, ICANBusNode
     #endregion
 
     #region Constructors
-    public CANBusMaster(String sid = DEFAULT_BOARD_NAME) : base(sid)
+    public CANBusMaster(byte nodeID = 1, String sid = DEFAULT_BOARD_NAME) : base(sid)
     {
+        MonitorNode = new MCP2515Monitor(nodeID);
+
         //The monitor node on the Arduino Board has parceled up a bus message and sent it as a normal arduino message
         //to this board which in turn directs it to the MCP node that then unwraps the message and fires this event.  The main purpose here
         //is to take tthe unwrapped message and pass it to the appropriate remote node.
         MonitorNode.BusMessageReceived += (sender, eargs) =>
         {
+            if (!HasNode(eargs.NodeID))
+            {
+                Console.WriteLine("Bus Message from unrecognised node {0}", eargs.NodeID);
+                return;    
+            }
+            
             //Determine which node this message relates to
             ICANBusNode busNode = GetNode(eargs.NodeID);
             
@@ -264,14 +271,6 @@ public class CANBusMaster : ArduinoBoard, ICANBusNode
         //Add SerialPin to Board
         AddDevice(SerialPin);
     }    
-
-    public CANBusMaster(int remoteNodes, String sid = DEFAULT_BOARD_NAME) : this(sid)
-    {
-        for (int i = 0; i < remoteNodes; i++)
-        {
-            AddRemoteNode();
-        }
-    }
     #endregion
 
     #region Methods
@@ -373,6 +372,18 @@ public class CANBusMaster : ArduinoBoard, ICANBusNode
             throw new ArgumentException(String.Format("Node ID {0} is the master node", nodeID));
         }
         return GetNode(nodeID);    
+    }
+    
+    public bool HasNode(byte nodeID)
+    {
+        if (nodeID == MonitorNode.NodeID)
+        {
+            return true;
+        }
+        else 
+        {
+            return RemoteNodes.ContainsKey(nodeID);
+        }
     }
     #endregion
 

@@ -9,10 +9,20 @@ public class WaterMaker : CANBusNode
 {
     #region  Constants
     public const String WATERMAKER_SID = "watermaker";
-    public const byte DEFAULT_NODE_ID = 2;
     #endregion
 
     #region Enums and Classes
+    public enum WMErrorCode : byte{
+        NO_ERROR = 0,
+        LOW_PRESSURE = 1,
+        HIGH_PRESSURE = 2,
+        FP_INCORRECT = 3,
+        PP_INCORRECT = 4,
+        LPS_INCORRECT = 5,
+        HPS_INCORRECT = 6,
+        CAN_BUS = 7, //Used for debugging
+    };
+
     public enum OperationalMode : byte
     {
         NOT_SET,
@@ -49,21 +59,29 @@ public class WaterMaker : CANBusNode
     public ActiveSwitch PressurePump {get; } = new ActiveSwitch("pressure");
     #endregion
 
+    #region Report Updated
+    public WMErrorCode WMError {get; }
 
-    public OperationalMode Mode {get; internal set; } = OperationalMode.NOT_SET;
+    public OperationalMode Mode => ModeSelector.SelectedItem;
+
+    public bool IsRunning { get; }
+
+    public int Duration {get; }
     #endregion
 
+    #endregion //end properties region
+
     #region Constructors
-    public WaterMaker(byte nodeID = DEFAULT_NODE_ID) : base(nodeID, WATERMAKER_SID)
+    public WaterMaker(byte nodeID) : base(nodeID, WATERMAKER_SID)
     {
         //IMPORTANT: Order that devices are added is important and should match those on the
         //Arduino Board as objects are mapped based on ID values and these are automatically assigned
         //based on order of adding device to board
 
-        //NOTE: MCP and SerialPin devices added by base
+        //NOTE: MCP and SerialPin devices added by base which makes ID values start at 10!
 
         //Display
-        AddDevice(Display);
+        AddDevice(Display); 
 
         //Inputs
         AddDevice(ModeSelector);
@@ -81,9 +99,10 @@ public class WaterMaker : CANBusNode
     #endregion
 
     #region Methods
+    //Empty
     #endregion
 
     #region Messaging
-    
+    //Empty
     #endregion
 }
