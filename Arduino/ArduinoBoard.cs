@@ -22,7 +22,7 @@ public class ArduinoBoard : IMessageUpdatableObject, IArduinoBoard
 
     public const int MESSAGE_OUT_INTERVAL = 10; //ensures a minimal interval between sending messages
 
-    public const int DEFAULT_REQUEST_STATUS_TIMER_INTERVAL = 15; //in secs
+    public const int MAX_IDLE_TIME_MS = 15000;
     #endregion
 
     #region Classes and Enums
@@ -176,6 +176,8 @@ public class ArduinoBoard : IMessageUpdatableObject, IArduinoBoard
     public bool IsConnected => Connection != null && Connection.IsConnected;
     virtual public bool IsReady => IsConnected && statusResponseReceived;
 
+    public bool DevicesReady { get; internal set; } = false;
+
     [ArduinoMessageMap(MessageType.STATUS_RESPONSE, 0)]
     public String Name { get; internal set; } = "Unknown";
 
@@ -215,17 +217,37 @@ public class ArduinoBoard : IMessageUpdatableObject, IArduinoBoard
         //Configure request status timer, this effectively pings the board if no message has been
         //received for some period .. starts based on board being ready or not (see OnReady)
         RequestStatusTimer.AutoReset = true;
-        RequestStatusTimer.Interval = DEFAULT_REQUEST_STATUS_TIMER_INTERVAL * 1000;
+        RequestStatusTimer.Interval = 250;
         RequestStatusTimer.Elapsed += (sender, eargs) =>
         {
-            if (IsReady && io.LastMessageReceived.Created != default && (DateTime.Now - io.LastMessageReceived.Created).TotalMilliseconds >= RequestStatusTimer.Interval)
+            if (IsReady)
             {
-                try
+                if(io.LastMessageReceived.Created != default && (DateTime.Now - io.LastMessageReceived.Created).TotalMilliseconds >= MAX_IDLE_TIME_MS)
                 {
-                    RequestStatus();
+                    try
+                    {
+                        RequestStatus();
+                    }
+                    catch { }
                 }
-                catch { }
-                ;
+
+
+                if(!DevicesReady){
+                    bool allReady = true;
+                    foreach(var device in devices.Values)
+                    {
+                        if (!device.IsReady)
+                        {
+                            device.RequestStatus();
+                            allReady = false;
+                        }
+                    }
+                    DevicesReady = allReady;
+                }
+                else
+                {
+                    RequestStatusTimer.Interval = 1000;
+                }
             }
         };
 
