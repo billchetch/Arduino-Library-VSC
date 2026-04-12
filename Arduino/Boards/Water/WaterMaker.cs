@@ -103,6 +103,16 @@ public class WaterMaker : CANBusNode
     #endregion
 
     #region Messaging
-    //Empty
+    public override ArduinoMessageMap.UpdatedProperties HandleMessage(ArduinoMessage message)
+    {
+        switch (message.Type)
+        {
+            case Messaging.MessageType.DATA:
+                break;
+        }
+        return base.HandleMessage(message);
+    }
+
+
     #endregion
 }

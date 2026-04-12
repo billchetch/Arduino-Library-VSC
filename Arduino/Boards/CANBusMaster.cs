@@ -414,6 +414,18 @@ public class CANBusMaster : ArduinoBoard, ICANBusNode
     }
     #endregion
 
+    #region Messaging
+    public override ArduinoMessageMap.UpdatedProperties HandleMessage(ArduinoMessage message)
+    {
+        switch (message.Type)
+        {
+            case MessageType.DATA:
+                break;
+        }
+        return base.HandleMessage(message);
+    }
+    #endregion
+    
     #region SP NMessaging
     public void SPINSendCommand(byte nodeID, byte command)
     {
