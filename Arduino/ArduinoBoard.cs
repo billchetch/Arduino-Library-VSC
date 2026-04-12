@@ -367,7 +367,7 @@ public class ArduinoBoard : IMessageUpdatableObject, IArduinoBoard
     #endregion
 
     #region Messaging
-    public bool AssignMessageValue(PropertyInfo propertyInfo, Object propertyValue, ArduinoMessage message)
+    virtual public bool AssignMessageValue(PropertyInfo propertyInfo, Object propertyValue, ArduinoMessage message)
     {
         propertyInfo.SetValue(this, propertyValue);
         return true;

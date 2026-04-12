@@ -162,7 +162,8 @@ public class CANBusMaster : ArduinoBoard, ICANBusNode
                         break;
 
                     default:
-                        //TODO:!!!
+                        var template = ArduinoMessageMap.CreateMessageFor(busNode, message.Type);
+                        message.Populate(template, canData, 0);
                         break;    
                 }
             } 
@@ -415,15 +416,7 @@ public class CANBusMaster : ArduinoBoard, ICANBusNode
     #endregion
 
     #region Messaging
-    public override ArduinoMessageMap.UpdatedProperties HandleMessage(ArduinoMessage message)
-    {
-        switch (message.Type)
-        {
-            case MessageType.DATA:
-                break;
-        }
-        return base.HandleMessage(message);
-    }
+    //Empty
     #endregion
     
     #region SP NMessaging

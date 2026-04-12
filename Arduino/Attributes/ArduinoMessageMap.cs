@@ -31,11 +31,14 @@ public class ArduinoMessageMap : Attribute
             var val = message.Get(argIdx, prop2set.PropertyType);
             var oldVal = kv.Key.GetValue(obj);
 
-            if(obj.AssignMessageValue(prop2set, val, message))
+            try
             {
-                //kv.Key.SetValue(obj, val);
-                updatedProperties.Properties.Add(prop2set);
-            }
+                if(obj.AssignMessageValue(prop2set, val, message))
+                {
+                    //kv.Key.SetValue(obj, val);
+                    updatedProperties.Properties.Add(prop2set);
+                }
+            } catch {}
         }
         return updatedProperties;
     }

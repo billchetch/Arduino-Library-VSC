@@ -1,7 +1,9 @@
 using System;
+using System.Reflection;
 using Chetch.Arduino.Devices;
 using Chetch.Arduino.Devices.Comms;
 using Chetch.Arduino.Devices.Displays;
+using Chetch.Messaging;
 
 namespace Chetch.Arduino.Boards.Water;
 
@@ -59,21 +61,42 @@ public class WaterMaker : CANBusNode
     public ActiveSwitch PressurePump {get; } = new ActiveSwitch("pressure");
     #endregion
 
-    #region Report Updated
-    public WMErrorCode WMError {get; }
+    #region Report Updatable
 
+    [ArduinoMessageMap(MessageType.DATA, 0)]
+    public WMErrorCode WMError {get; internal set; }
+
+    [ArduinoMessageMap(MessageType.DATA, 0)] //we don't assign (see AssignMessageValue beloe)
     public OperationalMode Mode => ModeSelector.SelectedItem;
 
-    public bool IsRunning { get; }
+    [ArduinoMessageMap(MessageType.DATA, 2)]
+    public bool IsRunning { get; internal set; }
 
-    public int Duration {get; }
+    [ArduinoMessageMap(MessageType.DATA, 3)]
+    public UInt16 Duration {get; internal set;  }
+
     #endregion
 
     #endregion //end properties region
 
+    #region Events
+    public event EventHandler<bool>? Started;
+    public event EventHandler<OperationalMode>? ModeSelected;
+    #endregion
+
     #region Constructors
     public WaterMaker(byte nodeID) : base(nodeID, WATERMAKER_SID)
     {
+        ModeSelector.Selected += (sender, mode) =>
+        {
+            ModeSelected?.Invoke(this, mode);  
+        };
+
+        FeederPump.Switched += (sender, on) =>
+        {
+            Started?.Invoke(this, on);
+        };
+
         //IMPORTANT: Order that devices are added is important and should match those on the
         //Arduino Board as objects are mapped based on ID values and these are automatically assigned
         //based on order of adding device to board
@@ -103,14 +126,16 @@ public class WaterMaker : CANBusNode
     #endregion
 
     #region Messaging
-    public override ArduinoMessageMap.UpdatedProperties HandleMessage(ArduinoMessage message)
+    public override bool AssignMessageValue(PropertyInfo propertyInfo, object propertyValue, ArduinoMessage message)
     {
-        switch (message.Type)
+        if (propertyInfo.Name.Equals("Mode"))
         {
-            case Messaging.MessageType.DATA:
-                break;
+            //Note that as there is no set method for this property, without handling here it would later simply throw an exception 
+            //which is just ignored (See base.AssignMessageValue)
+            return true; 
         }
-        return base.HandleMessage(message);
+        
+        return base.AssignMessageValue(propertyInfo, propertyValue, message);
     }
 
 
