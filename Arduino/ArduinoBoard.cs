@@ -23,6 +23,7 @@ public class ArduinoBoard : IMessageUpdatableObject, IArduinoBoard
     public const int MESSAGE_OUT_INTERVAL = 10; //ensures a minimal interval between sending messages
 
     public const int MAX_IDLE_TIME_MS = 15000;
+    public const int START_REQUEST_TIMER_INTERVAL = 250; //Whenall devices are ready this will fire at 1sec internvals
     #endregion
 
     #region Classes and Enums
@@ -217,7 +218,7 @@ public class ArduinoBoard : IMessageUpdatableObject, IArduinoBoard
         //Configure request status timer, this effectively pings the board if no message has been
         //received for some period .. starts based on board being ready or not (see OnReady)
         RequestStatusTimer.AutoReset = true;
-        RequestStatusTimer.Interval = 250;
+        RequestStatusTimer.Interval = START_REQUEST_TIMER_INTERVAL;
         RequestStatusTimer.Elapsed += (sender, eargs) =>
         {
             if (IsReady)
@@ -377,8 +378,10 @@ public class ArduinoBoard : IMessageUpdatableObject, IArduinoBoard
             ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));    
         }
         
+        DevicesReady = false; //Always set to false and allow the requesting status process to set to true
         if (IsReady)
         {
+            RequestStatusTimer.Interval = START_REQUEST_TIMER_INTERVAL;
             RequestStatusTimer.Start();
         }
         else
