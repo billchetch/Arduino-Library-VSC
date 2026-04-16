@@ -273,7 +273,7 @@ public class ArduinoBoard : IMessageUpdatableObject, IArduinoBoard
             }
             else
             {
-                var e = new Exception(String.Format("Board is not yet Ready to process messages of type {0} from {1}", message.Type, message.Sender));
+                var e = new Exception(String.Format("Board {0} is not yet Ready to process messages of type {1} from {2}", SID, message.Type, message.Sender));
                 ExceptionThrown?.Invoke(this, new System.IO.ErrorEventArgs(e));
             }
         };
@@ -502,7 +502,7 @@ public class ArduinoBoard : IMessageUpdatableObject, IArduinoBoard
     {
         if (!IsConnected)
         {
-            throw new Exception("Board is not connected");
+            throw new Exception(String.Format("Board {0} is not connected", SID));
         }
 
         if (message.Sender == ArduinoMessage.NO_SENDER)

@@ -16,6 +16,9 @@ public class ArduinoMessageMap : Attribute
     static Dictionary<Type, Dictionary<MessageType, Dictionary<PropertyInfo, byte>>> map = new Dictionary<Type, Dictionary<MessageType, Dictionary<PropertyInfo, byte>>>();
     static Object mapLock = new object();
 
+    static Dictionary<Type, Dictionary<MessageType, ArduinoMessage>> templates = new Dictionary<Type, Dictionary<MessageType,ArduinoMessage>>();
+    static Object templatesLock = new Object();
+
     public static UpdatedProperties AssignMessageValues(IMessageUpdatableObject obj, ArduinoMessage message)
     {
         var type = obj.GetType();
@@ -86,23 +89,37 @@ public class ArduinoMessageMap : Attribute
         return prop2index;
     }
 
-    public static ArduinoMessage CreateMessageFor(Object obj, MessageType messageType, String? propName = null, Object? propVal = null)
+    public static ArduinoMessage CreateMessageFor(IMessageUpdatableObject obj, MessageType messageType, String? propName = null, Object? propVal = null)
     {
-        var message = new ArduinoMessage(messageType);
-        var prop2index = GetArduinoMessageMapProperties(obj.GetType(), message.Type);
-
-        foreach (var kv in prop2index)
+        var type = obj.GetType();
+        if(templates.ContainsKey(type) && templates[type].ContainsKey(messageType))
         {
-            var prop2set = kv.Key;
-            var argIdx = kv.Value;
-            var val = kv.Key.GetValue(obj);
-            if (propName != null && prop2set.Name == propName) val = propVal;
-            if (val != null)
-            {
-                message.Add(val, argIdx);
-            }
+            return templates[type][messageType];
         }
-        return message;
+
+        ArduinoMessage message = new ArduinoMessage(messageType);
+        lock(templatesLock)
+        {
+            if (!templates.ContainsKey(type))
+            {
+                templates[type] = new Dictionary<MessageType, ArduinoMessage>();
+            }
+
+            var prop2index = GetArduinoMessageMapProperties(type, message.Type);
+            foreach (var kv in prop2index)
+            {
+                var prop2set = kv.Key;
+                var argIdx = kv.Value;
+                var val = kv.Key.GetValue(obj);
+                if (val != null)
+                {
+                    message.Add(val, argIdx);
+                }
+            }
+
+            templates[type][message.Type] = message;
+        }
+        return templates[type][message.Type];
     }
 
     public class UpdatedProperties

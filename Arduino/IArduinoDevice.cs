@@ -2,7 +2,7 @@ using System;
 
 namespace Chetch.Arduino;
 
-public interface IArduinoDevice
+public interface IArduinoDevice : IMessageUpdatableObject
 {
     public ArduinoBoard Board { get; set; }
 

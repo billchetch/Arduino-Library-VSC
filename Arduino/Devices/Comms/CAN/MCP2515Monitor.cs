@@ -154,7 +154,7 @@ public class MCP2515Monitor : MCP2515
             case MessageType.COMMAND:
                 fmsg.Add(message.Get<ArduinoDevice.DeviceCommand>(0));
                 fmsg.Add(nodeID);
-                fmsg.Add(message, 1);
+                fmsg.Add(message, 1); //add message arguments from 1 onwards (as 0 index arg added above)
                 break;
 
             default:

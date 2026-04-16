@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace Chetch.Arduino;
 
-abstract public class ArduinoDevice : IMessageUpdatableObject, IArduinoDevice
+abstract public class ArduinoDevice : IArduinoDevice
 {
     #region Constants
     public const Int16 DEFAULT_REPORT_INTEVAL = -1;

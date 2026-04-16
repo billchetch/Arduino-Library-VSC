@@ -4,7 +4,7 @@ using Chetch.Messaging;
 
 namespace Chetch.Arduino;
 
-public interface IArduinoBoard
+public interface IArduinoBoard : IMessageUpdatableObject
 {
 
     byte ID { get; }
