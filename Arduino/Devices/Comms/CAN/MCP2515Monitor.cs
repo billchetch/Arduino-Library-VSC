@@ -9,6 +9,8 @@ public class MCP2515Monitor : MCP2515
     #region Constants
     private const byte MESSAGE_ID_FORWARD_RECEIVED = 100;
     private const byte MESSAGE_ID_FORWARD_SENT = 101;
+
+    private const byte MESSAGE_TAG_BUS_MESSAGE = 88;
     #endregion
 
     #region Classes and Enums
@@ -121,6 +123,14 @@ public class MCP2515Monitor : MCP2515
                     
                 }
                 break;
+
+            case MessageType.COMMAND_RESPONSE:
+                if(message.Tag == MESSAGE_TAG_BUS_MESSAGE)
+                {
+                    bool sendResult = message.Get<bool>(0);
+                    Console.WriteLine("Send result: {0}", sendResult);
+                }
+                break;
         }
 
         
@@ -135,6 +145,7 @@ public class MCP2515Monitor : MCP2515
         }
 
         var fmsg = new ArduinoMessage(MessageType.COMMAND);
+        fmsg.Tag = MESSAGE_TAG_BUS_MESSAGE;
         fmsg.Target = ID;
         fmsg.Sender = message.Sender;
         switch (message.Type)

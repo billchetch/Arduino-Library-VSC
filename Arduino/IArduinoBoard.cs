@@ -28,4 +28,6 @@ public interface IArduinoBoard : IMessageUpdatableObject
     bool IsReady { get; }
 
     public event EventHandler<bool>? Ready;
+
+    public void RequestStatus();
 }

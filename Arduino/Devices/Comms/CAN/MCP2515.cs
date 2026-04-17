@@ -419,12 +419,6 @@ abstract public class MCP2515 : ArduinoDevice, ICANDevice
 
             case MessageType.PRESENCE:
                 LastPresenceOn = DateTime.Now; 
-                bool firstPresence = message.Get<bool>(2);
-                if (firstPresence) //signals a node (re)-joining
-                {
-                    RequestStatus();
-                    Initialise();
-                }   
                 break;
         }
         return base.HandleMessage(message);

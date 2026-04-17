@@ -515,18 +515,14 @@ public class ArduinoBoard : IMessageUpdatableObject, IArduinoBoard
         io.Add(message);
     }
 
-    public void RequestStatus(byte target = ArduinoMessage.NO_TARGET)
+    public void RequestStatus()
     {
-        if (target == ArduinoMessage.NO_TARGET)
-        {
-            target = ID;
-        }
         var msg = new ArduinoMessage(MessageType.STATUS_REQUEST);
         
         msg.Add(DateTimeOffset.UtcNow.ToUnixTimeSeconds());
         msg.Add((Int16)DateTimeOffset.Now.Offset.Hours);
 
-        msg.Target = target;
+        msg.Target = ID;
         SendMessage(msg);
         statusRequested = true; //flag that this has been requested
     }

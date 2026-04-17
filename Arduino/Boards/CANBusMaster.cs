@@ -198,6 +198,19 @@ public class CANBusMaster : ArduinoBoard, ICANBusNode
                         case MessageType.PRESENCE:
                             //Nodemillis, Interval, Initial presence, Status Flags
                             message.Populate<UInt32, UInt16, bool, byte>(canData);
+                            bool initialPresence = message.Get<bool>(2);
+                            if (initialPresence)
+                            {
+                                if (!busNode.IsReady)
+                                {
+                                    busNode.RequestStatus();
+                                } else
+                                {
+                                    device.RequestStatus();
+                                    device.Initialise();
+                                }
+                                injectMessage = false;
+                            }
                             break;
                     }
                 }
