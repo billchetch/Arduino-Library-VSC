@@ -243,6 +243,24 @@ public class CANBusMaster : ArduinoBoard, ICANBusNode
 
         MonitorNode.Ready += (sender, ready) =>
         {
+            if (ready)
+            {
+                foreach(var remoteNode in RemoteNodes.Values)
+                {
+                    if(remoteNode.Connection == null && Connection != null)
+                    {
+                        remoteNode.Connection = new ProxyConnection(Connection);
+                    }
+                    remoteNode.Begin();
+                }
+            } else
+            {
+                foreach(var remoteNode in RemoteNodes.Values)
+                {
+                    remoteNode.End();
+                }   
+            }
+
             NodeReady?.Invoke(this, ready);
         };
 
@@ -402,19 +420,6 @@ public class CANBusMaster : ArduinoBoard, ICANBusNode
     #endregion
 
     #region Lifecycle
-    public override void Begin()
-    {
-        foreach(var remoteNode in RemoteNodes.Values)
-        {
-            if(remoteNode.Connection == null && Connection != null)
-            {
-                remoteNode.Connection = new ProxyConnection(Connection);
-            }
-            remoteNode.Begin();
-        }
-
-        base.Begin();
-    }
     public override async Task End()
     {
         MonitorNode.Finalise();

@@ -367,17 +367,6 @@ abstract public class MCP2515 : ArduinoDevice, ICANDevice
             State = CANNodeState.TRANSMITTING;
         }
     }
-
-    public double UpdateMessageRate()
-    {
-
-        double intervalInSeconds = (DateTime.Now - lastMessageRateUpdated).TotalSeconds;
-        MessageRate = (double)(MessageCount - lastMessageCount) / intervalInSeconds;
-        lastMessageCount = MessageCount;
-        lastMessageRateUpdated = DateTime.Now;
-
-        return MessageRate;
-    }
     #endregion
 
     #region Messaging
