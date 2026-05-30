@@ -1,4 +1,5 @@
 using System;
+using Chetch.Arduino.Boards;
 using Chetch.Messaging;
 
 namespace Chetch.Arduino.Devices.Comms.CAN;
@@ -14,80 +15,18 @@ public class MCP2515Monitor : MCP2515
     #endregion
 
     #region Classes and Enums
-    public enum BusMessageDirection
-    {
-        OUTBOUND,
-        INBOUND
-    }
-
-    public class BusMessageEventArgs
-    {
-        public CANID CanID { get; internal set; }
-
-        public byte NodeID => CanID.NodeID;
-
-        public byte CanDLC => (byte)CanData.Length;
-
-        public byte[] CanData { get; }
-
-        public ArduinoMessage Message { get; } = new ArduinoMessage();
-
-        public BusMessageDirection Direction { get; internal set; }
-
-        public BusMessageEventArgs(ArduinoMessage message)
-        {
-            if (message.Tag == MESSAGE_ID_FORWARD_SENT)
-            {
-                Direction = BusMessageDirection.OUTBOUND;
-            }
-            else if (message.Tag == MESSAGE_ID_FORWARD_RECEIVED)
-            {
-                Direction = BusMessageDirection.INBOUND;
-            }
-
-            CanData = message.Get<byte[]>(0);
-            CanID = new CANID(message.Get<UInt32>(1));
-            if(!CanID.ValidateCRC(CanData))
-            {
-                throw new Exception("Not a valid CRC");
-            }
-
-            Message.Type = message.Get<MessageType>(2);
-            if (!Enum.IsDefined<MessageType>(Message.Type))
-            {
-                throw new Exception(String.Format("{0} is not a valid message type", message.Type));
-            }
-
-            Message.Sender = message.Get<byte>(3);
-            Message.Target = Message.Sender;
-            Message.Tag = CanID.Tag;
-        }
-    }
     
     #endregion
 
     #region Events
-    public EventHandler<BusMessageEventArgs>? BusMessageReceived;
-
-    public EventHandler? BusActivityUpdated;
+    public EventHandler<CANMessage>? BusMessageReceived;
 
     #endregion
 
     #region Properties
-    [ArduinoMessageMap(MessageType.DATA, 0)]     
-    public UInt16 BusMessageCount{ 
-        get => busMessageCount;
-        set
-        {
-            busMessageCount = value;
-            OnUpdateBusActivity();
-        } 
-    }
-    
     #endregion
 
     #region Fields
-    private UInt16 busMessageCount = 0;
     #endregion
 
     #region Constructors
@@ -97,10 +36,6 @@ public class MCP2515Monitor : MCP2515
     #endregion
 
     #region Methods
-    protected void OnUpdateBusActivity()
-    {
-        BusActivityUpdated?.Invoke(this, EventArgs.Empty);
-    }
     #endregion
 
     #region Messaging
@@ -112,14 +47,15 @@ public class MCP2515Monitor : MCP2515
             case MessageType.INFO:
                 if (message.Tag == MESSAGE_ID_FORWARD_SENT || message.Tag == MESSAGE_ID_FORWARD_RECEIVED)
                 {
-                    var eargs = new BusMessageEventArgs(message);
-                        
-                    if(eargs.NodeID == NodeID)
-                    {
-                        UpdateMessageCount(eargs.Message);
-                    }
+                    CANID canID = new CANID(message.Get<uint>(1));
 
-                    BusMessageReceived?.Invoke(this, eargs);
+                    var busMessage = new CANMessage(canID.NodeID, canID.ID, message.Get<byte[]>(0));
+                    busMessage.Message.Type = message.Get<MessageType>(2);
+                    busMessage.Message.Tag = canID.Tag;
+                    busMessage.Message.Sender = message.Get<byte>(3);
+                    busMessage.Message.Target = busMessage.Message.Sender;
+
+                    BusMessageReceived?.Invoke(this, busMessage);
                     
                 }
                 break;
@@ -128,7 +64,7 @@ public class MCP2515Monitor : MCP2515
                 if(message.Tag == MESSAGE_TAG_BUS_MESSAGE)
                 {
                     bool sendResult = message.Get<bool>(0);
-                    Console.WriteLine("Send result: {0}", sendResult);
+                    //Console.WriteLine("Send result: {0}", sendResult);
                 }
                 break;
         }

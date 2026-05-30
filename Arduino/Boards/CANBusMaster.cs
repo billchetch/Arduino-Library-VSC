@@ -276,23 +276,6 @@ public class CANBusMaster : ArduinoBoard, ICANBusNode
             NodeStateChanged?.Invoke(this, eargs);
         };
 
-        MonitorNode.BusActivityUpdated += (sender, eargs) =>
-        {
-            //Update the rates
-            double summedRate = 0.0;
-            uint totalCount = 0;
-            var allNodes = GetAllNodes();
-            /*
-            foreach(var node in allNodes)
-            {
-                summedRate += node.MCPDevice.UpdateMessageRate();
-                totalCount += node.MCPDevice.MessageCount;
-            }
-
-            String ioSummary = String.Format("Recv: {0}, Disp: {1}", IO.ToReceive, IO.ToDispatch);
-            ActivityLog.Add(new BusActivity(totalCount, summedRate, ioSummary));*/
-        };
-        
         //Ensure this is set so that comms remain open between this computer and the bus monitor ont eh arduino
         //Arduino code will assume long absence of status request as disconnection of computer
         MonitorNode.RequestStatusInterval = 5000; 

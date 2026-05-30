@@ -48,6 +48,8 @@ abstract public class ArduinoDevice : IArduinoDevice
         REQUEST,
         SYNCHRONISE,
         UPDATE,
+        CALIBRATE,
+        SET_MODE,
     }
     #endregion
 

@@ -36,11 +36,49 @@ public class CANNodeStateChange : System.EventArgs
     }
 }
 
+public class CANMessage{
+
+    public enum Format{
+        NONE,
+        ID_AS_BITS,
+        CAN_DATA_AS_BYTE_ARRAY,
+    }
+
+    public byte NodeID { get; internal set; }
+    public UInt32 ID { get; internal set; }
+
+    public byte[] Data;
+
+    public ArduinoMessage Message { get; internal set; } = new ArduinoMessage();
+
+    public CANMessage(byte nodeID, UInt32 canID, byte[] canData){
+        NodeID = nodeID;
+        ID = canID;
+        Data = canData;
+    }
+
+    public String? ToString(Format format){
+        switch(format){
+            case Format.ID_AS_BITS:
+                return Utilities.Convert.ToBitString(ID);
+
+            case Format.CAN_DATA_AS_BYTE_ARRAY:
+                return "n/a"; //Utilities.Convert.ToByteString(Data);
+
+            case Format.NONE:
+            default:
+                return this.ToString();
+        }
+    }
+}
+
 public interface ICANBusNode : IArduinoBoard
 {
     ICANDevice CANDevice { get; }
 
     byte NodeID => CANDevice.NodeID;
 
-    CANNodeState NodeState => CANDevice.State;
+    CANNodeState NodeState { get; }
+
+    bool RouteBusMessage(CANMessage busMessage);
 }
